@@ -1,0 +1,140 @@
+// Prisma Schema for Dental Referral Management System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Clinic Model
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users     User[]
+  contacts  Contact[]
+  referrals Referral[]
+
+  @@map("clinics")
+}
+
+// User Model
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(STAFF)
+  clinicId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+// Contact Model (Referral Recipients/Specialists)
+model Contact {
+  id        String        @id @default(uuid())
+  clinicId  String
+  name      String
+  specialty String
+  phone     String
+  email     String
+  address   String?
+  notes     String?
+  status    ContactStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  clinic    Clinic     @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  referrals Referral[]
+
+  @@index([clinicId])
+  @@index([specialty])
+  @@index([status])
+  @@map("contacts")
+}
+
+enum ContactStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// Referral Model
+model Referral {
+  id           String           @id @default(uuid())
+  clinicId     String
+  contactId    String
+  patientName  String
+  patientDob   DateTime
+  patientPhone String?
+  patientEmail String?
+  reason       String
+  urgency      ReferralUrgency  @default(ROUTINE)
+  status       ReferralStatus   @default(DRAFT)
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  clinic  Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  contact Contact        @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  files   ReferralFile[]
+
+  @@index([clinicId])
+  @@index([contactId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("referrals")
+}
+
+enum ReferralStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ReferralUrgency {
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+// Referral File Model
+model ReferralFile {
+  id         String   @id @default(uuid())
+  referralId String
+  fileName   String
+  fileType   String
+  fileUrl    String
+  fileSize   Int
+  uploadedAt DateTime @default(now())
+
+  // Relations
+  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([referralId])
+  @@map("referral_files")
+}
+

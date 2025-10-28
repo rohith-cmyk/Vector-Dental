@@ -1,0 +1,22 @@
+{
+  "name": "dental-referral-shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for Dental Referral System",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "dental",
+    "referral",
+    "shared"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  }
+}
+
