@@ -20,9 +20,11 @@ model Clinic {
   updatedAt DateTime @updatedAt
 
   // Relations
-  users     User[]
-  contacts  Contact[]
-  referrals Referral[]
+  users          User[]
+  contacts       Contact[]
+  referrals      Referral[]
+  referralLink   ClinicReferralLink?
+  notifications  Notification[]
 
   @@map("clinics")
 }
@@ -79,32 +81,59 @@ enum ContactStatus {
   INACTIVE
 }
 
-// Referral Model
+// Referral Model (Two-Way System)
 model Referral {
   id           String           @id @default(uuid())
-  clinicId     String
-  contactId    String
+  
+  // Referral Direction
+  referralType ReferralType     @default(OUTGOING)
+  
+  // For OUTGOING referrals (you send out)
+  fromClinicId String           // Clinic sending the referral
+  toContactId  String?          // Contact from your directory (optional)
+  toClinicId   String?          // If referring to another clinic in the system
+  
+  // For INCOMING referrals (you receive)
+  // The clinic receiving uses fromClinicId
+  fromClinicName    String?     // Name of external referring clinic
+  fromClinicEmail   String?     // Email of referring clinic  
+  fromClinicPhone   String?     // Phone of referring clinic
+  referringDentist  String?     // Name of dentist who made referral
+  
+  // Patient Information
   patientName  String
   patientDob   DateTime
   patientPhone String?
   patientEmail String?
+  
+  // Referral Details
   reason       String
   urgency      ReferralUrgency  @default(ROUTINE)
   status       ReferralStatus   @default(DRAFT)
   notes        String?
+  
+  // Timestamps
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   // Relations
-  clinic  Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  contact Contact        @relation(fields: [contactId], references: [id], onDelete: Restrict)
-  files   ReferralFile[]
+  clinic        Clinic          @relation(fields: [fromClinicId], references: [id], onDelete: Cascade)
+  contact       Contact?        @relation(fields: [toContactId], references: [id], onDelete: Restrict)
+  files         ReferralFile[]
+  notifications Notification[]
 
-  @@index([clinicId])
-  @@index([contactId])
+  @@index([fromClinicId])
+  @@index([toContactId])
+  @@index([toClinicId])
+  @@index([referralType])
   @@index([status])
   @@index([createdAt])
   @@map("referrals")
+}
+
+enum ReferralType {
+  OUTGOING
+  INCOMING
 }
 
 enum ReferralStatus {
@@ -136,5 +165,51 @@ model ReferralFile {
 
   @@index([referralId])
   @@map("referral_files")
+}
+
+// Clinic Referral Link Model (Shareable Public Link)
+model ClinicReferralLink {
+  id          String   @id @default(uuid())
+  clinicId    String   @unique
+  slug        String   @unique  // URL-friendly slug (e.g., "smith-dental-clinic")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("clinic_referral_links")
+}
+
+// Notification Model
+model Notification {
+  id          String             @id @default(uuid())
+  clinicId    String
+  userId      String?            // Specific user, or null for all clinic users
+  type        NotificationType
+  referralId  String?
+  title       String
+  message     String
+  isRead      Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+
+  // Relations
+  clinic   Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  referral Referral? @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_INCOMING_REFERRAL
+  REFERRAL_ACCEPTED
+  REFERRAL_REJECTED
+  REFERRAL_COMPLETED
+  REFERRAL_STATUS_UPDATE
+  SYSTEM_MESSAGE
 }
 

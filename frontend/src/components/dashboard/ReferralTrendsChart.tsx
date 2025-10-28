@@ -1,12 +1,13 @@
 'use client'
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts'
 
 interface ReferralTrendsChartProps {
   data: Array<{
     month: string
-    count: number
+    outgoing: number
+    incoming: number
   }>
 }
 
@@ -14,7 +15,10 @@ export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Referral Trends</CardTitle>
+        <div>
+          <CardTitle>Referral Trends</CardTitle>
+          <p className="text-sm text-gray-500 mt-1">Sent vs Received over time</p>
+        </div>
         <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
           <option>Monthly</option>
           <option>Weekly</option>
@@ -25,9 +29,13 @@ export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={data}>
             <defs>
-              <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="colorOutgoing" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#84cc16" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="#84cc16" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="colorIncoming" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -47,12 +55,22 @@ export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
                 borderRadius: '8px'
               }}
             />
+            <Legend />
             <Area 
               type="monotone" 
-              dataKey="count" 
+              dataKey="outgoing"
+              name="Sent Out"
               stroke="#84cc16" 
               strokeWidth={2}
-              fill="url(#colorCount)" 
+              fill="url(#colorOutgoing)" 
+            />
+            <Area 
+              type="monotone" 
+              dataKey="incoming"
+              name="Received"
+              stroke="#3b82f6" 
+              strokeWidth={2}
+              fill="url(#colorIncoming)" 
             />
           </AreaChart>
         </ResponsiveContainer>

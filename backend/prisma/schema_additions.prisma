@@ -1,0 +1,48 @@
+// Add these models to the main schema.prisma file
+
+// Shareable Referral Link Model
+model ClinicReferralLink {
+  id          String   @id @default(uuid())
+  clinicId    String   @unique
+  slug        String   @unique  // URL-friendly slug (e.g., "smith-dental-clinic")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("clinic_referral_links")
+}
+
+// Notification Model
+model Notification {
+  id          String             @id @default(uuid())
+  clinicId    String
+  userId      String?            // Specific user, or null for all clinic users
+  type        NotificationType
+  referralId  String?
+  title       String
+  message     String
+  isRead      Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+
+  // Relations
+  clinic   Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  referral Referral? @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_INCOMING_REFERRAL
+  REFERRAL_ACCEPTED
+  REFERRAL_REJECTED
+  REFERRAL_COMPLETED
+  REFERRAL_STATUS_UPDATE
+  SYSTEM_MESSAGE
+}
+

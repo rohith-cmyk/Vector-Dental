@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, LogOut, User, Settings } from 'lucide-react'
+import { ChevronDown, LogOut, User, Settings, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -21,11 +21,27 @@ export function Header({ title }: HeaderProps) {
     window.location.href = '/login'
   }
   
+  // Mock notifications
+  const unreadCount = 3
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
       <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
       
       <div className="flex items-center gap-4">
+        {/* Notifications Bell */}
+        <button 
+          onClick={() => window.location.href = '/notifications'}
+          className="relative p-2 text-gray-600 hover:text-brand-600 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Notifications"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
+              {unreadCount}
+            </span>
+          )}
+        </button>
         {/* User Dropdown */}
         <div className="relative">
           <button

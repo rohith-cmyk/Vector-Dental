@@ -6,4 +6,5 @@ export * from './Badge'
 export * from './Select'
 export * from './StatCard'
 export * from './Modal'
+export * from './Tabs'
 

@@ -2,6 +2,11 @@
 
 Quick commands for checking and managing your database.
 
+# run this to see on chrome browser -- at localhost:5555
+```bash
+cd "/Users/rohithperumandla/R&D venture Studio/code/dental-referral/backend"
+npm run prisma:studio
+```
 ---
 
 ## ⚡ Most Common Commands
