@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { Button, Card, CardContent, Badge } from '@/components/ui'
 import { Plus, Search, Edit, Trash2 } from 'lucide-react'
 import { ContactFormModal } from '@/components/contacts/ContactFormModal'
+import { contactsService } from '@/services/contacts.service'
 import { formatPhoneNumber } from '@/lib/utils'
 import type { Contact } from '@/types'
 
@@ -13,34 +14,31 @@ export default function ContactsPage() {
   const [editingContact, setEditingContact] = useState<Contact | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [contacts, setContacts] = useState<Contact[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock data for development
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: '1',
-      name: 'Dr. Brian Fred M.',
-      specialty: 'Orthodontics',
-      email: 'brianfred@email.com',
-      phone: '(319) 555-0115',
-      status: 'ACTIVE' as const,
-      clinicId: '1',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-    },
-    {
-      id: '2',
-      name: 'Dr. Courtney Henry',
-      specialty: 'Oral Surgery',
-      email: 'courtney.h@email.com',
-      phone: '(405) 555-0128',
-      status: 'ACTIVE' as const,
-      clinicId: '1',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-    },
-  ])
+  // Load contacts from API
+  useEffect(() => {
+    loadContacts()
+  }, [])
 
-  const loading = false
+  const loadContacts = async () => {
+    try {
+      setLoading(true)
+      // Request all contacts with a high limit
+      const response = await contactsService.getAll({ limit: 100 })
+      console.log('Contacts API response:', response)
+      setContacts(response.data || [])
+    } catch (error: any) {
+      console.error('Failed to load contacts:', error)
+      console.error('Error details:', error.response?.data || error.message)
+      // Show empty list if API fails
+      setContacts([])
+      alert(`Failed to load contacts: ${error.response?.data?.message || error.message || 'Unknown error'}`)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -50,52 +48,42 @@ export default function ContactsPage() {
 
   const handleAddContact = async (formData: any) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const contactData = {
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        specialty: formData.specialty,
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        address: formData.street ? `${formData.street}, ${formData.city}, ${formData.state} ${formData.zip}`.trim() : undefined,
+        notes: formData.notes?.trim() || undefined,
+      }
+      
+      console.log('Creating contact with data:', contactData)
       
       if (editingContact) {
         // Update existing contact
-        const updatedContact: Contact = {
-          ...editingContact,
-          name: `${formData.firstName} ${formData.lastName}`,
-          specialty: formData.specialty,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.street ? `${formData.street}, ${formData.city}, ${formData.state} ${formData.zip}` : undefined,
-          notes: formData.notes,
-          updatedAt: new Date().toISOString(),
-        }
-        
-        setContacts(prev => prev.map(c => c.id === editingContact.id ? updatedContact : c))
+        const updated = await contactsService.update(editingContact.id, contactData)
+        console.log('Contact updated:', updated)
         setSuccessMessage('Contact updated successfully!')
       } else {
         // Create new contact
-        const newContact: Contact = {
-          id: String(Date.now()),
-          name: `${formData.firstName} ${formData.lastName}`,
-          specialty: formData.specialty,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.street ? `${formData.street}, ${formData.city}, ${formData.state} ${formData.zip}` : undefined,
-          notes: formData.notes,
-          status: 'ACTIVE' as const,
-          clinicId: '1',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-        
-        setContacts(prev => [newContact, ...prev])
+        const created = await contactsService.create(contactData)
+        console.log('Contact created:', created)
         setSuccessMessage('Contact added successfully!')
       }
+      
+      // Reload contacts from API
+      await loadContacts()
       
       setIsModalOpen(false)
       setEditingContact(null)
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save contact:', error)
-      alert('Failed to save contact. Please try again.')
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error'
+      console.error('Error details:', error.response?.data)
+      alert(`Failed to save contact: ${errorMessage}`)
     }
   }
 
@@ -109,11 +97,17 @@ export default function ContactsPage() {
     setEditingContact(null)
   }
 
-  const handleDeleteContact = (id: string) => {
+  const handleDeleteContact = async (id: string) => {
     if (confirm('Are you sure you want to delete this contact?')) {
-      setContacts(prev => prev.filter(c => c.id !== id))
-      setSuccessMessage('Contact deleted successfully!')
-      setTimeout(() => setSuccessMessage(''), 3000)
+      try {
+        await contactsService.delete(id)
+        await loadContacts() // Reload contacts
+        setSuccessMessage('Contact deleted successfully!')
+        setTimeout(() => setSuccessMessage(''), 3000)
+      } catch (error) {
+        console.error('Failed to delete contact:', error)
+        alert('Failed to delete contact. Please try again.')
+      }
     }
   }
 

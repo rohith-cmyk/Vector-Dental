@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { Button, Card, CardContent, Badge, Select, Tabs } from '@/components/ui'
+import { NewReferralModal } from '@/components/referrals/NewReferralModal'
 import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle } from 'lucide-react'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES } from '@/constants'
@@ -11,12 +12,13 @@ import type { Referral, ReferralStatus } from '@/types'
 export default function ReferralsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ReferralStatus | 'all'>('all')
+  const [isNewReferralModalOpen, setIsNewReferralModalOpen] = useState(false)
 
   // Mock data - Incoming Referrals
   const incomingReferrals: Referral[] = [
     {
       id: 'inc-1',
-      referralType: 'incoming',
+      referralType: 'INCOMING',
       fromClinicId: 'clinic-1',
       fromClinicName: 'Oak Street Dental',
       referringDentist: 'Sarah Johnson',
@@ -24,14 +26,14 @@ export default function ReferralsPage() {
       patientDob: '1985-03-15',
       patientPhone: '(555) 111-2222',
       reason: 'Orthodontic evaluation needed',
-      urgency: 'urgent',
-      status: 'sent',
+      urgency: 'URGENT',
+      status: 'SENT',
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date().toISOString(),
     },
     {
       id: 'inc-2',
-      referralType: 'incoming',
+      referralType: 'INCOMING',
       fromClinicId: 'clinic-2',
       fromClinicName: 'Pine Dental Clinic',
       referringDentist: 'Michael Chen',
@@ -39,8 +41,8 @@ export default function ReferralsPage() {
       patientDob: '1992-07-22',
       patientPhone: '(555) 333-4444',
       reason: 'Wisdom tooth removal',
-      urgency: 'routine',
-      status: 'sent',
+      urgency: 'ROUTINE',
+      status: 'SENT',
       createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -50,7 +52,7 @@ export default function ReferralsPage() {
   const outgoingReferrals: Referral[] = [
     {
       id: 'out-1',
-      referralType: 'outgoing',
+      referralType: 'OUTGOING',
       fromClinicId: 'my-clinic',
       toContactId: 'contact-1',
       contact: {
@@ -68,8 +70,8 @@ export default function ReferralsPage() {
       patientDob: '1978-11-30',
       patientPhone: '(555) 777-8888',
       reason: 'Adult braces consultation',
-      urgency: 'routine',
-      status: 'accepted',
+      urgency: 'ROUTINE',
+      status: 'ACCEPTED',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -79,23 +81,23 @@ export default function ReferralsPage() {
 
   function getStatusBadgeVariant(status: ReferralStatus) {
     switch (status) {
-      case 'completed': return 'success'
-      case 'sent': return 'info'
-      case 'accepted': return 'warning'
-      case 'cancelled': return 'danger'
+      case 'COMPLETED': return 'success'
+      case 'SENT': return 'info'
+      case 'ACCEPTED': return 'warning'
+      case 'CANCELLED': return 'danger'
       default: return 'default'
     }
   }
 
   function getUrgencyBadgeVariant(urgency: string) {
     switch (urgency) {
-      case 'emergency': return 'danger'
-      case 'urgent': return 'warning'
+      case 'EMERGENCY': return 'danger'
+      case 'URGENT': return 'warning'
       default: return 'default'
     }
   }
 
-  const pendingIncomingCount = incomingReferrals.filter(r => r.status === 'sent').length
+  const pendingIncomingCount = incomingReferrals.filter(r => r.status === 'SENT').length
 
   return (
     <DashboardLayout title="Referrals">
@@ -146,7 +148,11 @@ export default function ReferralsPage() {
                   />
                 </div>
                 {activeTab === 'sent' && (
-                  <Button variant="primary" className="gap-2">
+                  <Button 
+                    variant="primary" 
+                    className="gap-2"
+                    onClick={() => setIsNewReferralModalOpen(true)}
+                  >
                     <Plus className="h-5 w-5" />
                     New Referral
                   </Button>
@@ -344,6 +350,16 @@ export default function ReferralsPage() {
             </>
           )}
         </Tabs>
+
+        {/* New Referral Modal */}
+        <NewReferralModal
+          isOpen={isNewReferralModalOpen}
+          onClose={() => setIsNewReferralModalOpen(false)}
+          onSuccess={() => {
+            // TODO: Refresh referrals list
+            setIsNewReferralModalOpen(false)
+          }}
+        />
       </div>
     </DashboardLayout>
   )
