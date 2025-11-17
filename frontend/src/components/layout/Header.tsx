@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, LogOut, User, Settings, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { notificationsService } from '@/services/notifications.service'
 
 interface HeaderProps {
   title: string
@@ -16,13 +17,28 @@ export function Header({ title }: HeaderProps) {
     clinic: { name: 'Demo Dental Clinic' }
   }
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  
+  // Load unread count
+  useEffect(() => {
+    loadUnreadCount()
+    // Refresh every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
+  
+  const loadUnreadCount = async () => {
+    try {
+      const count = await notificationsService.getUnreadCount()
+      setUnreadCount(count)
+    } catch (error) {
+      console.error('Failed to load unread count:', error)
+    }
+  }
   
   const handleLogout = () => {
     window.location.href = '/login'
   }
-  
-  // Mock notifications
-  const unreadCount = 3
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">

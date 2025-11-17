@@ -1,74 +1,77 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { Card, CardContent, Badge, Button } from '@/components/ui'
 import { Bell, CheckCheck, Trash2, ArrowDownLeft, CheckCircle, XCircle } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
+import { notificationsService } from '@/services/notifications.service'
 import type { Notification } from '@/types'
 
 export default function NotificationsPage() {
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock notifications
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 'notif-1',
-      clinicId: 'clinic-1',
-      type: 'new_incoming_referral',
-      referralId: 'ref-1',
-      title: 'New Incoming Referral',
-      message: 'Oak Street Dental referred patient John Doe for orthodontic evaluation (URGENT)',
-      isRead: false,
-      createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 min ago
-    },
-    {
-      id: 'notif-2',
-      clinicId: 'clinic-1',
-      type: 'referral_accepted',
-      referralId: 'ref-2',
-      title: 'Referral Accepted',
-      message: 'Dr. Brian Fred M. accepted your referral for patient Bob Wilson',
-      isRead: false,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-    },
-    {
-      id: 'notif-3',
-      clinicId: 'clinic-1',
-      type: 'new_incoming_referral',
-      referralId: 'ref-3',
-      title: 'New Incoming Referral',
-      message: 'Pine Dental Clinic referred patient Jane Smith for wisdom tooth removal',
-      isRead: false,
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-    },
-    {
-      id: 'notif-4',
-      clinicId: 'clinic-1',
-      type: 'referral_completed',
-      referralId: 'ref-4',
-      title: 'Referral Completed',
-      message: 'Dr. Courtney Henry completed treatment for patient Alice Brown',
-      isRead: true,
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-    },
-  ])
+  // Load notifications
+  useEffect(() => {
+    loadNotifications()
+  }, [filter])
+
+  const loadNotifications = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await notificationsService.getAll(filter)
+      setNotifications(data)
+    } catch (err) {
+      console.error('Failed to load notifications:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load notifications')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const unreadCount = notifications.filter(n => !n.isRead).length
   const filteredNotifications = filter === 'unread' 
     ? notifications.filter(n => !n.isRead)
     : notifications
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationsService.markAsRead(id)
+      // Update local state optimistically
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+    } catch (err) {
+      console.error('Failed to mark as read:', err)
+      // Reload to sync with server
+      loadNotifications()
+    }
   }
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationsService.markAllAsRead()
+      // Update local state optimistically
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (err) {
+      console.error('Failed to mark all as read:', err)
+      // Reload to sync with server
+      loadNotifications()
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await notificationsService.delete(id)
+      // Update local state optimistically
+      setNotifications(prev => prev.filter(n => n.id !== id))
+    } catch (err) {
+      console.error('Failed to delete notification:', err)
+      // Reload to sync with server
+      loadNotifications()
+    }
   }
 
   const getNotificationIcon = (type: string) => {
@@ -130,7 +133,19 @@ export default function NotificationsPage() {
         {/* Notifications List */}
         <Card>
           <CardContent className="p-0">
-            {filteredNotifications.length === 0 ? (
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mb-3"></div>
+                <p className="text-gray-500">Loading notifications...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <p className="text-red-500 mb-2">{error}</p>
+                <Button variant="outline" size="sm" onClick={loadNotifications}>
+                  Try Again
+                </Button>
+              </div>
+            ) : filteredNotifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Bell className="h-12 w-12 text-gray-300 mb-3" />
                 <p className="text-gray-500">No notifications</p>
@@ -193,7 +208,7 @@ export default function NotificationsPage() {
                         {/* View Referral Link */}
                         {notification.referralId && (
                           <button
-                            onClick={() => alert(`View referral ${notification.referralId}`)}
+                            onClick={() => window.location.href = `/referrals?id=${notification.referralId}`}
                             className="mt-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
                           >
                             View Referral →

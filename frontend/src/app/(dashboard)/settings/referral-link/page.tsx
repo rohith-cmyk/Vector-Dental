@@ -1,48 +1,125 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui'
-import { Copy, ExternalLink, QrCode, Mail, Check } from 'lucide-react'
+import { Copy, ExternalLink, QrCode, Mail, Check, Loader2 } from 'lucide-react'
+import { api } from '@/lib/api'
+
+interface ReferralLinkData {
+  slug: string
+  isActive: boolean
+  clinicName: string
+  referralUrl: string
+}
 
 export default function ReferralLinkPage() {
   const [copied, setCopied] = useState(false)
-  
-  // Mock clinic data
-  const clinicData = {
-    name: 'Demo Dental Clinic',
-    slug: 'demo-dental-clinic',
-    isActive: true,
-  }
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState(false)
+  const [referralLink, setReferralLink] = useState<ReferralLinkData | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const referralUrl = `http://localhost:3000/refer/${clinicData.slug}`
+  // Fetch referral link from API
+  useEffect(() => {
+    const fetchReferralLink = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await api.get<{ success: boolean; data: ReferralLinkData }>('/referral-link')
+        if (response.data.success && response.data.data) {
+          setReferralLink(response.data.data)
+        } else {
+          setError('Failed to load referral link')
+        }
+      } catch (error: any) {
+        console.error('Failed to load referral link:', error)
+        setError(error.response?.data?.message || 'Failed to load referral link')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(referralUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+    fetchReferralLink()
+  }, [])
 
-  const handleToggleLink = () => {
-    alert('Toggle link active/inactive - Feature coming soon!')
+  const handleToggleLink = async () => {
+    if (!referralLink) return
+
+    try {
+      setUpdating(true)
+      const response = await api.put<{ success: boolean; data: ReferralLinkData }>('/referral-link', {
+        isActive: !referralLink.isActive,
+      })
+      
+      if (response.data.success && response.data.data) {
+        setReferralLink(response.data.data)
+      } else {
+        throw new Error('Failed to update referral link')
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle referral link:', error)
+      alert(error.response?.data?.message || 'Failed to update referral link')
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const handleEmailTemplate = () => {
-    const subject = encodeURIComponent(`Referral Link - ${clinicData.name}`)
+    if (!referralLink) return
+
+    const subject = encodeURIComponent(`Referral Link - ${referralLink.clinicName}`)
     const body = encodeURIComponent(`
 Hello,
 
-You can refer patients to ${clinicData.name} using this secure link:
+You can refer patients to ${referralLink.clinicName} using this secure link:
 
-${referralUrl}
+${referralLink.referralUrl}
 
 Simply click the link and fill out the referral form. We'll receive it instantly and get back to you shortly.
 
 Thank you!
-${clinicData.name}
+${referralLink.clinicName}
     `)
     
     window.open(`mailto:?subject=${subject}&body=${body}`)
+  }
+
+  const handleCopy = () => {
+    if (!referralLink) return
+    navigator.clipboard.writeText(referralLink.referralUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout title="Referral Link">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          <span className="ml-2 text-gray-600">Loading referral link...</span>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error || !referralLink) {
+    return (
+      <DashboardLayout title="Referral Link">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-red-600">{error || 'Failed to load referral link'}</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -68,7 +145,7 @@ ${clinicData.name}
                 <div className="flex-1 relative">
                   <input
                     type="text"
-                    value={referralUrl}
+                    value={referralLink.referralUrl}
                     readOnly
                     className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-mono text-sm"
                   />
@@ -82,7 +159,7 @@ ${clinicData.name}
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => window.open(referralUrl, '_blank')}
+                  onClick={() => window.open(referralLink.referralUrl, '_blank')}
                   className="gap-2"
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -92,19 +169,28 @@ ${clinicData.name}
             </div>
 
             {/* Status */}
-            <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className={`flex items-center justify-between p-4 rounded-lg border ${
+              referralLink.isActive 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-sm font-medium text-green-800">
-                  Link is Active
+                <div className={`h-2 w-2 rounded-full ${
+                  referralLink.isActive ? 'bg-green-500' : 'bg-gray-400'
+                }`}></div>
+                <span className={`text-sm font-medium ${
+                  referralLink.isActive ? 'text-green-800' : 'text-gray-600'
+                }`}>
+                  Link is {referralLink.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleToggleLink}
+                disabled={updating}
               >
-                Deactivate Link
+                {updating ? 'Updating...' : referralLink.isActive ? 'Deactivate Link' : 'Activate Link'}
               </Button>
             </div>
           </CardContent>
@@ -158,7 +244,7 @@ ${clinicData.name}
               Add this code to your website to create a referral button:
             </p>
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
-              {`<a href="${referralUrl}" 
+              {`<a href="${referralLink.referralUrl}" 
    target="_blank" 
    style="background: #84cc16; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
   Refer a Patient
@@ -169,7 +255,7 @@ ${clinicData.name}
               size="sm"
               className="mt-4"
               onClick={() => {
-                navigator.clipboard.writeText(`<a href="${referralUrl}" target="_blank">Refer a Patient</a>`)
+                navigator.clipboard.writeText(`<a href="${referralLink.referralUrl}" target="_blank">Refer a Patient</a>`)
                 alert('Code copied to clipboard!')
               }}
             >

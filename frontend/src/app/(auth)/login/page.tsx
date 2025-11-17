@@ -4,12 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button, Input, Card, CardContent } from '@/components/ui'
-import { useAuth } from '@/hooks/useAuth'
+import { authService } from '@/services/auth.supabase.service'
 import { handleApiError } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth()
   
   const [formData, setFormData] = useState({
     email: '',
@@ -35,10 +34,10 @@ export default function LoginPage() {
     setErrors({})
 
     try {
-      await login(formData.email, formData.password)
+      await authService.login(formData.email, formData.password)
       router.push('/dashboard')
-    } catch (error) {
-      const errorMessage = handleApiError(error)
+    } catch (error: any) {
+      const errorMessage = error.message || handleApiError(error)
       setGeneralError(errorMessage)
     } finally {
       setIsLoading(false)

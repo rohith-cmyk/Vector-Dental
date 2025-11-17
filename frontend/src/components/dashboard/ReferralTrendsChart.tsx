@@ -12,6 +12,9 @@ interface ReferralTrendsChartProps {
 }
 
 export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
+  // Handle undefined or empty data
+  const safeData = data || []
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -26,8 +29,9 @@ export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
         </select>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data}>
+        {safeData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={safeData}>
             <defs>
               <linearGradient id="colorOutgoing" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#84cc16" stopOpacity={0.3}/>
@@ -74,6 +78,11 @@ export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
             />
           </AreaChart>
         </ResponsiveContainer>
+        ) : (
+          <div className="h-[300px] flex items-center justify-center text-gray-500">
+            No trend data available
+          </div>
+        )}
       </CardContent>
     </Card>
   )

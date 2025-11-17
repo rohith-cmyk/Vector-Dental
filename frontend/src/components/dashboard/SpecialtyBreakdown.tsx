@@ -14,12 +14,15 @@ interface SpecialtyBreakdownProps {
 const COLORS = ['#84cc16', '#65a30d', '#4d7c0f', '#fbbf24']
 
 export function SpecialtyBreakdown({ data }: SpecialtyBreakdownProps) {
-  const chartData = data.map((item) => ({
+  // Handle undefined or empty data
+  const safeData = data || []
+  
+  const chartData = safeData.map((item) => ({
     name: item.specialty,
     value: item.count,
   }))
   
-  const totalSales = data.reduce((sum, item) => sum + item.count, 0)
+  const totalSales = safeData.reduce((sum, item) => sum + item.count, 0)
   
   return (
     <Card>
@@ -59,18 +62,24 @@ export function SpecialtyBreakdown({ data }: SpecialtyBreakdownProps) {
           </div>
           
           <div className="w-full space-y-2 mt-4">
-            {data.map((item, index) => (
-              <div key={item.specialty} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="h-3 w-3 rounded-full" 
-                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                  />
-                  <span className="text-sm text-gray-700">{item.specialty}</span>
+            {safeData.length > 0 ? (
+              safeData.map((item, index) => (
+                <div key={item.specialty} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="h-3 w-3 rounded-full" 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm text-gray-700">{item.specialty}</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">{item.percentage}%</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{item.percentage}%</span>
+              ))
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No specialty data available
               </div>
-            ))}
+            )}
           </div>
         </div>
       </CardContent>

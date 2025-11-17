@@ -9,6 +9,9 @@ interface StatsCardsV2Props {
     totalIncoming: number
     pendingIncoming: number
     completedThisMonth: number
+    outgoingChange?: number
+    incomingChange?: number
+    completedChange?: number
   }
 }
 
@@ -18,13 +21,13 @@ export function StatsCardsV2({ stats }: StatsCardsV2Props) {
       <StatCard
         title="Sent Out"
         value={stats.totalOutgoing}
-        change={16}
+        change={stats.outgoingChange}
         icon={<ArrowUpRight className="h-5 w-5" />}
       />
       <StatCard
         title="Received"
         value={stats.totalIncoming}
-        change={8}
+        change={stats.incomingChange}
         icon={<ArrowDownLeft className="h-5 w-5" />}
       />
       <StatCard
@@ -35,7 +38,7 @@ export function StatsCardsV2({ stats }: StatsCardsV2Props) {
       <StatCard
         title="Completed This Month"
         value={stats.completedThisMonth}
-        change={12}
+        change={stats.completedChange}
         icon={<CheckCircle className="h-5 w-5" />}
       />
     </div>

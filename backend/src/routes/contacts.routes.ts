@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
 import * as contactsController from '../controllers/contacts.controller'
-import { authenticate } from '../middleware/auth.middleware'
+// import { authenticate } from '../middleware/auth.middleware'
 import { validateRequest } from '../middleware/validation.middleware'
 
 const router = Router()
 
-// All routes require authentication
-router.use(authenticate)
+// Auth disabled for development
+// router.use(authenticate)
 
 /**
  * @route   GET /api/contacts

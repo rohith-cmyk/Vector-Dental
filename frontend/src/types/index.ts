@@ -47,16 +47,16 @@ export interface Contact {
   email: string
   address?: string
   notes?: string
-  status: 'active' | 'inactive'
+  status: 'ACTIVE' | 'INACTIVE'
   lastAccess?: string
   createdAt: string
   updatedAt: string
 }
 
 // Referral Types
-export type ReferralStatus = 'draft' | 'sent' | 'accepted' | 'completed' | 'cancelled'
-export type ReferralUrgency = 'routine' | 'urgent' | 'emergency'
-export type ReferralType = 'outgoing' | 'incoming'
+export type ReferralStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
+export type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
+export type ReferralType = 'OUTGOING' | 'INCOMING'
 
 export interface Referral {
   id: string
@@ -144,6 +144,11 @@ export interface DashboardStats {
   totalReferrals: number
   totalOutgoing: number
   totalIncoming: number
+  
+  // Percentage changes (compared to previous period)
+  outgoingChange?: number  // Percentage change for outgoing referrals
+  incomingChange?: number  // Percentage change for incoming referrals
+  completedChange?: number // Percentage change for completed referrals
   
   // Action needed
   pendingIncoming: number  // Need to accept/reject

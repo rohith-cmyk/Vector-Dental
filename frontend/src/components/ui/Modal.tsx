@@ -42,9 +42,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalPr
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
+      {/* Backdrop - Transparent with subtle blur */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       

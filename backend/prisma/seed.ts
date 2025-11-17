@@ -314,6 +314,24 @@ async function main() {
   })
   console.log('✅ Created referrals:', outgoingReferrals.length + incomingReferrals.length)
 
+  // Create referral link for the clinic
+  const slug = clinic.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+  
+  const referralLink = await prisma.clinicReferralLink.upsert({
+    where: { clinicId: clinic.id },
+    update: {
+      slug,
+      isActive: true,
+    },
+    create: {
+      clinicId: clinic.id,
+      slug,
+      isActive: true,
+    },
+  })
+
+  console.log('✅ Created/updated referral link:', referralLink.slug)
+
   console.log('🎉 Seed completed successfully!')
   console.log('\n📊 Database now contains:')
   console.log(`   - 1 clinic: ${clinic.name}`)
@@ -321,6 +339,7 @@ async function main() {
   console.log(`   - ${contacts.count} contacts`)
   console.log(`   - ${outgoingReferrals.length} outgoing referrals`)
   console.log(`   - ${incomingReferrals.length} incoming referrals`)
+  console.log(`   - Referral link: /refer/${referralLink.slug}`)
 }
 
 main()

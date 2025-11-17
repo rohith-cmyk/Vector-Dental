@@ -13,8 +13,8 @@ export async function getAllReferrals(req: Request, res: Response, next: NextFun
     const skip = (Number(page) - 1) * Number(limit)
     const take = Number(limit)
 
-    // Build where clause
-    const where: any = { clinicId }
+    // Build where clause - referrals are linked via fromClinicId
+    const where: any = { fromClinicId: clinicId }
 
     if (search) {
       where.OR = [
@@ -68,7 +68,7 @@ export async function getReferralById(req: Request, res: Response, next: NextFun
     const clinicId = req.user!.clinicId
 
     const referral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
       include: {
         contact: true,
         files: true,
@@ -116,8 +116,9 @@ export async function createReferral(req: Request, res: Response, next: NextFunc
 
     const referral = await prisma.referral.create({
       data: {
-        clinicId,
-        contactId,
+        referralType: 'OUTGOING',
+        fromClinicId: clinicId,
+        toContactId: contactId,
         patientName,
         patientDob: new Date(patientDob),
         patientPhone,
@@ -161,7 +162,7 @@ export async function updateReferral(req: Request, res: Response, next: NextFunc
 
     // Check if referral exists and belongs to clinic
     const existingReferral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
     })
 
     if (!existingReferral) {
@@ -182,7 +183,7 @@ export async function updateReferral(req: Request, res: Response, next: NextFunc
     const referral = await prisma.referral.update({
       where: { id },
       data: {
-        contactId,
+        toContactId: contactId,
         patientName,
         patientDob: patientDob ? new Date(patientDob) : undefined,
         patientPhone,
@@ -217,7 +218,7 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
 
     // Check if referral exists and belongs to clinic
     const existingReferral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
     })
 
     if (!existingReferral) {
@@ -251,7 +252,7 @@ export async function deleteReferral(req: Request, res: Response, next: NextFunc
 
     // Check if referral exists and belongs to clinic
     const referral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
     })
 
     if (!referral) {

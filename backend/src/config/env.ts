@@ -13,9 +13,14 @@ export const config = {
   // Database
   databaseUrl: process.env.DATABASE_URL!,
   
-  // JWT
+  // JWT (keeping for backward compatibility)
   jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  
+  // Supabase
+  supabaseUrl: process.env.SUPABASE_URL!,
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY!,
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   
   // CORS
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -26,7 +31,13 @@ export const config = {
 }
 
 // Validate required environment variables
-const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET']
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'JWT_SECRET',
+  'SUPABASE_URL',
+  'SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY'
+]
 
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {

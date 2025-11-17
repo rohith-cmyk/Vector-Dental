@@ -1,6 +1,33 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+// Get API URL - always use full URL to avoid proxy issues
+const getApiUrl = () => {
+  // Check both NEXT_PUBLIC_API_URL and API_URL (for Next.js env)
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL
+  const url = envUrl || 'http://localhost:3001'
+  
+  // Ensure URL ends with /api
+  if (url.endsWith('/api')) {
+    return url
+  }
+  // If URL ends with a slash, remove it before adding /api
+  const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url
+  const finalUrl = `${cleanUrl}/api`
+  
+  // Log in development
+  if (typeof window !== 'undefined') {
+    console.log('🔗 API Configuration:', {
+      'NEXT_PUBLIC_API_URL': process.env.NEXT_PUBLIC_API_URL,
+      'API_URL': process.env.API_URL,
+      'Final API URL': finalUrl,
+      'Window origin': window.location.origin
+    })
+  }
+  
+  return finalUrl
+}
+
+const API_URL = getApiUrl()
 
 /**
  * Axios instance with default configuration
@@ -14,13 +41,27 @@ export const api: AxiosInstance = axios.create({
 })
 
 /**
- * Request interceptor to add auth token
+ * Request interceptor to add auth token and log requests
  */
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    // Log the full URL being requested (in development)
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      const fullUrl = `${config.baseURL}${config.url}`
+      console.log('🌐 API Request:', {
+        method: config.method?.toUpperCase(),
+        url: fullUrl,
+        baseURL: config.baseURL,
+        path: config.url,
+      })
+    }
+    
+    // Only access localStorage on client side (browser)
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
     }
     return config
   },

@@ -1,31 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, Input, Select, Button } from '@/components/ui'
-import { DENTAL_SPECIALTIES } from '@/constants'
-import { CheckCircle } from 'lucide-react'
+import { FileUpload } from '@/components/referrals/FileUpload'
+import { api } from '@/lib/api'
+import { CheckCircle, AlertCircle } from 'lucide-react'
+
+interface ClinicInfo {
+  name: string
+  address?: string
+  phone?: string
+  email?: string
+  slug: string
+}
 
 export default function PublicReferralPage() {
   const params = useParams()
   const clinicSlug = params.slug as string
   
-  // Mock clinic data (would fetch from API using slug)
-  const targetClinic = {
-    name: 'Smith Dental Clinic',
-    specialty: 'Orthodontics',
-    address: '123 Main Street, New York, NY',
-    phone: '(555) 123-4567',
-  }
+  const [targetClinic, setTargetClinic] = useState<ClinicInfo | null>(null)
+  const [loadingClinic, setLoadingClinic] = useState(true)
+  const [clinicError, setClinicError] = useState<string | null>(null)
 
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [files, setFiles] = useState<File[]>([])
   const [formData, setFormData] = useState({
     // Your clinic info
-    yourClinicName: '',
-    yourName: '',
-    yourEmail: '',
-    yourPhone: '',
+    fromClinicName: '',
+    referringDentist: '',
+    fromClinicEmail: '',
+    fromClinicPhone: '',
     
     // Patient info
     patientName: '',
@@ -35,11 +41,39 @@ export default function PublicReferralPage() {
     
     // Referral details
     reason: '',
-    urgency: 'routine',
+    urgency: 'ROUTINE',
     notes: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Fetch clinic info by slug (only on client side)
+  useEffect(() => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return
+    
+    const fetchClinic = async () => {
+      try {
+        setLoadingClinic(true)
+        setClinicError(null)
+        const response = await api.get<{ success: boolean; data: ClinicInfo }>(`/public/clinic/${clinicSlug}`)
+        if (response.data.success && response.data.data) {
+          setTargetClinic(response.data.data)
+        } else {
+          setClinicError('Clinic not found')
+        }
+      } catch (error: any) {
+        console.error('Failed to load clinic:', error)
+        setClinicError(error.response?.data?.message || 'Failed to load clinic information')
+      } finally {
+        setLoadingClinic(false)
+      }
+    }
+
+    if (clinicSlug) {
+      fetchClinic()
+    }
+  }, [clinicSlug])
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -51,13 +85,21 @@ export default function PublicReferralPage() {
   const validate = () => {
     const newErrors: Record<string, string> = {}
     
-    if (!formData.yourClinicName.trim()) newErrors.yourClinicName = 'Your clinic name is required'
-    if (!formData.yourName.trim()) newErrors.yourName = 'Your name is required'
-    if (!formData.yourEmail.trim()) newErrors.yourEmail = 'Your email is required'
-    if (!formData.yourPhone.trim()) newErrors.yourPhone = 'Your phone is required'
+    if (!formData.fromClinicName.trim()) newErrors.fromClinicName = 'Your clinic name is required'
+    if (!formData.referringDentist.trim()) newErrors.referringDentist = 'Your name is required'
+    if (!formData.fromClinicEmail.trim()) newErrors.fromClinicEmail = 'Your email is required'
     if (!formData.patientName.trim()) newErrors.patientName = 'Patient name is required'
     if (!formData.patientDob) newErrors.patientDob = 'Patient date of birth is required'
     if (!formData.reason.trim()) newErrors.reason = 'Reason for referral is required'
+    
+    // Email validation
+    if (formData.fromClinicEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.fromClinicEmail)) {
+      newErrors.fromClinicEmail = 'Please enter a valid email address'
+    }
+    
+    if (formData.patientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.patientEmail)) {
+      newErrors.patientEmail = 'Please enter a valid email address'
+    }
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -68,17 +110,88 @@ export default function PublicReferralPage() {
     
     if (!validate()) return
     
+    if (!targetClinic) {
+      setClinicError('Clinic information not loaded')
+      return
+    }
+    
     setIsSubmitting(true)
+    setErrors({})
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      setSubmitted(true)
-    } catch (error) {
-      alert('Failed to submit referral. Please try again.')
+      // Prepare form data
+      const referralData = {
+        fromClinicName: formData.fromClinicName,
+        fromClinicEmail: formData.fromClinicEmail,
+        fromClinicPhone: formData.fromClinicPhone || undefined,
+        referringDentist: formData.referringDentist,
+        patientName: formData.patientName,
+        patientDob: formData.patientDob,
+        patientPhone: formData.patientPhone || undefined,
+        patientEmail: formData.patientEmail || undefined,
+        reason: formData.reason,
+        urgency: formData.urgency.toUpperCase(),
+        notes: formData.notes || undefined,
+      }
+
+      // Submit referral via API
+      const response = await api.post(`/public/referral/${clinicSlug}`, referralData)
+      
+      // TODO: Upload files if any (will need separate file upload endpoint)
+      // For now, files are collected but not uploaded
+      // if (files.length > 0) {
+      //   // Upload files after referral is created
+      // }
+      
+      if (response.data.success) {
+        setSubmitted(true)
+      } else {
+        throw new Error(response.data.message || 'Failed to submit referral')
+      }
+    } catch (error: any) {
+      console.error('Failed to submit referral:', error)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to submit referral. Please try again.'
+      setErrors({ submit: errorMessage })
+      alert(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Loading state
+  if (loadingClinic) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading referral form...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Error state
+  if (clinicError || !targetClinic) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4">
+              <AlertCircle className="h-10 w-10 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Clinic Not Found</h1>
+            <p className="text-gray-600 mb-4">
+              {clinicError || 'The referral link you are trying to access is invalid or inactive.'}
+            </p>
+            <p className="text-sm text-gray-500">
+              Please contact the clinic directly or check the link and try again.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (submitted) {
@@ -94,23 +207,24 @@ export default function PublicReferralPage() {
               Your referral has been successfully sent to {targetClinic.name}.
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              They will review and respond to your referral shortly. You will receive a confirmation email at {formData.yourEmail}.
+              They will review and respond to your referral shortly. You will receive a confirmation email at {formData.fromClinicEmail}.
             </p>
             <Button
               variant="primary"
               onClick={() => {
                 setSubmitted(false)
+                setFiles([])
                 setFormData({
-                  yourClinicName: '',
-                  yourName: '',
-                  yourEmail: '',
-                  yourPhone: '',
+                  fromClinicName: '',
+                  referringDentist: '',
+                  fromClinicEmail: '',
+                  fromClinicPhone: '',
                   patientName: '',
                   patientDob: '',
                   patientPhone: '',
                   patientEmail: '',
                   reason: '',
-                  urgency: 'routine',
+                  urgency: 'ROUTINE',
                   notes: '',
                 })
               }}
@@ -136,9 +250,12 @@ export default function PublicReferralPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Refer a Patient to {targetClinic.name}
           </h1>
-          <p className="text-gray-600">
-            {targetClinic.specialty} • {targetClinic.address}
-          </p>
+          {targetClinic.address && (
+            <p className="text-gray-600">
+              {targetClinic.address}
+              {targetClinic.phone && ` • ${targetClinic.phone}`}
+            </p>
+          )}
           <p className="text-sm text-gray-500 mt-2">
             Fill out this form to refer a patient. No account required.
           </p>
@@ -154,17 +271,17 @@ export default function PublicReferralPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Your Clinic Name"
-                    value={formData.yourClinicName}
-                    onChange={(e) => handleChange('yourClinicName', e.target.value)}
-                    error={errors.yourClinicName}
+                    value={formData.fromClinicName}
+                    onChange={(e) => handleChange('fromClinicName', e.target.value)}
+                    error={errors.fromClinicName}
                     placeholder="ABC Dental Clinic"
                     required
                   />
                   <Input
                     label="Your Name (Referring Dentist)"
-                    value={formData.yourName}
-                    onChange={(e) => handleChange('yourName', e.target.value)}
-                    error={errors.yourName}
+                    value={formData.referringDentist}
+                    onChange={(e) => handleChange('referringDentist', e.target.value)}
+                    error={errors.referringDentist}
                     placeholder="Dr. John Smith"
                     required
                   />
@@ -173,20 +290,19 @@ export default function PublicReferralPage() {
                   <Input
                     label="Your Email"
                     type="email"
-                    value={formData.yourEmail}
-                    onChange={(e) => handleChange('yourEmail', e.target.value)}
-                    error={errors.yourEmail}
+                    value={formData.fromClinicEmail}
+                    onChange={(e) => handleChange('fromClinicEmail', e.target.value)}
+                    error={errors.fromClinicEmail}
                     placeholder="john@clinic.com"
                     required
                   />
                   <Input
-                    label="Your Phone"
+                    label="Your Phone (Optional)"
                     type="tel"
-                    value={formData.yourPhone}
-                    onChange={(e) => handleChange('yourPhone', e.target.value)}
-                    error={errors.yourPhone}
+                    value={formData.fromClinicPhone}
+                    onChange={(e) => handleChange('fromClinicPhone', e.target.value)}
+                    error={errors.fromClinicPhone}
                     placeholder="(555) 123-4567"
-                    required
                   />
                 </div>
               </div>
@@ -256,9 +372,9 @@ export default function PublicReferralPage() {
                     value={formData.urgency}
                     onChange={(e) => handleChange('urgency', e.target.value)}
                     options={[
-                      { value: 'routine', label: 'Routine' },
-                      { value: 'urgent', label: 'Urgent' },
-                      { value: 'emergency', label: 'Emergency' },
+                      { value: 'ROUTINE', label: 'Routine' },
+                      { value: 'URGENT', label: 'Urgent' },
+                      { value: 'EMERGENCY', label: 'Emergency' },
                     ]}
                   />
                 </div>
@@ -281,8 +397,22 @@ export default function PublicReferralPage() {
                 </div>
               </div>
 
+              {/* File Upload */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Documents (Optional)</h3>
+                <FileUpload files={files} onFilesChange={setFiles} />
+                <p className="text-xs text-gray-500 mt-2">
+                  Upload X-rays, photos, or other relevant patient documents. Max 10MB per file.
+                </p>
+              </div>
+
               {/* Submit */}
               <div className="border-t border-gray-200 pt-6">
+                {errors.submit && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-red-800">{errors.submit}</p>
+                  </div>
+                )}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <p className="text-sm text-blue-800">
                     📧 You will receive an email confirmation once {targetClinic.name} reviews your referral.

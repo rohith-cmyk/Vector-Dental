@@ -13,6 +13,9 @@ interface IncomingReferralsTableProps {
 }
 
 export function IncomingReferralsTable({ referrals, onAccept, onReject }: IncomingReferralsTableProps) {
+  // Handle undefined or empty data
+  const safeReferrals = referrals || []
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -32,7 +35,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        {referrals.length === 0 ? (
+        {safeReferrals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-gray-500">No pending incoming referrals</p>
             <p className="text-sm text-gray-400 mt-1">You're all caught up! 🎉</p>
@@ -63,7 +66,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {referrals.map((referral) => (
+                {safeReferrals.length > 0 ? safeReferrals.map((referral) => (
                   <tr key={referral.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{referral.patientName}</div>
@@ -118,7 +121,13 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
                       </div>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      No incoming referrals at this time
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
