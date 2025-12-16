@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import * as notificationsController from '../controllers/notifications.controller'
-// import { authenticate } from '../middleware/auth.middleware'
+import { authenticateSupabase } from '../middleware/auth.supabase.middleware'
 
 const router = Router()
 
-// Auth disabled for development
-// router.use(authenticate)
+// Apply authentication middleware to all routes
+router.use(authenticateSupabase)
 
 /**
  * @route   GET /api/notifications
@@ -28,6 +28,13 @@ router.get('/unread-count', notificationsController.getUnreadCount)
  * @access  Public (dev mode)
  */
 router.patch('/:id/read', notificationsController.markAsRead)
+
+/**
+ * @route   PATCH /api/notifications/referral/:referralId/read
+ * @desc    Mark notification as read by referral ID
+ * @access  Public (dev mode)
+ */
+router.patch('/referral/:referralId/read', notificationsController.markAsReadByReferral)
 
 /**
  * @route   PATCH /api/notifications/mark-all-read

@@ -5,7 +5,7 @@ const getApiUrl = () => {
   // Check both NEXT_PUBLIC_API_URL and API_URL (for Next.js env)
   const envUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL
   const url = envUrl || 'http://localhost:3001'
-  
+
   // Ensure URL ends with /api
   if (url.endsWith('/api')) {
     return url
@@ -13,7 +13,7 @@ const getApiUrl = () => {
   // If URL ends with a slash, remove it before adding /api
   const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url
   const finalUrl = `${cleanUrl}/api`
-  
+
   // Log in development
   if (typeof window !== 'undefined') {
     console.log('🔗 API Configuration:', {
@@ -23,11 +23,11 @@ const getApiUrl = () => {
       'Window origin': window.location.origin
     })
   }
-  
+
   return finalUrl
 }
 
-const API_URL = getApiUrl()
+export const API_URL = getApiUrl()
 
 /**
  * Axios instance with default configuration
@@ -55,7 +55,7 @@ api.interceptors.request.use(
         path: config.url,
       })
     }
-    
+
     // Only access localStorage on client side (browser)
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('auth_token')

@@ -60,22 +60,22 @@ export type ReferralType = 'OUTGOING' | 'INCOMING'
 
 export interface Referral {
   id: string
-  
+
   // Referral Direction
   referralType: ReferralType
-  
+
   // For OUTGOING (you send)
   fromClinicId: string
   toContactId?: string
   toClinicId?: string
   contact?: Contact
-  
+
   // For INCOMING (you receive)
   fromClinicName?: string
   fromClinicEmail?: string
   fromClinicPhone?: string
   referringDentist?: string
-  
+
   // Patient Information
   patientName: string
   patientFirstName?: string
@@ -84,29 +84,29 @@ export interface Referral {
   patientPhone?: string
   patientEmail?: string
   insurance?: string
-  
+
   // GP/Submitter Information (for magic links)
   gpClinicName?: string
   submittedByName?: string
   submittedByPhone?: string
-  
+
   // Referral Details
   reason: string
   urgency: ReferralUrgency
   status: ReferralStatus
   notes?: string
   referralLinkId?: string
-  
-  // Files
+  clinic?: Clinic // Sender clinic info
   files?: ReferralFile[]
-  
+  selectedTeeth?: string[]
+
   // Timestamps
   createdAt: string
   updatedAt: string
 }
 
 // Notification Types
-export type NotificationType = 
+export type NotificationType =
   | 'new_incoming_referral'
   | 'referral_accepted'
   | 'referral_rejected'
@@ -191,21 +191,31 @@ export interface DashboardStats {
   totalReferrals: number
   totalOutgoing: number
   totalIncoming: number
-  
+
   // Percentage changes (compared to previous period)
   outgoingChange?: number  // Percentage change for outgoing referrals
   incomingChange?: number  // Percentage change for incoming referrals
   completedChange?: number // Percentage change for completed referrals
-  
+
   // Action needed
   pendingIncoming: number  // Need to accept/reject
   pendingOutgoing: number  // Waiting for response
-  
+
   // Completed
   completedThisMonth: number
-  
+
   // Charts
   referralsBySpecialty: Array<{
+    specialty: string
+    count: number
+    percentage: number
+  }>
+  outgoingReferralsBySpecialty?: Array<{
+    specialty: string
+    count: number
+    percentage: number
+  }>
+  incomingReferralsBySpecialty?: Array<{
     specialty: string
     count: number
     percentage: number
@@ -215,7 +225,7 @@ export interface DashboardStats {
     outgoing: number
     incoming: number
   }>
-  
+
   // Recent referrals
   recentIncoming: Referral[]
   recentOutgoing: Referral[]

@@ -7,31 +7,11 @@ import { errors } from '../utils/errors'
  */
 export async function getNotifications(req: Request, res: Response, next: NextFunction) {
   try {
-    // For development: use demo user's clinic if no auth
-    let clinicId = req.user?.clinicId
-    
+    // Get clinic ID from authenticated user
+    const clinicId = req.user?.clinicId
+
     if (!clinicId) {
-      // Try to get clinic from demo user (admin@dental.com)
-      const demoUser = await prisma.user.findUnique({
-        where: { email: 'admin@dental.com' },
-        include: { clinic: true },
-      })
-      
-      if (demoUser && demoUser.clinic) {
-        clinicId = demoUser.clinicId
-        console.log(`📬 Using demo user's clinic: ${demoUser.clinic.name} (ID: ${clinicId})`)
-      } else {
-        // Fallback: Get first clinic from database
-        const firstClinic = await prisma.clinic.findFirst()
-        if (!firstClinic) {
-          return res.json({
-            success: true,
-            data: [],
-          })
-        }
-        clinicId = firstClinic.id
-        console.log(`📬 Using first clinic: ${firstClinic.name} (ID: ${clinicId})`)
-      }
+      throw new Error('User does not belong to a clinic')
     }
 
     const { filter = 'all' } = req.query
@@ -82,27 +62,11 @@ export async function getNotifications(req: Request, res: Response, next: NextFu
  */
 export async function getUnreadCount(req: Request, res: Response, next: NextFunction) {
   try {
-    // For development: use demo user's clinic if no auth
-    let clinicId = req.user?.clinicId
-    
+    // Get clinic ID from authenticated user
+    const clinicId = req.user?.clinicId
+
     if (!clinicId) {
-      const demoUser = await prisma.user.findUnique({
-        where: { email: 'admin@dental.com' },
-        include: { clinic: true },
-      })
-      
-      if (demoUser && demoUser.clinic) {
-        clinicId = demoUser.clinicId
-      } else {
-        const firstClinic = await prisma.clinic.findFirst()
-        if (!firstClinic) {
-          return res.json({
-            success: true,
-            data: { count: 0 },
-          })
-        }
-        clinicId = firstClinic.id
-      }
+      throw new Error('User does not belong to a clinic')
     }
 
     const count = await prisma.notification.count({
@@ -127,6 +91,20 @@ export async function getUnreadCount(req: Request, res: Response, next: NextFunc
 export async function markAsRead(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params
+    const clinicId = req.user?.clinicId
+
+    if (!clinicId) {
+      throw new Error('User does not belong to a clinic')
+    }
+
+    // Verify notification belongs to user's clinic
+    const existingNotification = await prisma.notification.findFirst({
+      where: { id, clinicId },
+    })
+
+    if (!existingNotification) {
+      throw errors.notFound('Notification not found')
+    }
 
     const notification = await prisma.notification.update({
       where: { id },
@@ -146,31 +124,46 @@ export async function markAsRead(req: Request, res: Response, next: NextFunction
 }
 
 /**
+ * Mark notification as read by referral ID
+ */
+export async function markAsReadByReferral(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { referralId } = req.params
+    const clinicId = req.user?.clinicId
+
+    if (!clinicId) {
+      throw new Error('User does not belong to a clinic')
+    }
+
+    // Update all notifications for this referral and clinic
+    const result = await prisma.notification.updateMany({
+      where: {
+        referralId,
+        clinicId,
+        isRead: false,
+      },
+      data: { isRead: true },
+    })
+
+    res.json({
+      success: true,
+      data: { count: result.count },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * Mark all notifications as read for a clinic
  */
 export async function markAllAsRead(req: Request, res: Response, next: NextFunction) {
   try {
-    // For development: use demo user's clinic if no auth
-    let clinicId = req.user?.clinicId
-    
+    // Get clinic ID from authenticated user
+    const clinicId = req.user?.clinicId
+
     if (!clinicId) {
-      const demoUser = await prisma.user.findUnique({
-        where: { email: 'admin@dental.com' },
-        include: { clinic: true },
-      })
-      
-      if (demoUser && demoUser.clinic) {
-        clinicId = demoUser.clinicId
-      } else {
-        const firstClinic = await prisma.clinic.findFirst()
-        if (!firstClinic) {
-          return res.json({
-            success: true,
-            data: { count: 0 },
-          })
-        }
-        clinicId = firstClinic.id
-      }
+      throw new Error('User does not belong to a clinic')
     }
 
     const result = await prisma.notification.updateMany({
@@ -198,6 +191,20 @@ export async function markAllAsRead(req: Request, res: Response, next: NextFunct
 export async function deleteNotification(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params
+    const clinicId = req.user?.clinicId
+
+    if (!clinicId) {
+      throw new Error('User does not belong to a clinic')
+    }
+
+    // Verify notification belongs to user's clinic
+    const existingNotification = await prisma.notification.findFirst({
+      where: { id, clinicId },
+    })
+
+    if (!existingNotification) {
+      throw errors.notFound('Notification not found')
+    }
 
     await prisma.notification.delete({
       where: { id },

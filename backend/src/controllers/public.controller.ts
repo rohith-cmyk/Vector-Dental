@@ -180,6 +180,19 @@ export async function getReferralLinkByToken(
     }
 
     // Return safe public info (no PHI, no access code hash)
+    // Also fetch all potential specialists (users) for this clinic
+    const specialists = await prisma.user.findMany({
+      where: {
+        clinicId: referralLink.specialist.clinic.id,
+        // Optional: filter by role if needed, e.g. role: 'STAFF' or 'ADMIN'
+      },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+      },
+    })
+
     res.json({
       success: true,
       data: {
@@ -190,6 +203,7 @@ export async function getReferralLinkByToken(
         clinicPhone: referralLink.specialist.clinic.phone,
         clinicEmail: referralLink.specialist.clinic.email,
         specialistName: referralLink.specialist.name,
+        specialists, // List of all doctors/staff
       },
     })
   } catch (error) {
@@ -278,7 +292,21 @@ export async function submitMagicReferral(
       // Referral details
       reasonForReferral,
       notes,
+      selectedTeeth, // Extract selectedTeeth from body
     } = req.body
+
+    // Parse selected teeth
+    let teethArray: string[] = []
+    if (selectedTeeth) {
+      try {
+        const parsed = JSON.parse(selectedTeeth)
+        if (Array.isArray(parsed)) {
+          teethArray = parsed
+        }
+      } catch (e) {
+        console.warn('Failed to parse selectedTeeth:', e)
+      }
+    }
 
     // Validate required fields (manual check as backup)
     const missingFields: string[] = []
@@ -350,11 +378,16 @@ export async function submitMagicReferral(
         submittedByPhone: submittedByPhone || null,
         reason: reasonForReferral,
         notes: notes || null,
+        selectedTeeth: teethArray,
         status: 'SUBMITTED', // New status for magic link submissions
         urgency: 'ROUTINE', // Default urgency
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,
         referringDentist: submittedByName,
+        // Save selected specialist if provided
+        intendedRecipientId: req.body.intendedRecipientId || null,
+        // Save specialty category if provided
+        specialty: req.body.specialty || null,
       },
       include: {
         files: true,

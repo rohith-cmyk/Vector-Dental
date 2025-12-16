@@ -1,85 +1,78 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { Button, Card, CardContent, Badge, Select, Tabs } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
+import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
 import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle } from 'lucide-react'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES } from '@/constants'
 import type { Referral, ReferralStatus } from '@/types'
+import { api } from '@/lib/api'
 
 export default function ReferralsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ReferralStatus | 'all'>('all')
   const [isNewReferralModalOpen, setIsNewReferralModalOpen] = useState(false)
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
+  const [activeTab, setActiveTab] = useState('received')
 
-  // Mock data - Incoming Referrals
-  const incomingReferrals: Referral[] = [
-    {
-      id: 'inc-1',
-      referralType: 'INCOMING',
-      fromClinicId: 'clinic-1',
-      fromClinicName: 'Oak Street Dental',
-      referringDentist: 'Sarah Johnson',
-      patientName: 'John Doe',
-      patientDob: '1985-03-15',
-      patientPhone: '(555) 111-2222',
-      reason: 'Orthodontic evaluation needed',
-      urgency: 'URGENT',
-      status: 'SENT',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'inc-2',
-      referralType: 'INCOMING',
-      fromClinicId: 'clinic-2',
-      fromClinicName: 'Pine Dental Clinic',
-      referringDentist: 'Michael Chen',
-      patientName: 'Jane Smith',
-      patientDob: '1992-07-22',
-      patientPhone: '(555) 333-4444',
-      reason: 'Wisdom tooth removal',
-      urgency: 'ROUTINE',
-      status: 'SENT',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date().toISOString(),
+  const [referrals, setReferrals] = useState<Referral[]>([])
+  const [loading, setLoading] = useState(true)
+  const [total, setTotal] = useState(0)
+
+  // Fetch referrals
+  const fetchReferrals = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params: any = {
+        type: activeTab,
+        limit: 50, // Get more for list view
+      }
+
+      if (statusFilter !== 'all') {
+        params.status = statusFilter
+      }
+
+      if (searchQuery) {
+        params.search = searchQuery
+      }
+
+      const response = await api.get('/referrals', { params })
+      if (response.data.success) {
+        setReferrals(response.data.data)
+        setTotal(response.data.total)
+      }
+    } catch (error) {
+      console.error('Failed to fetch referrals:', error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }, [activeTab, statusFilter, searchQuery])
 
-  // Mock data - Outgoing Referrals
-  const outgoingReferrals: Referral[] = [
-    {
-      id: 'out-1',
-      referralType: 'OUTGOING',
-      fromClinicId: 'my-clinic',
-      toContactId: 'contact-1',
-      contact: {
-        id: 'contact-1',
-        name: 'Dr. Brian Fred M.',
-        specialty: 'Orthodontics',
-        email: 'brianfred@email.com',
-        phone: '(319) 555-0115',
-        status: 'ACTIVE',
-        clinicId: '1',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
-      },
-      patientName: 'Bob Wilson',
-      patientDob: '1978-11-30',
-      patientPhone: '(555) 777-8888',
-      reason: 'Adult braces consultation',
-      urgency: 'ROUTINE',
-      status: 'ACCEPTED',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date().toISOString(),
+  // Initial fetch and refetch on filters change
+  useEffect(() => {
+    // Debounce search
+    const timer = setTimeout(() => {
+      fetchReferrals()
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [fetchReferrals])
+
+  // Handle status update
+  const handleStatusUpdate = async (id: string, newStatus: ReferralStatus) => {
+    try {
+      await api.patch(`/referrals/${id}/status`, { status: newStatus })
+      fetchReferrals()
+    } catch (error) {
+      console.error('Failed to update status:', error)
     }
-  ]
-
-  const loading = false
+  }
 
   function getStatusBadgeVariant(status: ReferralStatus) {
+    if (!status) return 'default'
     switch (status) {
       case 'COMPLETED': return 'success'
       case 'SENT': return 'info'
@@ -90,6 +83,7 @@ export default function ReferralsPage() {
   }
 
   function getUrgencyBadgeVariant(urgency: string) {
+    if (!urgency) return 'default'
     switch (urgency) {
       case 'EMERGENCY': return 'danger'
       case 'URGENT': return 'warning'
@@ -97,7 +91,11 @@ export default function ReferralsPage() {
     }
   }
 
-  const pendingIncomingCount = incomingReferrals.filter(r => r.status === 'SENT').length
+  // Count strictly pending incoming for badge
+  // Note: This matches dashboard logic but for the badge we might want a separate API call or just rely on current list if loaded
+  // For now, let's use a simpler approach or rely on dashboard stats if available.
+  // Ideally, we'd fetch the count separately.
+  const pendingIncomingCount = 0 // TODO: Fetch from stats API?
 
   return (
     <DashboardLayout title="Referrals">
@@ -105,21 +103,22 @@ export default function ReferralsPage() {
         {/* Tabs for Received vs Sent */}
         <Tabs
           tabs={[
-            { 
-              id: 'received', 
-              label: 'Received', 
+            {
+              id: 'received',
+              label: 'Received',
               icon: <ArrowDownLeft className="h-4 w-4" />,
-              badge: pendingIncomingCount
+              // badge: pendingIncomingCount // Optional: re-enable if we have count
             },
-            { 
-              id: 'sent', 
-              label: 'Sent', 
+            {
+              id: 'sent',
+              label: 'Sent',
               icon: <ArrowUpRight className="h-4 w-4" />
             },
           ]}
           defaultTab="received"
+          onChange={setActiveTab}
         >
-          {(activeTab) => (
+          {() => ( // We ignore the render prop argument and use state
             <>
               {/* Header Actions */}
               <div className="flex items-center justify-between gap-4 mb-6">
@@ -148,8 +147,8 @@ export default function ReferralsPage() {
                   />
                 </div>
                 {activeTab === 'sent' && (
-                  <Button 
-                    variant="primary" 
+                  <Button
+                    variant="primary"
                     className="gap-2"
                     onClick={() => setIsNewReferralModalOpen(true)}
                   >
@@ -165,6 +164,10 @@ export default function ReferralsPage() {
                   {loading ? (
                     <div className="flex items-center justify-center h-64">
                       <div className="text-gray-500">Loading...</div>
+                    </div>
+                  ) : referrals.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                      <p>No referrals found</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -197,8 +200,12 @@ export default function ReferralsPage() {
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                            {incomingReferrals.map((referral) => (
-                              <tr key={referral.id} className="hover:bg-gray-50">
+                            {referrals.map((referral) => (
+                              <tr
+                                key={referral.id}
+                                className="hover:bg-gray-50 cursor-pointer"
+                                onClick={() => setSelectedReferral(referral)}
+                              >
                                 <td className="px-6 py-4">
                                   <div className="text-sm font-medium text-gray-900">
                                     {referral.patientName}
@@ -209,10 +216,10 @@ export default function ReferralsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {referral.fromClinicName}
+                                    {referral.fromClinicName || referral.clinic?.name || 'Unknown'}
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    Dr. {referral.referringDentist}
+                                    {referral.referringDentist ? `Dr. ${referral.referringDentist}` : ''}
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
@@ -222,32 +229,41 @@ export default function ReferralsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                   <Badge variant={getUrgencyBadgeVariant(referral.urgency)}>
-                                    {referral.urgency.toUpperCase()}
+                                    {(referral.urgency || '').toUpperCase()}
                                   </Badge>
                                 </td>
                                 <td className="px-6 py-4">
                                   <Badge variant={getStatusBadgeVariant(referral.status)}>
-                                    {referral.status.toUpperCase()}
+                                    {(referral.status || '').toUpperCase()}
                                   </Badge>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-500">
-                                  {formatRelativeTime(referral.createdAt)}
+                                <td className="px-6 py-4 text-sm text-gray-500" suppressHydrationWarning>
+                                  {referral.createdAt && formatRelativeTime(referral.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 text-right text-sm">
-                                  <div className="flex items-center justify-end gap-2">
-                                    {referral.status === 'sent' && (
+                                  <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                    {referral.status === 'SENT' && (
                                       <>
-                                        <button className="px-3 py-1 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 flex items-center gap-1">
+                                        <button
+                                          onClick={() => handleStatusUpdate(referral.id, 'ACCEPTED')}
+                                          className="px-3 py-1 text-xs bg-brand-500 text-white rounded-lg hover:bg-brand-600 flex items-center gap-1"
+                                        >
                                           <CheckCircle className="h-3 w-3" />
                                           Accept
                                         </button>
-                                        <button className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-1">
+                                        <button
+                                          onClick={() => handleStatusUpdate(referral.id, 'REJECTED')}
+                                          className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center gap-1"
+                                        >
                                           <XCircle className="h-3 w-3" />
                                           Reject
                                         </button>
                                       </>
                                     )}
-                                    <button className="p-2 text-gray-600 hover:text-brand-600 hover:bg-gray-100 rounded-lg">
+                                    <button
+                                      onClick={() => setSelectedReferral(referral)}
+                                      className="p-2 text-gray-600 hover:text-brand-600 hover:bg-gray-100 rounded-lg"
+                                    >
                                       <Eye className="h-4 w-4" />
                                     </button>
                                   </div>
@@ -285,7 +301,7 @@ export default function ReferralsPage() {
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                            {outgoingReferrals.map((referral) => (
+                            {referrals.map((referral) => (
                               <tr key={referral.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4">
                                   <div className="text-sm font-medium text-gray-900">
@@ -297,10 +313,10 @@ export default function ReferralsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                   <div className="text-sm font-medium text-gray-900">
-                                    {referral.contact?.name || 'N/A'}
+                                    {referral.contact ? referral.contact.name : 'N/A'}
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {referral.contact?.specialty}
+                                    {referral.contact ? referral.contact.specialty : ''}
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
@@ -310,23 +326,23 @@ export default function ReferralsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                   <Badge variant={getUrgencyBadgeVariant(referral.urgency)}>
-                                    {referral.urgency.toUpperCase()}
+                                    {(referral.urgency || '').toUpperCase()}
                                   </Badge>
                                 </td>
                                 <td className="px-6 py-4">
                                   <Badge variant={getStatusBadgeVariant(referral.status)}>
-                                    {referral.status.toUpperCase()}
+                                    {(referral.status || '').toUpperCase()}
                                   </Badge>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-500">
-                                  {formatRelativeTime(referral.createdAt)}
+                                <td className="px-6 py-4 text-sm text-gray-500" suppressHydrationWarning>
+                                  {referral.createdAt && formatRelativeTime(referral.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 text-right text-sm">
                                   <div className="flex items-center justify-end gap-2">
                                     <button className="p-2 text-gray-600 hover:text-brand-600 hover:bg-gray-100 rounded-lg">
                                       <Eye className="h-4 w-4" />
                                     </button>
-                                    {referral.status === 'draft' && (
+                                    {referral.status === 'DRAFT' && (
                                       <>
                                         <button className="p-2 text-gray-600 hover:text-brand-600 hover:bg-gray-100 rounded-lg">
                                           <Edit className="h-4 w-4" />
@@ -351,12 +367,19 @@ export default function ReferralsPage() {
           )}
         </Tabs>
 
+        {/* Details Modal */}
+        <ReferralDetailsModal
+          isOpen={!!selectedReferral}
+          onClose={() => setSelectedReferral(null)}
+          referral={selectedReferral}
+        />
+
         {/* New Referral Modal */}
         <NewReferralModal
           isOpen={isNewReferralModalOpen}
           onClose={() => setIsNewReferralModalOpen(false)}
           onSuccess={() => {
-            // TODO: Refresh referrals list
+            fetchReferrals()
             setIsNewReferralModalOpen(false)
           }}
         />

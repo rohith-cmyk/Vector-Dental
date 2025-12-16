@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
 import * as contactsController from '../controllers/contacts.controller'
-// import { authenticate } from '../middleware/auth.middleware'
+import { authenticateSupabase } from '../middleware/auth.supabase.middleware'
 import { validateRequest } from '../middleware/validation.middleware'
 
 const router = Router()
 
-// Auth disabled for development
-// router.use(authenticate)
+// Apply authentication middleware to all routes
+router.use(authenticateSupabase)
 
 /**
  * @route   GET /api/contacts

@@ -8,19 +8,48 @@ import { errors } from '../utils/errors'
 export async function getAllReferrals(req: Request, res: Response, next: NextFunction) {
   try {
     const clinicId = req.user!.clinicId
-    const { page = 1, limit = 10, search, status, urgency } = req.query
+    const { page = 1, limit = 10, search, status, urgency, type } = req.query
 
     const skip = (Number(page) - 1) * Number(limit)
     const take = Number(limit)
 
-    // Build where clause - referrals are linked via fromClinicId
-    const where: any = { fromClinicId: clinicId }
+    // Build where clause
+    const where: any = {}
+
+    // Filter by type (sent vs received)
+    if (type === 'received') {
+      // Incoming referrals:
+      // 1. P2P: Sent TO this clinic (toClinicId = clinicId)
+      // 2. Magic Link/Legacy: Created presumably by this clinic with type INCOMING (fromClinicId = clinicId AND referralType = INCOMING)
+      where.OR = [
+        { toClinicId: clinicId },
+        {
+          fromClinicId: clinicId,
+          referralType: 'INCOMING'
+        }
+      ]
+    } else {
+      // Default or 'sent': Outgoing referrals
+      // Sent BY this clinic (fromClinicId = clinicId AND referralType = OUTGOING)
+      where.fromClinicId = clinicId
+      where.referralType = 'OUTGOING'
+    }
 
     if (search) {
-      where.OR = [
+      const searchFilter = [
         { patientName: { contains: search as string, mode: 'insensitive' } },
         { reason: { contains: search as string, mode: 'insensitive' } },
       ]
+
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: searchFilter }
+        ]
+        delete where.OR // Move original OR to AND block
+      } else {
+        where.OR = searchFilter
+      }
     }
 
     if (status) {
@@ -40,6 +69,7 @@ export async function getAllReferrals(req: Request, res: Response, next: NextFun
         include: {
           contact: true,
           files: true,
+          clinic: true, // Include sending clinic info
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -68,10 +98,17 @@ export async function getReferralById(req: Request, res: Response, next: NextFun
     const clinicId = req.user!.clinicId
 
     const referral = await prisma.referral.findFirst({
-      where: { id, fromClinicId: clinicId },
+      where: {
+        id,
+        OR: [
+          { fromClinicId: clinicId }, // Sender
+          { toClinicId: clinicId },   // Receiver
+        ]
+      },
       include: {
         contact: true,
         files: true,
+        clinic: true,
       },
     })
 

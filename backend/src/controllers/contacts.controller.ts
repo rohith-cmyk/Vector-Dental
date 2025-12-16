@@ -7,15 +7,11 @@ import { errors } from '../utils/errors'
  */
 export async function getAllContacts(req: Request, res: Response, next: NextFunction) {
   try {
-    // For development: use first clinic if no auth
-    let clinicId = req.user?.clinicId
-    
+    // Get clinic ID from authenticated user
+    const clinicId = req.user?.clinicId
+
     if (!clinicId) {
-      const firstClinic = await prisma.clinic.findFirst()
-      if (!firstClinic) {
-        return res.json({ success: true, data: [], total: 0, page: 1, limit: 10, totalPages: 0 })
-      }
-      clinicId = firstClinic.id
+      throw new Error('User does not belong to a clinic')
     }
     const { page = 1, limit = 10, search, specialty, status } = req.query
 
@@ -71,16 +67,12 @@ export async function getAllContacts(req: Request, res: Response, next: NextFunc
 export async function getContactById(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params
-    
-    // For development: use first clinic if no auth
-    let clinicId = req.user?.clinicId
+
+    // Get clinic ID from authenticated user
+    const clinicId = req.user?.clinicId
+
     if (!clinicId) {
-      const firstClinic = await prisma.clinic.findFirst()
-      clinicId = firstClinic?.id
-    }
-    
-    if (!clinicId) {
-      throw errors.notFound('No clinic found')
+      throw errors.badRequest('User does not belong to a clinic')
     }
 
     const contact = await prisma.contact.findFirst({
@@ -105,15 +97,11 @@ export async function getContactById(req: Request, res: Response, next: NextFunc
  */
 export async function createContact(req: Request, res: Response, next: NextFunction) {
   try {
-    // For development: use first clinic if no auth
-    let clinicId = req.user?.clinicId
+    // Get clinic ID from authenticated user
+    const clinicId = req.user?.clinicId
+
     if (!clinicId) {
-      const firstClinic = await prisma.clinic.findFirst()
-      clinicId = firstClinic?.id
-    }
-    
-    if (!clinicId) {
-      throw errors.badRequest('No clinic found')
+      throw new Error('User does not belong to a clinic')
     }
     const { name, specialty, phone, email, address, notes } = req.body
 
@@ -145,18 +133,18 @@ export async function createContact(req: Request, res: Response, next: NextFunct
 export async function updateContact(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params
-    
+
     // For development: use first clinic if no auth
     let clinicId = req.user?.clinicId
     if (!clinicId) {
       const firstClinic = await prisma.clinic.findFirst()
       clinicId = firstClinic?.id
     }
-    
+
     if (!clinicId) {
       throw errors.badRequest('No clinic found')
     }
-    
+
     const { name, specialty, phone, email, address, notes, status } = req.body
 
     // Check if contact exists and belongs to clinic
@@ -196,14 +184,14 @@ export async function updateContact(req: Request, res: Response, next: NextFunct
 export async function deleteContact(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params
-    
+
     // For development: use first clinic if no auth
     let clinicId = req.user?.clinicId
     if (!clinicId) {
       const firstClinic = await prisma.clinic.findFirst()
       clinicId = firstClinic?.id
     }
-    
+
     if (!clinicId) {
       throw errors.badRequest('No clinic found')
     }
@@ -219,7 +207,7 @@ export async function deleteContact(req: Request, res: Response, next: NextFunct
 
     // Check if contact has referrals
     const referralCount = await prisma.referral.count({
-      where: { contactId: id },
+      where: { toContactId: id },
     })
 
     if (referralCount > 0) {

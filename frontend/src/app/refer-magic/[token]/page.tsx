@@ -7,6 +7,7 @@ import { FileUpload } from '@/components/referrals/FileUpload'
 import { magicReferralLinkService } from '@/services/magic-referral-link.service'
 import { api } from '@/lib/api'
 import { CheckCircle, AlertCircle, Key, Loader2 } from 'lucide-react'
+import { InteractiveToothChart } from '@/components/referrals/InteractiveToothChart'
 
 interface LinkInfo {
   token: string
@@ -16,6 +17,7 @@ interface LinkInfo {
   clinicPhone?: string
   clinicEmail?: string
   specialistName: string
+  specialists?: { id: string; name: string; role: string }[]
 }
 
 export default function MagicReferralPage() {
@@ -32,6 +34,7 @@ export default function MagicReferralPage() {
   const [codeError, setCodeError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [files, setFiles] = useState<File[]>([])
+  const [selectedTeeth, setSelectedTeeth] = useState<string[]>([])
 
   const [formData, setFormData] = useState({
     patientFirstName: '',
@@ -43,7 +46,20 @@ export default function MagicReferralPage() {
     submittedByPhone: '',
     reasonForReferral: '',
     notes: '',
+    intendedRecipientId: '',
+    specialty: '',
   })
+
+  // List of specialties for categorization
+  const SPECIALTIES = [
+    'General Dentist',
+    'Pedodontist or Pediatric Dentist',
+    'Orthodontist',
+    'Periodontist or Gum Specialist',
+    'Endodontist or Root Canal Specialist',
+    'Oral Pathologist or Oral Surgeon',
+    'Prosthodontist',
+  ]
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -147,6 +163,9 @@ export default function MagicReferralPage() {
       if (formData.insurance) submitFormData.append('insurance', formData.insurance)
       if (formData.submittedByPhone) submitFormData.append('submittedByPhone', formData.submittedByPhone)
       if (formData.notes) submitFormData.append('notes', formData.notes)
+      if (formData.intendedRecipientId) submitFormData.append('intendedRecipientId', formData.intendedRecipientId)
+      if (formData.specialty) submitFormData.append('specialty', formData.specialty)
+      if (selectedTeeth.length > 0) submitFormData.append('selectedTeeth', JSON.stringify(selectedTeeth))
 
       // Append files
       files.forEach((file) => {
@@ -404,11 +423,67 @@ export default function MagicReferralPage() {
                 </div>
               </div>
 
+
               {/* Referral Details */}
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Referral Details
                 </h3>
+
+                <div className="mb-12">
+                  <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+                    Select Teeth (Optional)
+                  </label>
+                  <InteractiveToothChart
+                    selectedTeeth={selectedTeeth}
+                    onTeethChange={setSelectedTeeth}
+                  />
+                </div>
+
+
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Specialist Type
+                  </label>
+                  <select
+                    value={formData.specialty}
+                    onChange={(e) => handleFormChange('specialty', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option value="">Select a Specialty...</option>
+                    {SPECIALTIES.map((spec) => (
+                      <option key={spec} value={spec}>
+                        {spec}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Categorize the type of specialist needed for this referral.
+                  </p>
+                </div>
+
+                {/* Optional: Show specific doctor selection if needed, or remove if replaced by Specialty */}
+                {linkInfo?.specialists && linkInfo.specialists.length > 0 && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Select Specific Doctor (Optional)
+                    </label>
+                    <select
+                      value={formData.intendedRecipientId}
+                      onChange={(e) => handleFormChange('intendedRecipientId', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                    >
+                      <option value="">Any Specialist (First Available)</option>
+                      {linkInfo.specialists.map((specialist) => (
+                        <option key={specialist.id} value={specialist.id}>
+                          Dr. {specialist.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Reason for Referral <span className="text-red-500">*</span>
@@ -476,7 +551,7 @@ export default function MagicReferralPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div >
   )
 }
 

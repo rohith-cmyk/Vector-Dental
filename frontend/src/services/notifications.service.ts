@@ -13,11 +13,11 @@ export const notificationsService = {
       const response = await api.get<{ success: boolean; data: Notification[] }>(
         `/notifications?filter=${filter}`
       )
-      
+
       if (response.data.success && response.data.data) {
         return response.data.data
       }
-      
+
       return []
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
@@ -33,11 +33,11 @@ export const notificationsService = {
       const response = await api.get<{ success: boolean; data: { count: number } }>(
         '/notifications/unread-count'
       )
-      
+
       if (response.data.success && response.data.data) {
         return response.data.data.count
       }
-      
+
       return 0
     } catch (error) {
       console.error('Failed to fetch unread count:', error)
@@ -54,6 +54,18 @@ export const notificationsService = {
     } catch (error) {
       console.error('Failed to mark notification as read:', error)
       throw error
+    }
+  },
+
+  /**
+   * Mark notification as read by referral ID
+   */
+  async markAsReadByReferral(referralId: string): Promise<void> {
+    try {
+      await api.patch(`/notifications/referral/${referralId}/read`)
+    } catch (error) {
+      console.error('Failed to mark notification as read by referral:', error)
+      // Don't throw, just log - this is a background action
     }
   },
 

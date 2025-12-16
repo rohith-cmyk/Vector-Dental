@@ -18,12 +18,12 @@ export default function DashboardPage() {
   useEffect(() => {
     // Initial load - show loading
     loadDashboardData(true)
-    
+
     // Auto-refresh dashboard data every 60 seconds (silent refresh - no loading indicator)
     const interval = setInterval(() => {
       loadDashboardData(false) // Silent refresh - don't show loading
     }, 60000) // 60 seconds
-    
+
     return () => clearInterval(interval)
   }, [])
 
@@ -120,19 +120,22 @@ export default function DashboardPage() {
             <ReferralTrendsChart data={stats.referralTrends} />
           </div>
           <div className="lg:col-span-1">
-            <SpecialtyBreakdown data={stats.referralsBySpecialty} />
+            <SpecialtyBreakdown
+              data={stats.incomingReferralsBySpecialty || []}
+              title="Incoming by Specialty"
+            />
           </div>
         </div>
 
         {/* Incoming Referrals - PRIORITY (Need Your Action) */}
-        <IncomingReferralsTable 
+        <IncomingReferralsTable
           referrals={stats.recentIncoming}
           onAccept={handleAcceptReferral}
           onReject={handleRejectReferral}
         />
 
         {/* Outgoing Referrals - Track Status */}
-        <OutgoingReferralsTable 
+        <OutgoingReferralsTable
           referrals={stats.recentOutgoing}
           onView={handleViewReferral}
         />
