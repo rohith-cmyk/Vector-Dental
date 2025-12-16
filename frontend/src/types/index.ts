@@ -54,7 +54,7 @@ export interface Contact {
 }
 
 // Referral Types
-export type ReferralStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
+export type ReferralStatus = 'DRAFT' | 'SENT' | 'SUBMITTED' | 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED'
 export type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
 export type ReferralType = 'OUTGOING' | 'INCOMING'
 
@@ -78,15 +78,24 @@ export interface Referral {
   
   // Patient Information
   patientName: string
+  patientFirstName?: string
+  patientLastName?: string
   patientDob: string
   patientPhone?: string
   patientEmail?: string
+  insurance?: string
+  
+  // GP/Submitter Information (for magic links)
+  gpClinicName?: string
+  submittedByName?: string
+  submittedByPhone?: string
   
   // Referral Details
   reason: string
   urgency: ReferralUrgency
   status: ReferralStatus
   notes?: string
+  referralLinkId?: string
   
   // Files
   files?: ReferralFile[]
@@ -118,7 +127,7 @@ export interface Notification {
   referral?: Referral
 }
 
-// Clinic Referral Link
+// Clinic Referral Link (slug-based)
 export interface ClinicReferralLink {
   id: string
   clinicId: string
@@ -126,6 +135,44 @@ export interface ClinicReferralLink {
   isActive: boolean
   createdAt: string
   updatedAt: string
+}
+
+// Magic Referral Link (token-based with access code)
+export interface ReferralLink {
+  id: string
+  specialistId: string
+  token: string
+  isActive: boolean
+  label?: string
+  referralCount?: number
+  referralUrl?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateReferralLinkRequest {
+  label?: string
+  accessCode?: string
+}
+
+export interface CreateReferralLinkResponse {
+  referralLink: ReferralLink
+  accessCode: string // Plaintext code (only shown once on creation)
+  referralUrl: string
+}
+
+export interface MagicReferralSubmission {
+  accessCode: string
+  patientFirstName: string
+  patientLastName: string
+  patientDob?: string
+  insurance?: string
+  reasonForReferral: string
+  notes?: string
+  gpClinicName: string
+  submittedByName: string
+  submittedByPhone?: string
+  files?: File[]
 }
 
 export interface ReferralFile {

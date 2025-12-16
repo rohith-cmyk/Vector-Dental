@@ -35,8 +35,14 @@ export function authenticateSupabase(req: Request, res: Response, next: NextFunc
       // Verify token with Supabase
       const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
 
-      if (error || !user) {
-        throw errors.unauthorized('Invalid or expired token')
+      if (error) {
+        console.error('Supabase token verification error:', error.message)
+        throw errors.unauthorized(`Invalid or expired token: ${error.message}`)
+      }
+
+      if (!user) {
+        console.error('No user returned from Supabase')
+        throw errors.unauthorized('Invalid or expired token: No user found')
       }
 
       // Check if email is verified (disabled for development)

@@ -22,6 +22,12 @@ export function validate(req: Request, res: Response, next: NextFunction) {
       }
     })
 
+    // Log validation errors in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Validation errors:', formattedErrors)
+      console.error('Request body keys:', Object.keys(req.body || {}))
+    }
+
     throw errors.badRequest('Validation failed', formattedErrors)
   }
 

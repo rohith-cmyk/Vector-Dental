@@ -4,20 +4,22 @@ import { useState, useEffect } from 'react'
 import { ChevronDown, LogOut, User, Settings, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
+import { authService } from '@/services/auth.supabase.service'
+import type { User as UserType } from '@/types'
 
 interface HeaderProps {
   title: string
 }
 
 export function Header({ title }: HeaderProps) {
-  // Mock user for development
-  const user = {
-    name: 'Demo User',
-    email: 'demo@clinic.com',
-    clinic: { name: 'Demo Dental Clinic' }
-  }
+  const [user, setUser] = useState<UserType | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  
+  // Load user data on mount
+  useEffect(() => {
+    loadUser()
+  }, [])
   
   // Load unread count
   useEffect(() => {
@@ -26,6 +28,30 @@ export function Header({ title }: HeaderProps) {
     const interval = setInterval(loadUnreadCount, 30000)
     return () => clearInterval(interval)
   }, [])
+  
+  const loadUser = async () => {
+    try {
+      // Check if token exists first
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        console.warn('No auth token found')
+        setUser(null)
+        return
+      }
+      
+      const currentUser = await authService.getCurrentUser()
+      if (currentUser) {
+        setUser(currentUser)
+      } else {
+        // If getCurrentUser returns null, token might be invalid
+        console.warn('getCurrentUser returned null - token might be invalid')
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('Failed to load user:', error)
+      setUser(null)
+    }
+  }
   
   const loadUnreadCount = async () => {
     try {
@@ -36,7 +62,8 @@ export function Header({ title }: HeaderProps) {
     }
   }
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authService.logout()
     window.location.href = '/login'
   }
 
@@ -80,9 +107,17 @@ export function Header({ title }: HeaderProps) {
               />
               <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-20">
                 <div className="px-4 py-3 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
-                  <p className="text-xs text-gray-400 mt-1">{user?.clinic?.name}</p>
+                  {user ? (
+                    <>
+                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                      {user.clinic && (
+                        <p className="text-xs text-gray-400 mt-1">{user.clinic.name}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-500">Not logged in</p>
+                  )}
                 </div>
                 
                 <div className="py-1">
