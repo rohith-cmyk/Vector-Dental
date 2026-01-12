@@ -1,9 +1,7 @@
 import { useEffect } from 'react'
 import { formatDate } from '@/lib/utils'
-import { Modal } from '@/components/ui/Modal'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import { FileText, Download, X, Phone, Mail, Calendar, User, Building2 } from 'lucide-react'
+import { Modal, Badge, Button, Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
+import { FileText, Download, Phone, Mail, Calendar, User, Building2 } from 'lucide-react'
 import type { Referral, ReferralFile } from '@/types'
 import { API_URL } from '@/lib/api'
 import { InteractiveToothChart } from './InteractiveToothChart'
@@ -31,6 +29,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral }: ReferralDeta
             case 'SENT': return 'info'
             case 'ACCEPTED': return 'warning'
             case 'CANCELLED': return 'danger'
+            case 'SUBMITTED': return 'info'
             default: return 'default'
         }
     }
@@ -43,6 +42,15 @@ export function ReferralDetailsModal({ isOpen, onClose, referral }: ReferralDeta
         }
     }
 
+    // Get patient name - use new fields if available, otherwise fall back to patientName
+    const patientName = referral.patientFirstName && referral.patientLastName
+        ? `${referral.patientFirstName} ${referral.patientLastName}`
+        : referral.patientName
+
+    // Get clinic name and doctor - use new fields if available
+    const clinicName = referral.gpClinicName || referral.fromClinicName || 'Unknown Clinic'
+    const doctorName = referral.submittedByName || referral.referringDentist
+
     return (
         <Modal
             isOpen={isOpen}
@@ -51,143 +59,208 @@ export function ReferralDetailsModal({ isOpen, onClose, referral }: ReferralDeta
             size="xl"
         >
             <div className="space-y-6">
-                {/* Header - Patient Info */}
-                <div className="flex justify-between items-start border-b pb-4">
-                    <div>
-                        <h3 className="text-xl font-semibold text-gray-900">{referral.patientName}</h3>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                <span suppressHydrationWarning>DOB: {formatDate(referral.patientDob)}</span>
+                {/* Patient Information Card */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-2xl">{patientName}</CardTitle>
+                                <div className="flex items-center gap-4 mt-2">
+                                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                                        <Calendar className="h-4 w-4" />
+                                        <span suppressHydrationWarning>
+                                            DOB: {formatDate(referral.patientDob)}
+                                        </span>
+                                    </div>
+                                    {referral.patientPhone && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Phone className="h-4 w-4" />
+                                            <span>{referral.patientPhone}</span>
+                                        </div>
+                                    )}
+                                    {referral.patientEmail && (
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <Mail className="h-4 w-4" />
+                                            <span>{referral.patientEmail}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            {referral.patientPhone && (
-                                <div className="flex items-center gap-1">
-                                    <Phone className="h-4 w-4" />
-                                    <span>{referral.patientPhone}</span>
+                            <div className="flex gap-2">
+                                <Badge variant={getUrgencyVariant(referral.urgency)}>
+                                    {referral.urgency || 'ROUTINE'}
+                                </Badge>
+                                <Badge variant={getStatusVariant(referral.status)}>
+                                    {referral.status}
+                                </Badge>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {referral.insurance && (
+                            <div className="mb-4">
+                                <p className="text-sm font-medium text-gray-500 mb-1">Insurance</p>
+                                <p className="text-base text-gray-900">{referral.insurance}</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Referrer Information Card */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>From</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500 mb-1">Clinic Name</p>
+                                <p className="text-base text-gray-900">{clinicName}</p>
+                            </div>
+                            {doctorName && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500 mb-1">Doctor</p>
+                                    <p className="text-base text-gray-900">
+                                        {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
+                                    </p>
+                                </div>
+                            )}
+                            {referral.fromClinicEmail && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
+                                    <div className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-gray-400" />
+                                        <a href={`mailto:${referral.fromClinicEmail}`} className="text-base text-blue-600 hover:text-blue-800">
+                                            {referral.fromClinicEmail}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            {referral.fromClinicPhone && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500 mb-1">Phone</p>
+                                    <div className="flex items-center gap-2">
+                                        <Phone className="h-4 w-4 text-gray-400" />
+                                        <a href={`tel:${referral.fromClinicPhone}`} className="text-base text-blue-600 hover:text-blue-800">
+                                            {referral.fromClinicPhone}
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            {(referral.submittedByPhone || referral.fromClinicPhone) && (
+                                <div>
+                                    <p className="text-sm font-medium text-gray-500 mb-1">Contact Phone</p>
+                                    <div className="flex items-center gap-2">
+                                        <Phone className="h-4 w-4 text-gray-400" />
+                                        <a href={`tel:${referral.submittedByPhone || referral.fromClinicPhone}`} className="text-base text-blue-600 hover:text-blue-800">
+                                            {referral.submittedByPhone || referral.fromClinicPhone}
+                                        </a>
+                                    </div>
                                 </div>
                             )}
                         </div>
-                    </div>
-                    <div className="flex gap-2">
-                        <Badge variant={getUrgencyVariant(referral.urgency)}>
-                            {referral.urgency}
-                        </Badge>
-                        <Badge variant={getStatusVariant(referral.status)}>
-                            {referral.status}
-                        </Badge>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
 
-                {/* Two Column Layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Left Column - Clinical Info */}
-                    <div className="space-y-4">
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">From</h4>
-                            <div className="bg-gray-50 p-3 rounded-lg">
-                                <p className="font-medium text-gray-900">{referral.fromClinicName}</p>
-                                {referral.referringDentist && (
-                                    <p className="text-sm text-gray-600 mt-1">Dr. {referral.referringDentist}</p>
-                                )}
-                                {referral.fromClinicEmail && (
-                                    <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                                        <Mail className="h-3 w-3" />
-                                        <span>{referral.fromClinicEmail}</span>
-                                    </div>
-                                )}
-                            </div>
+                {/* Referral Details Card */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Reason for Referral</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-gray-900 whitespace-pre-wrap">{referral.reason}</p>
                         </div>
+                    </CardContent>
+                </Card>
 
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Reason for Referral</h4>
-                            <div className="bg-white border rounded-lg p-3 text-gray-700 min-h-[100px]">
-                                {referral.reason}
+                {/* Notes Card */}
+                {referral.notes && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Additional Notes</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="bg-gray-50 rounded-lg p-4">
+                                <p className="text-gray-700 whitespace-pre-wrap text-sm">{referral.notes}</p>
                             </div>
-                        </div>
+                        </CardContent>
+                    </Card>
+                )}
 
-                        {referral.selectedTeeth && referral.selectedTeeth.length > 0 && (
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Selected Teeth</h4>
-                                <div className="border rounded-lg overflow-hidden bg-gray-900">
-                                    {/* Scale down slightly to fit in modal column if needed, or keeping full size */}
-                                    <div className="scale-90 origin-top">
-                                        <InteractiveToothChart
-                                            selectedTeeth={referral.selectedTeeth}
-                                            onTeethChange={() => { }} // No-op for read-only
-                                            readOnly={true}
-                                        />
-                                    </div>
+                {/* Selected Teeth Card */}
+                {referral.selectedTeeth && referral.selectedTeeth.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Selected Teeth</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="border rounded-lg overflow-hidden bg-gray-900">
+                                <div className="scale-90 origin-top">
+                                    <InteractiveToothChart
+                                        selectedTeeth={referral.selectedTeeth}
+                                        onTeethChange={() => { }}
+                                        readOnly={true}
+                                    />
                                 </div>
                             </div>
-                        )}
+                        </CardContent>
+                    </Card>
+                )}
 
-                        {referral.notes && (
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Notes</h4>
-                                <div className="bg-white border rounded-lg p-3 text-gray-600 text-sm">
-                                    {referral.notes}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                {/* Attached Files Card */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Attached Files ({referral.files?.length || 0})</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {referral.files && referral.files.length > 0 ? (
+                            <div className="space-y-3">
+                                {referral.files.map((file) => {
+                                    // Handle local development URLs
+                                    const fileUrl = file.fileUrl.startsWith('/')
+                                        ? `${API_URL.replace('/api', '')}${file.fileUrl}`
+                                        : file.fileUrl
 
-                    {/* Right Column - Files & Insurance */}
-                    <div className="space-y-4">
-                        {referral.insurance && (
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Insurance</h4>
-                                <div className="bg-blue-50 text-blue-900 p-3 rounded-lg text-sm font-medium">
-                                    {referral.insurance}
-                                </div>
-                            </div>
-                        )}
-
-                        <div>
-                            <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-                                Attached Files ({referral.files?.length || 0})
-                            </h4>
-                            <div className="space-y-2">
-                                {referral.files && referral.files.length > 0 ? (
-                                    referral.files.map((file) => {
-                                        // Handle local development URLs
-                                        const fileUrl = file.fileUrl.startsWith('/')
-                                            ? `${API_URL.replace('/api', '')}${file.fileUrl}`
-                                            : file.fileUrl
-
-                                        return (
-                                            <a
-                                                key={file.id}
-                                                href={fileUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors group"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-gray-100 rounded text-gray-500">
-                                                        <FileText className="h-4 w-4" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-700 max-w-[180px] truncate">
-                                                            {file.fileName}
-                                                        </p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {(file.fileSize / 1024).toFixed(1)} KB
-                                                        </p>
-                                                    </div>
+                                    return (
+                                        <a
+                                            key={file.id}
+                                            href={fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all group"
+                                        >
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                <div className="flex-shrink-0 p-3 bg-gray-100 rounded-lg">
+                                                    <FileText className="h-5 w-5 text-gray-600" />
                                                 </div>
-                                                <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
-                                                    <Download className="h-4 w-4" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                        {file.fileName}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {(file.fileSize / 1024).toFixed(1)} KB
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex-shrink-0 ml-4">
+                                                <Button variant="outline" size="sm" className="group-hover:bg-gray-100">
+                                                    <Download className="h-4 w-4 mr-2" />
+                                                    Download
                                                 </Button>
-                                            </a>
-                                        )
-                                    })
-                                ) : (
-                                    <p className="text-sm text-gray-500 italic">No files attached</p>
-                                )}
+                                            </div>
+                                        </a>
+                                    )
+                                })}
                             </div>
-                        </div>
-                    </div>
-                </div>
+                        ) : (
+                            <div className="text-center py-8">
+                                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm text-gray-500">No files attached</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Footer Actions */}
                 <div className="flex justify-end gap-3 pt-4 border-t">

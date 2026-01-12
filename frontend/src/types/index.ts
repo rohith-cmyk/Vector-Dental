@@ -54,59 +54,50 @@ export interface Contact {
 }
 
 // Referral Types
-export type ReferralStatus = 'DRAFT' | 'SENT' | 'SUBMITTED' | 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED'
+export type ReferralStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
 export type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
 export type ReferralType = 'OUTGOING' | 'INCOMING'
 
 export interface Referral {
   id: string
-
+  
   // Referral Direction
   referralType: ReferralType
-
+  
   // For OUTGOING (you send)
   fromClinicId: string
   toContactId?: string
   toClinicId?: string
   contact?: Contact
-
+  
   // For INCOMING (you receive)
   fromClinicName?: string
   fromClinicEmail?: string
   fromClinicPhone?: string
   referringDentist?: string
-
+  
   // Patient Information
   patientName: string
-  patientFirstName?: string
-  patientLastName?: string
   patientDob: string
   patientPhone?: string
   patientEmail?: string
-  insurance?: string
-
-  // GP/Submitter Information (for magic links)
-  gpClinicName?: string
-  submittedByName?: string
-  submittedByPhone?: string
-
+  
   // Referral Details
   reason: string
   urgency: ReferralUrgency
   status: ReferralStatus
   notes?: string
-  referralLinkId?: string
-  clinic?: Clinic // Sender clinic info
+  
+  // Files
   files?: ReferralFile[]
-  selectedTeeth?: string[]
-
+  
   // Timestamps
   createdAt: string
   updatedAt: string
 }
 
 // Notification Types
-export type NotificationType =
+export type NotificationType = 
   | 'new_incoming_referral'
   | 'referral_accepted'
   | 'referral_rejected'
@@ -127,7 +118,7 @@ export interface Notification {
   referral?: Referral
 }
 
-// Clinic Referral Link (slug-based)
+// Clinic Referral Link
 export interface ClinicReferralLink {
   id: string
   clinicId: string
@@ -137,7 +128,7 @@ export interface ClinicReferralLink {
   updatedAt: string
 }
 
-// Magic Referral Link (token-based with access code)
+// Referral Link (token-based with access code)
 export interface ReferralLink {
   id: string
   specialistId: string
@@ -157,11 +148,10 @@ export interface CreateReferralLinkRequest {
 
 export interface CreateReferralLinkResponse {
   referralLink: ReferralLink
-  accessCode: string // Plaintext code (only shown once on creation)
   referralUrl: string
 }
 
-export interface MagicReferralSubmission {
+export interface ReferralSubmission {
   accessCode: string
   patientFirstName: string
   patientLastName: string
@@ -191,31 +181,21 @@ export interface DashboardStats {
   totalReferrals: number
   totalOutgoing: number
   totalIncoming: number
-
+  
   // Percentage changes (compared to previous period)
   outgoingChange?: number  // Percentage change for outgoing referrals
   incomingChange?: number  // Percentage change for incoming referrals
   completedChange?: number // Percentage change for completed referrals
-
+  
   // Action needed
   pendingIncoming: number  // Need to accept/reject
   pendingOutgoing: number  // Waiting for response
-
+  
   // Completed
   completedThisMonth: number
-
+  
   // Charts
   referralsBySpecialty: Array<{
-    specialty: string
-    count: number
-    percentage: number
-  }>
-  outgoingReferralsBySpecialty?: Array<{
-    specialty: string
-    count: number
-    percentage: number
-  }>
-  incomingReferralsBySpecialty?: Array<{
     specialty: string
     count: number
     percentage: number
@@ -225,7 +205,7 @@ export interface DashboardStats {
     outgoing: number
     incoming: number
   }>
-
+  
   // Recent referrals
   recentIncoming: Referral[]
   recentOutgoing: Referral[]

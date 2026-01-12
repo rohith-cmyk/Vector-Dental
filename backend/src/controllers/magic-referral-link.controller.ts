@@ -1,34 +1,56 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
-import { generateReferralToken, generateAccessCode, hashAccessCode } from '../utils/tokens'
+import {
+  generateReferralToken,
+} from '../utils/tokens'
+import { config } from '../config/env'
 
 /**
- * Create a new magic referral link
- * POST /api/magic-referral-links
+ * Create a new referral link
+ * POST /api/referral-links
  */
-export async function createReferralLink(req: Request, res: Response, next: NextFunction) {
+export async function createReferralLink(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    const userId = req.user?.userId
-    if (!userId) {
-      throw errors.unauthorized('Authentication required')
+    const userId = req.user!.userId
+    const { label } = req.body
+
+    // Access codes are no longer required - set to empty string (schema requires non-null)
+    // TODO: Update schema to make accessCodeHash nullable in future migration
+    const accessCodeHash = ''
+
+    // Generate unique token
+    let token: string = ''
+    let tokenExists = true
+    let attempts = 0
+    const maxAttempts = 10
+
+    // Ensure token is unique (very unlikely to collide, but safety check)
+    while (tokenExists && attempts < maxAttempts) {
+      token = generateReferralToken()
+      const existing = await prisma.referralLink.findUnique({
+        where: { token },
+      })
+      tokenExists = !!existing
+      attempts++
     }
 
-    const { label, accessCode: providedAccessCode } = req.body
-
-    // Generate token and access code
-    const token = generateReferralToken()
-    const accessCode = providedAccessCode || generateAccessCode(6)
-    const accessCodeHash = await hashAccessCode(accessCode)
+    if (tokenExists) {
+      throw errors.internal('Failed to generate unique token')
+    }
 
     // Create referral link
     const referralLink = await prisma.referralLink.create({
       data: {
         specialistId: userId,
-        token,
+        token: token!,
         accessCodeHash,
-        label: label || null,
         isActive: true,
+        label: label || null,
       },
       include: {
         specialist: {
@@ -47,8 +69,8 @@ export async function createReferralLink(req: Request, res: Response, next: Next
       },
     })
 
-    // Construct referral URL
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    // Build referral URL
+    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
     const referralUrl = `${frontendUrl}/refer-magic/${token}`
 
     res.status(201).json({
@@ -63,7 +85,6 @@ export async function createReferralLink(req: Request, res: Response, next: Next
           updatedAt: referralLink.updatedAt,
           specialist: referralLink.specialist,
         },
-        accessCode, // Return plaintext code ONLY ONCE (when created)
         referralUrl,
       },
     })
@@ -73,21 +94,35 @@ export async function createReferralLink(req: Request, res: Response, next: Next
 }
 
 /**
- * List all referral links for the authenticated specialist
- * GET /api/magic-referral-links
+ * Get all referral links for the logged-in specialist
+ * GET /api/referral-links
  */
-export async function listReferralLinks(req: Request, res: Response, next: NextFunction) {
+export async function listReferralLinks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    const userId = req.user?.userId
-    if (!userId) {
-      throw errors.unauthorized('Authentication required')
-    }
+    const userId = req.user!.userId
 
     const referralLinks = await prisma.referralLink.findMany({
       where: {
         specialistId: userId,
       },
       include: {
+        specialist: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            clinic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             referrals: true,
@@ -99,21 +134,23 @@ export async function listReferralLinks(req: Request, res: Response, next: NextF
       },
     })
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    // Build referral URLs
+    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
+    const linksWithUrls = referralLinks.map((link) => ({
+      id: link.id,
+      token: link.token,
+      isActive: link.isActive,
+      label: link.label,
+      createdAt: link.createdAt,
+      updatedAt: link.updatedAt,
+      referralUrl: `${frontendUrl}/refer-magic/${link.token}`,
+      referralCount: link._count.referrals,
+      // DO NOT include accessCodeHash or plaintext access code
+    }))
 
     res.json({
       success: true,
-      data: referralLinks.map((link) => ({
-        id: link.id,
-        token: link.token,
-        isActive: link.isActive,
-        label: link.label,
-        referralUrl: `${frontendUrl}/refer-magic/${link.token}`,
-        referralCount: link._count.referrals,
-        createdAt: link.createdAt,
-        updatedAt: link.updatedAt,
-        // Note: accessCodeHash is NEVER returned
-      })),
+      data: linksWithUrls,
     })
   } catch (error) {
     next(error)
@@ -121,16 +158,16 @@ export async function listReferralLinks(req: Request, res: Response, next: NextF
 }
 
 /**
- * Get a single referral link by ID
- * GET /api/magic-referral-links/:id
+ * Get a specific referral link by ID
+ * GET /api/referral-links/:id
  */
-export async function getReferralLink(req: Request, res: Response, next: NextFunction) {
+export async function getReferralLink(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    const userId = req.user?.userId
-    if (!userId) {
-      throw errors.unauthorized('Authentication required')
-    }
-
+    const userId = req.user!.userId
     const { id } = req.params
 
     const referralLink = await prisma.referralLink.findFirst({
@@ -139,6 +176,19 @@ export async function getReferralLink(req: Request, res: Response, next: NextFun
         specialistId: userId, // Ensure user owns this link
       },
       include: {
+        specialist: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            clinic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
             referrals: true,
@@ -151,7 +201,7 @@ export async function getReferralLink(req: Request, res: Response, next: NextFun
       throw errors.notFound('Referral link not found')
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
 
     res.json({
       success: true,
@@ -160,11 +210,11 @@ export async function getReferralLink(req: Request, res: Response, next: NextFun
         token: referralLink.token,
         isActive: referralLink.isActive,
         label: referralLink.label,
-        referralUrl: `${frontendUrl}/refer-magic/${referralLink.token}`,
-        referralCount: referralLink._count.referrals,
         createdAt: referralLink.createdAt,
         updatedAt: referralLink.updatedAt,
-        // Note: accessCodeHash is NEVER returned
+        referralUrl: `${frontendUrl}/refer-magic/${referralLink.token}`,
+        referralCount: referralLink._count.referrals,
+        // DO NOT include accessCodeHash
       },
     })
   } catch (error) {
@@ -173,20 +223,20 @@ export async function getReferralLink(req: Request, res: Response, next: NextFun
 }
 
 /**
- * Update a referral link
- * PUT /api/magic-referral-links/:id
+ * Update a referral link (toggle active/inactive, update label, regenerate access code)
+ * PUT /api/referral-links/:id
  */
-export async function updateReferralLink(req: Request, res: Response, next: NextFunction) {
+export async function updateReferralLink(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    const userId = req.user?.userId
-    if (!userId) {
-      throw errors.unauthorized('Authentication required')
-    }
-
+    const userId = req.user!.userId
     const { id } = req.params
-    const { isActive, label, regenerateAccessCode } = req.body
+    const { isActive, label } = req.body
 
-    // Check if link exists and belongs to user
+    // Verify ownership
     const existingLink = await prisma.referralLink.findFirst({
       where: {
         id,
@@ -200,7 +250,6 @@ export async function updateReferralLink(req: Request, res: Response, next: Next
 
     // Prepare update data
     const updateData: any = {}
-    let newAccessCode: string | undefined
 
     if (isActive !== undefined) {
       updateData.isActive = isActive
@@ -210,39 +259,40 @@ export async function updateReferralLink(req: Request, res: Response, next: Next
       updateData.label = label || null
     }
 
-    // Regenerate access code if requested
-    if (regenerateAccessCode === true) {
-      newAccessCode = generateAccessCode(6)
-      updateData.accessCodeHash = await hashAccessCode(newAccessCode)
-    }
-
-    // Update link
     const updatedLink = await prisma.referralLink.update({
       where: { id },
       data: updateData,
+      include: {
+        specialist: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            clinic: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     })
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
 
-    const response: any = {
+    res.json({
       success: true,
       data: {
         id: updatedLink.id,
         token: updatedLink.token,
         isActive: updatedLink.isActive,
         label: updatedLink.label,
-        referralUrl: `${frontendUrl}/refer-magic/${updatedLink.token}`,
         createdAt: updatedLink.createdAt,
         updatedAt: updatedLink.updatedAt,
+        referralUrl: `${frontendUrl}/refer-magic/${updatedLink.token}`,
       },
-    }
-
-    // Return new access code if regenerated (ONLY ONCE)
-    if (newAccessCode) {
-      response.data.accessCode = newAccessCode
-    }
-
-    res.json(response)
+    })
   } catch (error) {
     next(error)
   }
@@ -250,18 +300,18 @@ export async function updateReferralLink(req: Request, res: Response, next: Next
 
 /**
  * Delete a referral link
- * DELETE /api/magic-referral-links/:id
+ * DELETE /api/referral-links/:id
  */
-export async function deleteReferralLink(req: Request, res: Response, next: NextFunction) {
+export async function deleteReferralLink(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    const userId = req.user?.userId
-    if (!userId) {
-      throw errors.unauthorized('Authentication required')
-    }
-
+    const userId = req.user!.userId
     const { id } = req.params
 
-    // Check if link exists and belongs to user
+    // Verify ownership
     const existingLink = await prisma.referralLink.findFirst({
       where: {
         id,
@@ -273,7 +323,7 @@ export async function deleteReferralLink(req: Request, res: Response, next: Next
       throw errors.notFound('Referral link not found')
     }
 
-    // Delete link (cascade will handle referrals' referralLinkId -> null)
+    // Delete the link (cascades will handle referrals - referralLinkId becomes null)
     await prisma.referralLink.delete({
       where: { id },
     })

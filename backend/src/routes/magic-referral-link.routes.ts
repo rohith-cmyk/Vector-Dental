@@ -10,37 +10,40 @@ const router = Router()
 router.use(authenticateSupabase)
 
 /**
- * @route   POST /api/magic-referral-links
- * @desc    Create a new magic referral link
- * @access  Private
+ * Referral Link routes (authenticated - specialist only)
+ */
+
+/**
+ * @route   POST /api/referral-links
+ * @desc    Create a new referral link with access code
+ * @access  Private (authenticated specialist)
  */
 router.post(
   '/',
   validateRequest([
     body('label').optional().isString().trim().isLength({ max: 100 }).withMessage('Label must be less than 100 characters'),
-    body('accessCode').optional().matches(/^\d{4,8}$/).withMessage('Access code must be 4-8 digits'),
   ]),
   magicReferralLinkController.createReferralLink
 )
 
 /**
- * @route   GET /api/magic-referral-links
- * @desc    List all referral links for the authenticated specialist
- * @access  Private
+ * @route   GET /api/referral-links
+ * @desc    Get all referral links for the logged-in specialist
+ * @access  Private (authenticated specialist)
  */
 router.get('/', magicReferralLinkController.listReferralLinks)
 
 /**
- * @route   GET /api/magic-referral-links/:id
- * @desc    Get a single referral link by ID
- * @access  Private
+ * @route   GET /api/referral-links/:id
+ * @desc    Get a specific referral link by ID
+ * @access  Private (authenticated specialist)
  */
 router.get('/:id', magicReferralLinkController.getReferralLink)
 
 /**
- * @route   PUT /api/magic-referral-links/:id
+ * @route   PUT /api/referral-links/:id
  * @desc    Update a referral link (toggle active, update label, regenerate access code)
- * @access  Private
+ * @access  Private (authenticated specialist)
  */
 router.put(
   '/:id',
@@ -53,9 +56,9 @@ router.put(
 )
 
 /**
- * @route   DELETE /api/magic-referral-links/:id
+ * @route   DELETE /api/referral-links/:id
  * @desc    Delete a referral link
- * @access  Private
+ * @access  Private (authenticated specialist)
  */
 router.delete('/:id', magicReferralLinkController.deleteReferralLink)
 

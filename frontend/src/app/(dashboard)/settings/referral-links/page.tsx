@@ -12,11 +12,10 @@ import {
   Check,
   X,
   Loader2,
-  Key,
   Link2,
   Calendar,
 } from 'lucide-react'
-import { magicReferralLinkService } from '@/services/magic-referral-link.service'
+import { referralLinkService } from '@/services/referral-link.service'
 import type { ReferralLink } from '@/types'
 import { Modal } from '@/components/ui'
 
@@ -28,11 +27,8 @@ interface CreateLinkModalProps {
 
 function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   const [label, setLabel] = useState('')
-  const [customAccessCode, setCustomAccessCode] = useState('')
-  const [useCustomCode, setUseCustomCode] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [createdLink, setCreatedLink] = useState<{
-    accessCode: string
     referralUrl: string
   } | null>(null)
 
@@ -41,26 +37,17 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
     setIsSubmitting(true)
 
     try {
-      const data = await magicReferralLinkService.create({
+      const data = await referralLinkService.create({
         label: label.trim() || undefined,
-        accessCode: useCustomCode ? customAccessCode.trim() : undefined,
       })
 
       setCreatedLink({
-        accessCode: data.accessCode,
         referralUrl: data.referralUrl,
       })
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to create referral link')
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleCopyCode = () => {
-    if (createdLink) {
-      navigator.clipboard.writeText(createdLink.accessCode)
-      alert('Access code copied to clipboard!')
     }
   }
 
@@ -72,12 +59,11 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   }
 
   const handleClose = () => {
+    const hadCreatedLink = !!createdLink
     setLabel('')
-    setCustomAccessCode('')
-    setUseCustomCode(false)
     setCreatedLink(null)
     onClose()
-    if (createdLink) {
+    if (hadCreatedLink) {
       onSuccess()
     }
   }
@@ -88,24 +74,8 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
         <div className="space-y-4">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <p className="text-sm text-green-800 font-medium mb-2">
-              ⚠️ Save these details now - the access code will not be shown again!
+              ✅ Your referral link is ready! Share this URL with anyone who needs to submit a referral.
             </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Access Code
-            </label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={createdLink.accessCode}
-                readOnly
-                className="font-mono text-lg font-bold"
-              />
-              <Button onClick={handleCopyCode} size="sm" variant="outline">
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
 
           <div>
@@ -118,6 +88,9 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Anyone with this link can submit a referral directly - no login required!
+            </p>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -129,7 +102,7 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create Magic Referral Link">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Create Referral Link">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -145,34 +118,6 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
             Helpful name to identify this link (only visible to you)
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="useCustomCode"
-            checked={useCustomCode}
-            onChange={(e) => setUseCustomCode(e.target.checked)}
-            className="rounded"
-          />
-          <label htmlFor="useCustomCode" className="text-sm text-gray-700">
-            Set custom access code (leave unchecked for auto-generated)
-          </label>
-        </div>
-
-        {useCustomCode && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Access Code (4-8 digits)
-            </label>
-            <Input
-              value={customAccessCode}
-              onChange={(e) => setCustomAccessCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="123456"
-              pattern="[0-9]{4,8}"
-              maxLength={8}
-            />
-          </div>
-        )}
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={handleClose}>
@@ -194,7 +139,7 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   )
 }
 
-export default function MagicReferralLinksPage() {
+export default function ReferralLinksPage() {
   const [links, setLinks] = useState<ReferralLink[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -205,7 +150,7 @@ export default function MagicReferralLinksPage() {
     try {
       setLoading(true)
       setError(null)
-      const data = await magicReferralLinkService.list()
+      const data = await referralLinkService.list()
       setLinks(data)
     } catch (error: any) {
       console.error('Failed to load referral links:', error)
@@ -221,7 +166,7 @@ export default function MagicReferralLinksPage() {
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     try {
-      const data = await magicReferralLinkService.update(id, {
+      const data = await referralLinkService.update(id, {
         isActive: !currentStatus,
       })
       await fetchLinks()
@@ -236,7 +181,7 @@ export default function MagicReferralLinksPage() {
     }
 
     try {
-      await magicReferralLinkService.delete(id)
+      await referralLinkService.delete(id)
       await fetchLinks()
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to delete link')
@@ -249,29 +194,10 @@ export default function MagicReferralLinksPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const handleRegenerateCode = async (id: string) => {
-    if (
-      !confirm(
-        'Are you sure you want to regenerate the access code? The old code will no longer work. Make sure to share the new code with authorized users.'
-      )
-    ) {
-      return
-    }
-
-    try {
-      const data = await magicReferralLinkService.update(id, {
-        regenerateAccessCode: true,
-      })
-      alert(`New access code: ${data.accessCode}\n\n⚠️ Save this code - it will not be shown again!`)
-      await fetchLinks()
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to regenerate access code')
-    }
-  }
 
   if (loading) {
     return (
-      <DashboardLayout title="Magic Referral Links">
+      <DashboardLayout title="Referral Links">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
           <span className="ml-2 text-gray-600">Loading referral links...</span>
@@ -281,15 +207,14 @@ export default function MagicReferralLinksPage() {
   }
 
   return (
-    <DashboardLayout title="Magic Referral Links">
+    <DashboardLayout title="Referral Links">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Magic Referral Links</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Referral Links</h1>
             <p className="text-gray-600 mt-1">
-              Create secure token-based referral links with access codes for GPs to submit
-              referrals
+              Create secure token-based referral links for GPs to submit referrals directly
             </p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -312,7 +237,7 @@ export default function MagicReferralLinksPage() {
               <Link2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No referral links yet</h3>
               <p className="text-gray-600 mb-4">
-                Create your first magic referral link to start accepting referrals from GPs
+                Create your first referral link to start accepting referrals from GPs
               </p>
               <Button onClick={() => setIsCreateModalOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -381,14 +306,6 @@ export default function MagicReferralLinksPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleRegenerateCode(link.id)}
-                        title="Regenerate access code"
-                      >
-                        <Key className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
                         onClick={() => handleToggleActive(link.id, link.isActive)}
                       >
                         {link.isActive ? (
@@ -428,4 +345,5 @@ export default function MagicReferralLinksPage() {
     </DashboardLayout>
   )
 }
+
 

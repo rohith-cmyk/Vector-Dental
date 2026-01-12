@@ -180,19 +180,6 @@ export async function getReferralLinkByToken(
     }
 
     // Return safe public info (no PHI, no access code hash)
-    // Also fetch all potential specialists (users) for this clinic
-    const specialists = await prisma.user.findMany({
-      where: {
-        clinicId: referralLink.specialist.clinic.id,
-        // Optional: filter by role if needed, e.g. role: 'STAFF' or 'ADMIN'
-      },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-      },
-    })
-
     res.json({
       success: true,
       data: {
@@ -203,7 +190,6 @@ export async function getReferralLinkByToken(
         clinicPhone: referralLink.specialist.clinic.phone,
         clinicEmail: referralLink.specialist.clinic.email,
         specialistName: referralLink.specialist.name,
-        specialists, // List of all doctors/staff
       },
     })
   } catch (error) {
@@ -266,20 +252,17 @@ export async function verifyReferralLinkAccessCode(
 }
 
 /**
- * Submit referral via magic link (public - no auth required)
+ * Submit referral via referral link (public - no auth required)
  * POST /api/public/referral-link/:token/submit
- * Requires access code verification
  */
-export async function submitMagicReferral(
+export async function submitReferral(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
   try {
     const { token } = req.params
-
     const {
-      accessCode,
       // Patient information
       patientFirstName,
       patientLastName,
@@ -292,35 +275,17 @@ export async function submitMagicReferral(
       // Referral details
       reasonForReferral,
       notes,
-      selectedTeeth, // Extract selectedTeeth from body
     } = req.body
 
-    // Parse selected teeth
-    let teethArray: string[] = []
-    if (selectedTeeth) {
-      try {
-        const parsed = JSON.parse(selectedTeeth)
-        if (Array.isArray(parsed)) {
-          teethArray = parsed
-        }
-      } catch (e) {
-        console.warn('Failed to parse selectedTeeth:', e)
-      }
-    }
-
-    // Validate required fields (manual check as backup)
-    const missingFields: string[] = []
-    if (!accessCode) missingFields.push('accessCode')
-    if (!patientFirstName) missingFields.push('patientFirstName')
-    if (!patientLastName) missingFields.push('patientLastName')
-    if (!patientDob) missingFields.push('patientDob')
-    if (!gpClinicName) missingFields.push('gpClinicName')
-    if (!submittedByName) missingFields.push('submittedByName')
-    if (!reasonForReferral) missingFields.push('reasonForReferral')
-
-    if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields)
-      throw errors.badRequest(`Missing required fields: ${missingFields.join(', ')}`)
+    // Validate required fields (access code no longer required)
+    if (
+      !patientFirstName ||
+      !patientLastName ||
+      !gpClinicName ||
+      !submittedByName ||
+      !reasonForReferral
+    ) {
+      throw errors.badRequest('Missing required fields')
     }
 
     // Find and verify referral link
@@ -350,16 +315,6 @@ export async function submitMagicReferral(
       throw errors.badRequest('This referral link is currently inactive')
     }
 
-    // Verify access code
-    const isValid = await verifyAccessCode(
-      accessCode,
-      referralLink.accessCodeHash
-    )
-
-    if (!isValid) {
-      throw errors.unauthorized('Invalid access code')
-    }
-
     // Create referral with new fields
     // Use the specialist's clinic as the receiving clinic
     const referral = await prisma.referral.create({
@@ -371,58 +326,53 @@ export async function submitMagicReferral(
         patientFirstName,
         patientLastName,
         patientName: `${patientFirstName} ${patientLastName}`, // Keep for backward compatibility
-        patientDob: new Date(patientDob), // patientDob is required and validated above
+        patientDob: patientDob ? new Date(patientDob) : new Date(), // Default to today if not provided
         insurance: insurance || null,
         gpClinicName,
         submittedByName,
         submittedByPhone: submittedByPhone || null,
         reason: reasonForReferral,
         notes: notes || null,
-        selectedTeeth: teethArray,
         status: 'SUBMITTED', // New status for magic link submissions
         urgency: 'ROUTINE', // Default urgency
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,
         referringDentist: submittedByName,
-        // Save selected specialist if provided
-        intendedRecipientId: req.body.intendedRecipientId || null,
-        // Save specialty category if provided
-        specialty: req.body.specialty || null,
       },
       include: {
         files: true,
       },
     })
 
-    // Upload files if any (from multipart form data)
-    const files = (req.files as Express.Multer.File[]) || []
+    // Upload files if any
+    const files = req.files as Express.Multer.File[]
     if (files && files.length > 0) {
       for (const file of files) {
         try {
-          // Upload to storage (Supabase Storage or local filesystem)
+          // Upload to storage (Supabase or local)
           const uploadResult = await uploadFile(
             file.buffer,
             file.originalname,
             file.mimetype,
             referral.id
           )
-
+          
           // Save file metadata to database
           await prisma.referralFile.create({
             data: {
               referralId: referral.id,
               fileName: uploadResult.fileName,
-              fileType: uploadResult.mimeType || file.mimetype || 'application/octet-stream',
+              fileType: uploadResult.mimeType.split('/')[1] || 'unknown', // Extract extension
               fileUrl: uploadResult.fileUrl,
               fileSize: uploadResult.fileSize,
-              storageKey: uploadResult.storageKey || null,
-              mimeType: uploadResult.mimeType || file.mimetype || null,
+              storageKey: uploadResult.storageKey,
+              mimeType: uploadResult.mimeType,
             },
           })
         } catch (fileError: any) {
-          console.error('Failed to upload file:', fileError.message)
+          console.error('Failed to upload file:', fileError)
           // Continue with other files even if one fails
-          // Don't fail the entire submission if file upload fails
+          // Don't fail the entire referral submission if file upload fails
         }
       }
     }
@@ -435,7 +385,7 @@ export async function submitMagicReferral(
         referralId: referral.id,
         title: 'New Referral Received',
         // Don't log PHI - just generic message
-        message: `New referral received via magic link from ${gpClinicName}`,
+        message: `New referral received via referral link from ${gpClinicName}`,
       },
     })
 
@@ -446,16 +396,7 @@ export async function submitMagicReferral(
         referralId: referral.id,
       },
     })
-  } catch (error: any) {
-    // Log error for debugging (without PHI)
-    console.error('Error submitting magic referral:', {
-      message: error.message,
-      code: error.code,
-      name: error.name,
-      // Include stack in development
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
-      // Don't log patient info or PHI
-    })
+  } catch (error) {
     // HIPAA: Do not log PHI in error logs
     // The error middleware will handle logging without PHI
     next(error)

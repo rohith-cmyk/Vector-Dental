@@ -1,13 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Card, CardContent, Input, Button } from '@/components/ui'
+import { useParams } from 'next/navigation'
+import { Card, CardContent, Input, Select, Button } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
-import { magicReferralLinkService } from '@/services/magic-referral-link.service'
 import { api } from '@/lib/api'
-import { CheckCircle, AlertCircle, Key, Loader2 } from 'lucide-react'
-import { InteractiveToothChart } from '@/components/referrals/InteractiveToothChart'
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
 interface LinkInfo {
   token: string
@@ -17,67 +15,53 @@ interface LinkInfo {
   clinicPhone?: string
   clinicEmail?: string
   specialistName: string
-  specialists?: { id: string; name: string; role: string }[]
 }
 
-export default function MagicReferralPage() {
+export default function ReferMagicPage() {
   const params = useParams()
-  const router = useRouter()
   const token = params.token as string
-
-  const [step, setStep] = useState<'access-code' | 'form' | 'success'>('access-code')
+  
   const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null)
-  const [loadingLink, setLoadingLink] = useState(true)
-  const [linkError, setLinkError] = useState<string | null>(null)
-  const [accessCode, setAccessCode] = useState('')
-  const [verifyingCode, setVerifyingCode] = useState(false)
-  const [codeError, setCodeError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [files, setFiles] = useState<File[]>([])
-  const [selectedTeeth, setSelectedTeeth] = useState<string[]>([])
-
   const [formData, setFormData] = useState({
+    // GP/Submitter information
+    gpClinicName: '',
+    submittedByName: '',
+    submittedByPhone: '',
+    // Patient information
     patientFirstName: '',
     patientLastName: '',
     patientDob: '',
     insurance: '',
-    gpClinicName: '',
-    submittedByName: '',
-    submittedByPhone: '',
+    // Referral details
     reasonForReferral: '',
     notes: '',
-    intendedRecipientId: '',
-    specialty: '',
   })
-
-  // List of specialties for categorization
-  const SPECIALTIES = [
-    'General Dentist',
-    'Pedodontist or Pediatric Dentist',
-    'Orthodontist',
-    'Periodontist or Gum Specialist',
-    'Endodontist or Root Canal Specialist',
-    'Oral Pathologist or Oral Surgeon',
-    'Prosthodontist',
-  ]
-
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Fetch link info on mount
+  // Fetch link info
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const fetchLinkInfo = async () => {
       try {
-        setLoadingLink(true)
-        setLinkError(null)
-        const data = await magicReferralLinkService.getByToken(token)
-        setLinkInfo(data as LinkInfo)
+        setLoading(true)
+        setError(null)
+        const response = await api.get<{ success: boolean; data: LinkInfo }>(`/public/referral-link/${token}`)
+        if (response.data.success && response.data.data) {
+          setLinkInfo(response.data.data)
+        } else {
+          setError('Referral link not found')
+        }
       } catch (error: any) {
         console.error('Failed to load referral link:', error)
-        setLinkError(
-          error.response?.data?.message || 'Referral link not found or is inactive'
-        )
+        setError(error.response?.data?.message || 'Failed to load referral link information')
       } finally {
-        setLoadingLink(false)
+        setLoading(false)
       }
     }
 
@@ -86,114 +70,93 @@ export default function MagicReferralPage() {
     }
   }, [token])
 
-  const handleAccessCodeChange = (value: string) => {
-    setAccessCode(value.replace(/\D/g, '').slice(0, 8))
-    setCodeError(null)
-  }
-
-  const handleVerifyAccessCode = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!accessCode || accessCode.length < 4) {
-      setCodeError('Please enter a valid access code (4-8 digits)')
-      return
-    }
-
-    try {
-      setVerifyingCode(true)
-      setCodeError(null)
-      await magicReferralLinkService.verifyAccessCode(token, accessCode)
-      setStep('form')
-    } catch (error: any) {
-      setCodeError(error.response?.data?.message || 'Invalid access code')
-    } finally {
-      setVerifyingCode(false)
-    }
-  }
-
-  const handleFormChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }))
+      setErrors(prev => ({ ...prev, [field]: '' }))
     }
   }
 
-  const validateForm = () => {
+  const validate = () => {
     const newErrors: Record<string, string> = {}
-
-    if (!formData.patientFirstName.trim()) newErrors.patientFirstName = 'First name is required'
-    if (!formData.patientLastName.trim()) newErrors.patientLastName = 'Last name is required'
-    if (!formData.patientDob) {
-      newErrors.patientDob = 'Date of birth is required'
-    } else {
-      // Validate date format
-      const date = new Date(formData.patientDob)
-      if (isNaN(date.getTime())) {
-        newErrors.patientDob = 'Please enter a valid date'
-      }
-    }
+    
     if (!formData.gpClinicName.trim()) newErrors.gpClinicName = 'GP clinic name is required'
-    if (!formData.submittedByName.trim())
-      newErrors.submittedByName = 'Submitted by name is required'
-    if (!formData.reasonForReferral.trim())
-      newErrors.reasonForReferral = 'Reason for referral is required'
-
+    if (!formData.submittedByName.trim()) newErrors.submittedByName = 'Your name is required'
+    if (!formData.patientFirstName.trim()) newErrors.patientFirstName = 'Patient first name is required'
+    if (!formData.patientLastName.trim()) newErrors.patientLastName = 'Patient last name is required'
+    if (!formData.reasonForReferral.trim()) newErrors.reasonForReferral = 'Reason for referral is required'
+    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) return
-
+    
+    if (!validate()) return
+    
+    if (!linkInfo) {
+      setError('Referral link information not loaded')
+      return
+    }
+    
+    setIsSubmitting(true)
+    setErrors({})
+    
     try {
-      setSubmitting(true)
-
       // Create FormData to support file uploads
-      const submitFormData = new FormData()
-      submitFormData.append('accessCode', accessCode)
-      submitFormData.append('patientFirstName', formData.patientFirstName)
-      submitFormData.append('patientLastName', formData.patientLastName)
-      submitFormData.append('patientDob', formData.patientDob)
-      submitFormData.append('gpClinicName', formData.gpClinicName)
-      submitFormData.append('submittedByName', formData.submittedByName)
-      submitFormData.append('reasonForReferral', formData.reasonForReferral)
-
-      if (formData.insurance) submitFormData.append('insurance', formData.insurance)
-      if (formData.submittedByPhone) submitFormData.append('submittedByPhone', formData.submittedByPhone)
-      if (formData.notes) submitFormData.append('notes', formData.notes)
-      if (formData.intendedRecipientId) submitFormData.append('intendedRecipientId', formData.intendedRecipientId)
-      if (formData.specialty) submitFormData.append('specialty', formData.specialty)
-      if (selectedTeeth.length > 0) submitFormData.append('selectedTeeth', JSON.stringify(selectedTeeth))
-
+      const formDataToSend = new FormData()
+      formDataToSend.append('patientFirstName', formData.patientFirstName.trim())
+      formDataToSend.append('patientLastName', formData.patientLastName.trim())
+      formDataToSend.append('gpClinicName', formData.gpClinicName.trim())
+      formDataToSend.append('submittedByName', formData.submittedByName.trim())
+      formDataToSend.append('reasonForReferral', formData.reasonForReferral.trim())
+      
+      if (formData.patientDob) {
+        formDataToSend.append('patientDob', formData.patientDob)
+      }
+      if (formData.insurance?.trim()) {
+        formDataToSend.append('insurance', formData.insurance.trim())
+      }
+      if (formData.submittedByPhone?.trim()) {
+        formDataToSend.append('submittedByPhone', formData.submittedByPhone.trim())
+      }
+      if (formData.notes?.trim()) {
+        formDataToSend.append('notes', formData.notes.trim())
+      }
+      
       // Append files
       files.forEach((file) => {
-        submitFormData.append('files', file)
+        formDataToSend.append('files', file)
       })
 
-      // Submit with FormData (includes files)
-      // Submit with FormData (includes files)
-      // Note: We need to unset the default application/json content type
-      // Setting it to undefined allows the browser to set the regular multipart/form-data with the correct boundary
-      await api.post(`/public/referral-link/${token}/submit`, submitFormData, {
-        headers: {
-          'Content-Type': undefined,
-        },
-      })
-
-      setStep('success')
+      const response = await api.post(
+        `/public/referral-link/${token}/submit`,
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      )
+      
+      if (response.data.success) {
+        setSubmitted(true)
+      } else {
+        throw new Error(response.data.message || 'Failed to submit referral')
+      }
     } catch (error: any) {
       console.error('Failed to submit referral:', error)
       const errorMessage = error.response?.data?.message || error.message || 'Failed to submit referral. Please try again.'
+      setErrors({ submit: errorMessage })
       alert(errorMessage)
     } finally {
-      setSubmitting(false)
+      setIsSubmitting(false)
     }
   }
 
   // Loading state
-  if (loadingLink) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
@@ -207,7 +170,7 @@ export default function MagicReferralPage() {
   }
 
   // Error state
-  if (linkError || !linkInfo) {
+  if (error || !linkInfo) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
@@ -215,9 +178,9 @@ export default function MagicReferralPage() {
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4">
               <AlertCircle className="h-10 w-10 text-red-600" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Link Not Found</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Referral Link Not Found</h1>
             <p className="text-gray-600 mb-4">
-              {linkError || 'The referral link you are trying to access is invalid or inactive.'}
+              {error || 'The referral link you are trying to access is invalid or inactive.'}
             </p>
             <p className="text-sm text-gray-500">
               Please contact the clinic directly or check the link and try again.
@@ -229,7 +192,7 @@ export default function MagicReferralPage() {
   }
 
   // Success state
-  if (step === 'success') {
+  if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
@@ -241,7 +204,7 @@ export default function MagicReferralPage() {
             <p className="text-gray-600 mb-4">
               Your referral has been successfully sent to {linkInfo.clinicName}.
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500">
               They will review and respond to your referral shortly.
             </p>
           </CardContent>
@@ -250,86 +213,12 @@ export default function MagicReferralPage() {
     )
   }
 
-  // Access Code Entry Step
-  if (step === 'access-code') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 py-12 px-4">
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-8">
-            <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Secure Referral Submission
-            </h1>
-            <p className="text-gray-600">
-              Refer a patient to <strong>{linkInfo.clinicName}</strong>
-            </p>
-            {linkInfo.specialistName && (
-              <p className="text-sm text-gray-500 mt-1">Dr. {linkInfo.specialistName}</p>
-            )}
-          </div>
-
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center mb-6">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 mb-4">
-                  <Key className="h-8 w-8 text-brand-600" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Enter Access Code
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Please enter the access code provided by {linkInfo.clinicName} to continue.
-                </p>
-              </div>
-
-              <form onSubmit={handleVerifyAccessCode} className="space-y-4">
-                <div>
-                  <Input
-                    label="Access Code"
-                    type="text"
-                    inputMode="numeric"
-                    value={accessCode}
-                    onChange={(e) => handleAccessCodeChange(e.target.value)}
-                    placeholder="123456"
-                    className="text-center text-2xl font-mono tracking-widest"
-                    maxLength={8}
-                    error={codeError || undefined}
-                    autoFocus
-                  />
-                  <p className="text-xs text-gray-500 mt-1 text-center">
-                    4-8 digit code
-                  </p>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={verifyingCode || !accessCode || accessCode.length < 4}
-                >
-                  {verifyingCode ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Verifying...
-                    </>
-                  ) : (
-                    'Continue'
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  // Referral Form Step
+  // Referral form
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Refer a Patient to {linkInfo.clinicName}
           </h1>
@@ -339,8 +228,13 @@ export default function MagicReferralPage() {
               {linkInfo.clinicPhone && ` • ${linkInfo.clinicPhone}`}
             </p>
           )}
+          {linkInfo.specialistName && (
+            <p className="text-sm text-gray-500 mt-2">
+              Specialist: {linkInfo.specialistName}
+            </p>
+          )}
           <p className="text-sm text-gray-500 mt-2">
-            Fill out this form to submit your referral
+            Fill out this form to refer a patient. No account required.
           </p>
         </div>
 
@@ -348,16 +242,14 @@ export default function MagicReferralPage() {
         <Card>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* GP/Submitter Information */}
+              {/* Your Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Your Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Information</h3>
+                <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="GP Clinic Name"
+                    label="Your Clinic Name"
                     value={formData.gpClinicName}
-                    onChange={(e) => handleFormChange('gpClinicName', e.target.value)}
+                    onChange={(e) => handleChange('gpClinicName', e.target.value)}
                     error={errors.gpClinicName}
                     placeholder="ABC Dental Clinic"
                     required
@@ -365,7 +257,7 @@ export default function MagicReferralPage() {
                   <Input
                     label="Your Name"
                     value={formData.submittedByName}
-                    onChange={(e) => handleFormChange('submittedByName', e.target.value)}
+                    onChange={(e) => handleChange('submittedByName', e.target.value)}
                     error={errors.submittedByName}
                     placeholder="Dr. John Smith"
                     required
@@ -376,7 +268,7 @@ export default function MagicReferralPage() {
                     label="Your Phone (Optional)"
                     type="tel"
                     value={formData.submittedByPhone}
-                    onChange={(e) => handleFormChange('submittedByPhone', e.target.value)}
+                    onChange={(e) => handleChange('submittedByPhone', e.target.value)}
                     placeholder="(555) 123-4567"
                   />
                 </div>
@@ -384,14 +276,12 @@ export default function MagicReferralPage() {
 
               {/* Patient Information */}
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Patient Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
+                <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Patient First Name"
                     value={formData.patientFirstName}
-                    onChange={(e) => handleFormChange('patientFirstName', e.target.value)}
+                    onChange={(e) => handleChange('patientFirstName', e.target.value)}
                     error={errors.patientFirstName}
                     placeholder="John"
                     required
@@ -399,159 +289,106 @@ export default function MagicReferralPage() {
                   <Input
                     label="Patient Last Name"
                     value={formData.patientLastName}
-                    onChange={(e) => handleFormChange('patientLastName', e.target.value)}
+                    onChange={(e) => handleChange('patientLastName', e.target.value)}
                     error={errors.patientLastName}
                     placeholder="Doe"
                     required
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="grid grid-cols-2 gap-4 mt-4">
                   <Input
-                    label="Date of Birth"
+                    label="Date of Birth (Optional)"
                     type="date"
                     value={formData.patientDob}
-                    onChange={(e) => handleFormChange('patientDob', e.target.value)}
-                    error={errors.patientDob}
-                    required
+                    onChange={(e) => handleChange('patientDob', e.target.value)}
                   />
                   <Input
                     label="Insurance (Optional)"
                     value={formData.insurance}
-                    onChange={(e) => handleFormChange('insurance', e.target.value)}
-                    placeholder="Blue Cross Blue Shield"
+                    onChange={(e) => handleChange('insurance', e.target.value)}
+                    placeholder="Insurance provider"
                   />
                 </div>
               </div>
 
-
               {/* Referral Details */}
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Referral Details
-                </h3>
-
-                <div className="mb-12">
-                  <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
-                    Select Teeth (Optional)
-                  </label>
-                  <InteractiveToothChart
-                    selectedTeeth={selectedTeeth}
-                    onTeethChange={setSelectedTeeth}
-                  />
-                </div>
-
-
-
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Select Specialist Type
-                  </label>
-                  <select
-                    value={formData.specialty}
-                    onChange={(e) => handleFormChange('specialty', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                  >
-                    <option value="">Select a Specialty...</option>
-                    {SPECIALTIES.map((spec) => (
-                      <option key={spec} value={spec}>
-                        {spec}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Categorize the type of specialist needed for this referral.
-                  </p>
-                </div>
-
-                {/* Optional: Show specific doctor selection if needed, or remove if replaced by Specialty */}
-                {linkInfo?.specialists && linkInfo.specialists.length > 0 && (
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Specific Doctor (Optional)
-                    </label>
-                    <select
-                      value={formData.intendedRecipientId}
-                      onChange={(e) => handleFormChange('intendedRecipientId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-                    >
-                      <option value="">Any Specialist (First Available)</option>
-                      {linkInfo.specialists.map((specialist) => (
-                        <option key={specialist.id} value={specialist.id}>
-                          Dr. {specialist.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Referral Details</h3>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Reason for Referral <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     value={formData.reasonForReferral}
-                    onChange={(e) => handleFormChange('reasonForReferral', e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.reasonForReferral ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                    rows={4}
-                    placeholder="Describe the reason for this referral..."
+                    onChange={(e) => handleChange('reasonForReferral', e.target.value)}
+                    rows={3}
                     required
+                    placeholder="Please describe the reason for this referral..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
                   />
                   {errors.reasonForReferral && (
                     <p className="mt-1 text-sm text-red-600">{errors.reasonForReferral}</p>
                   )}
                 </div>
+
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Additional Notes (Optional)
                   </label>
                   <textarea
                     value={formData.notes}
-                    onChange={(e) => handleFormChange('notes', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    onChange={(e) => handleChange('notes', e.target.value)}
                     rows={3}
+                    maxLength={500}
                     placeholder="Any additional information..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.notes?.length || 0}/500 characters
+                  </p>
                 </div>
               </div>
 
               {/* File Upload */}
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Attachments (Optional)
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Documents (Optional)</h3>
                 <FileUpload files={files} onFilesChange={setFiles} />
                 <p className="text-xs text-gray-500 mt-2">
-                  You can upload X-rays, images, or documents related to this referral
+                  Upload X-rays, photos, or other relevant patient documents. Max 10MB per file.
                 </p>
               </div>
 
-              {/* Submit Button */}
-              <div className="border-t border-gray-200 pt-6 flex justify-end gap-4">
+              {/* Submit */}
+              <div className="border-t border-gray-200 pt-6">
+                {errors.submit && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-red-800">{errors.submit}</p>
+                  </div>
+                )}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    📧 You will receive an email confirmation once {linkInfo.clinicName} reviews your referral.
+                  </p>
+                </div>
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep('access-code')}
-                  disabled={submitting}
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  isLoading={isSubmitting}
                 >
-                  Back
-                </Button>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Referral'
-                  )}
+                  Submit Referral to {linkInfo.clinicName}
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
+
+        {/* Footer */}
+        <p className="text-center text-sm text-gray-500 mt-6">
+          This is a secure referral submission form. Your information will only be shared with {linkInfo.clinicName}.
+        </p>
       </div>
-    </div >
+    </div>
   )
 }
-

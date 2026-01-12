@@ -7,15 +7,15 @@ import type {
 } from '@/types'
 
 /**
- * Magic Referral Link Service
+ * Referral Link Service
  */
-export const magicReferralLinkService = {
+export const referralLinkService = {
   /**
-   * Create a new magic referral link
+   * Create a new referral link
    */
   async create(data: CreateReferralLinkRequest): Promise<CreateReferralLinkResponse> {
     const response = await api.post<ApiResponse<CreateReferralLinkResponse>>(
-      '/magic-referral-links',
+      '/referral-links',
       data
     )
     return response.data.data
@@ -25,7 +25,7 @@ export const magicReferralLinkService = {
    * List all referral links for the authenticated specialist
    */
   async list(): Promise<ReferralLink[]> {
-    const response = await api.get<ApiResponse<ReferralLink[]>>('/magic-referral-links')
+    const response = await api.get<ApiResponse<ReferralLink[]>>('/referral-links')
     return response.data.data
   },
 
@@ -33,7 +33,7 @@ export const magicReferralLinkService = {
    * Get a single referral link by ID
    */
   async getById(id: string): Promise<ReferralLink> {
-    const response = await api.get<ApiResponse<ReferralLink>>(`/magic-referral-links/${id}`)
+    const response = await api.get<ApiResponse<ReferralLink>>(`/referral-links/${id}`)
     return response.data.data
   },
 
@@ -49,7 +49,7 @@ export const magicReferralLinkService = {
     }
   ): Promise<{ referralLink: ReferralLink; accessCode?: string }> {
     const response = await api.put<ApiResponse<{ referralLink: ReferralLink; accessCode?: string }>>(
-      `/magic-referral-links/${id}`,
+      `/referral-links/${id}`,
       data
     )
     return response.data.data
@@ -59,7 +59,7 @@ export const magicReferralLinkService = {
    * Delete a referral link
    */
   async delete(id: string): Promise<void> {
-    await api.delete(`/magic-referral-links/${id}`)
+    await api.delete(`/referral-links/${id}`)
   },
 
   /**
@@ -90,7 +90,7 @@ export const magicReferralLinkService = {
   },
 
   /**
-   * Submit referral via magic link (public endpoint)
+   * Submit referral via referral link (public endpoint)
    * Note: This method is kept for compatibility, but FormData should be used directly
    * when files are included (see frontend page implementation)
    */
