@@ -31,6 +31,7 @@ export default function ReferMagicPage() {
     // GP/Submitter information
     gpClinicName: '',
     submittedByName: '',
+    submittedByEmail: '',
     submittedByPhone: '',
     // Patient information
     patientFirstName: '',
@@ -82,6 +83,10 @@ export default function ReferMagicPage() {
     
     if (!formData.gpClinicName.trim()) newErrors.gpClinicName = 'GP clinic name is required'
     if (!formData.submittedByName.trim()) newErrors.submittedByName = 'Your name is required'
+    if (!formData.submittedByEmail.trim()) newErrors.submittedByEmail = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.submittedByEmail.trim())) {
+      newErrors.submittedByEmail = 'Please enter a valid email address'
+    }
     if (!formData.patientFirstName.trim()) newErrors.patientFirstName = 'Patient first name is required'
     if (!formData.patientLastName.trim()) newErrors.patientLastName = 'Patient last name is required'
     if (!formData.reasonForReferral.trim()) newErrors.reasonForReferral = 'Reason for referral is required'
@@ -110,6 +115,7 @@ export default function ReferMagicPage() {
       formDataToSend.append('patientLastName', formData.patientLastName.trim())
       formDataToSend.append('gpClinicName', formData.gpClinicName.trim())
       formDataToSend.append('submittedByName', formData.submittedByName.trim())
+      formDataToSend.append('submittedByEmail', formData.submittedByEmail.trim())
       formDataToSend.append('reasonForReferral', formData.reasonForReferral.trim())
       
       if (formData.patientDob) {
@@ -260,6 +266,17 @@ export default function ReferMagicPage() {
                     onChange={(e) => handleChange('submittedByName', e.target.value)}
                     error={errors.submittedByName}
                     placeholder="Dr. John Smith"
+                    required
+                  />
+                </div>
+                <div className="mt-4">
+                  <Input
+                    label="Your Email"
+                    type="email"
+                    value={formData.submittedByEmail}
+                    onChange={(e) => handleChange('submittedByEmail', e.target.value)}
+                    error={errors.submittedByEmail}
+                    placeholder="your.email@example.com"
                     required
                   />
                 </div>

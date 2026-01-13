@@ -75,6 +75,7 @@ router.post(
     body('patientLastName').notEmpty().withMessage('Patient last name is required'),
     body('gpClinicName').notEmpty().withMessage('GP clinic name is required'),
     body('submittedByName').notEmpty().withMessage('Submitted by name is required'),
+    body('submittedByEmail').isEmail().withMessage('Valid email is required'),
     body('reasonForReferral').notEmpty().withMessage('Reason for referral is required'),
     body('patientDob').optional().isISO8601().withMessage('Patient date of birth must be a valid date'),
     body('insurance').optional().isString().trim(),
@@ -83,6 +84,21 @@ router.post(
   ]),
   publicController.submitReferral
 )
+
+/**
+ * @route   GET /api/public/referral-status/:statusToken
+ * @desc    Get referral status by status token (for status tracking page)
+ * @access  Public
+ */
+router.get('/referral-status/:statusToken', publicController.getReferralStatusByToken)
+
+/**
+ * @route   GET /api/public/referral/:shareToken
+ * @desc    Get shared referral by share token (read-only view)
+ * @access  Public
+ * @note    This feature is not yet implemented - getSharedReferral function does not exist
+ */
+// router.get('/referral/:shareToken', publicController.getSharedReferral)
 
 export default router
 

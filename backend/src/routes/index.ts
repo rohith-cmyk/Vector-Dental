@@ -17,7 +17,7 @@ router.use('/referrals', referralsRoutes)
 router.use('/dashboard', dashboardRoutes)
 router.use('/public', publicRoutes) // Public routes (no auth required)
 router.use('/referral-link', referralLinkRoutes) // Clinic referral link management (slug-based)
-router.use('/magic-referral-links', magicReferralLinkRoutes) // Magic referral link management (token-based)
+router.use('/referral-links', magicReferralLinkRoutes) // Referral link management (token-based)
 router.use('/notifications', notificationsRoutes) // Notifications
 
 // Health check

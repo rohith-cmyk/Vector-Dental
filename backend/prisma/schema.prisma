@@ -125,6 +125,8 @@ model Referral {
   intendedRecipientId String? // FK to User (Specialist)
   specialty    String?          // Specialty category (e.g. Orthodontist)
   referralLinkId String?  // FK to ReferralLink
+  shareToken   String?   @unique // Token for sharing referral (view-only access)
+  statusToken  String?   @unique // Token for status tracking page
   
   // Clinical Data
   selectedTeeth String[]  @default([]) // Array of tooth IDs (e.g. ["1", "3", "32"])
@@ -149,6 +151,8 @@ model Referral {
   @@index([status])
   @@index([createdAt])
   @@index([referralLinkId])
+  @@index([shareToken])
+  @@index([statusToken])
   @@map("referrals")
 }
 

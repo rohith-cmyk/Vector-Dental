@@ -10,6 +10,7 @@ import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES } from '@/constants'
 import type { Referral, ReferralStatus } from '@/types'
 import { api } from '@/lib/api'
+import { referralsService } from '@/services/referrals.service'
 
 export default function ReferralsPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -372,6 +373,13 @@ export default function ReferralsPage() {
           isOpen={!!selectedReferral}
           onClose={() => setSelectedReferral(null)}
           referral={selectedReferral}
+          onStatusUpdate={() => {
+            fetchReferrals()
+            // Refresh the selected referral if modal is still open
+            if (selectedReferral) {
+              referralsService.getById(selectedReferral.id).then(setSelectedReferral).catch(console.error)
+            }
+          }}
         />
 
         {/* New Referral Modal */}

@@ -45,3 +45,23 @@ export async function hashAccessCode(accessCode: string): Promise<string> {
 export async function verifyAccessCode(accessCode: string, hash: string): Promise<boolean> {
   return comparePassword(accessCode, hash)
 }
+
+/**
+ * Generate a cryptographically secure random token for sharing referrals
+ * Returns a base64url-encoded token (32-64 characters)
+ */
+export function generateShareToken(): string {
+  // Generate 32 random bytes and encode as base64url (URL-safe)
+  const randomBytes = crypto.randomBytes(32)
+  return randomBytes.toString('base64url')
+}
+
+/**
+ * Generate a cryptographically secure random token for status tracking
+ * Returns a base64url-encoded token (32-64 characters)
+ */
+export function generateStatusToken(): string {
+  // Generate 32 random bytes and encode as base64url (URL-safe)
+  const randomBytes = crypto.randomBytes(32)
+  return randomBytes.toString('base64url')
+}

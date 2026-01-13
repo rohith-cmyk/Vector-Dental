@@ -11,8 +11,10 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format date to readable string
  */
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return ''
   const d = typeof date === 'string' ? new Date(date) : date
+  if (isNaN(d.getTime())) return '' // Invalid date
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',

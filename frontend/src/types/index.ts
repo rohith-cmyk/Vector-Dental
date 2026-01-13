@@ -54,7 +54,7 @@ export interface Contact {
 }
 
 // Referral Types
-export type ReferralStatus = 'DRAFT' | 'SENT' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
+export type ReferralStatus = 'DRAFT' | 'SENT' | 'SUBMITTED' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
 export type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
 export type ReferralType = 'OUTGOING' | 'INCOMING'
 
@@ -90,6 +90,9 @@ export interface Referral {
   
   // Files
   files?: ReferralFile[]
+  
+  // Status tracking
+  statusToken?: string // Token for status tracking page (only for referrals submitted via referral link)
   
   // Timestamps
   createdAt: string

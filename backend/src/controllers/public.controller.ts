@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
-import { verifyAccessCode } from '../utils/tokens'
+import { verifyAccessCode, generateStatusToken } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
 
 /**
@@ -271,6 +271,7 @@ export async function submitReferral(
       // GP/Submitter information
       gpClinicName,
       submittedByName,
+      submittedByEmail,
       submittedByPhone,
       // Referral details
       reasonForReferral,
@@ -315,6 +316,9 @@ export async function submitReferral(
       throw errors.badRequest('This referral link is currently inactive')
     }
 
+    // Generate status token for status tracking page
+    const statusToken = generateStatusToken()
+
     // Create referral with new fields
     // Use the specialist's clinic as the receiving clinic
     const referral = await prisma.referral.create({
@@ -330,11 +334,13 @@ export async function submitReferral(
         insurance: insurance || null,
         gpClinicName,
         submittedByName,
+        fromClinicEmail: submittedByEmail || null, // Store email in fromClinicEmail field
         submittedByPhone: submittedByPhone || null,
         reason: reasonForReferral,
         notes: notes || null,
         status: 'SUBMITTED', // New status for magic link submissions
         urgency: 'ROUTINE', // Default urgency
+        statusToken, // Store the status token for status tracking page
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,
         referringDentist: submittedByName,
@@ -403,3 +409,88 @@ export async function submitReferral(
   }
 }
 
+
+/**
+ * Get referral status by status token (public - no auth required)
+ * GET /api/public/referral-status/:statusToken
+ * Returns referral status information for status tracking page
+ */
+export async function getReferralStatusByToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusToken } = req.params
+
+    if (!statusToken) {
+      throw errors.badRequest('Status token is required')
+    }
+
+    // Find referral by status token
+    const referral = await prisma.referral.findUnique({
+      where: { statusToken },
+      include: {
+        clinic: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    if (!referral) {
+      throw errors.notFound('Referral status not found')
+    }
+
+    // Status mapping for timeline display
+    const STATUS_TO_TIMELINE_STAGE: Record<string, string> = {
+      SUBMITTED: 'reviewed',
+      ACCEPTED: 'appointment_scheduled',
+      SENT: 'patient_attended',
+      COMPLETED: 'completed',
+    }
+
+    const TIMELINE_STAGES = [
+      { key: 'reviewed', label: 'Reviewed', status: 'SUBMITTED' },
+      { key: 'appointment_scheduled', label: 'Appointment Scheduled', status: 'ACCEPTED' },
+      { key: 'patient_attended', label: 'Patient Attended', status: 'SENT' },
+      { key: 'completed', label: 'Completed', status: 'COMPLETED' },
+    ]
+
+    // Determine current timeline stage based on status
+    const currentStage = STATUS_TO_TIMELINE_STAGE[referral.status] || 'reviewed'
+
+    // Build timeline stages
+    const timeline = TIMELINE_STAGES.map((stage) => {
+      const stageIndex = TIMELINE_STAGES.findIndex((s) => s.key === stage.key)
+      const currentIndex = TIMELINE_STAGES.findIndex((s) => s.key === currentStage)
+      
+      return {
+        key: stage.key,
+        label: stage.label,
+        status: stage.status,
+        isCompleted: stageIndex < currentIndex,
+        isCurrent: stageIndex === currentIndex,
+        isPending: stageIndex > currentIndex,
+      }
+    })
+
+    res.json({
+      success: true,
+      data: {
+        referralId: referral.id,
+        patientName: referral.patientFirstName && referral.patientLastName
+          ? `${referral.patientFirstName} ${referral.patientLastName}`
+          : referral.patientName,
+        status: referral.status,
+        currentStage,
+        timeline,
+        submittedAt: referral.createdAt,
+        clinic: referral.clinic,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
