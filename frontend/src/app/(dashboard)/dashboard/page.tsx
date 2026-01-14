@@ -16,7 +16,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [acceptingId, setAcceptingId] = useState<string | null>(null)
+  const [acceptingIds, setAcceptingIds] = useState<string[]>([])
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
 
   useEffect(() => {
@@ -56,10 +56,22 @@ export default function DashboardPage() {
   }
 
   const handleAcceptReferral = async (id: string) => {
-    if (acceptingId) return // Prevent multiple simultaneous requests
+    if (acceptingIds.includes(id)) return // Prevent duplicate request for same row
 
     try {
-      setAcceptingId(id)
+      setAcceptingIds((prev) => [...new Set([...prev, id])])
+      // Optimistically remove from pending list for instant UI feedback
+      setStats((prev) => {
+        if (!prev) return prev
+        const exists = prev.recentIncoming.some((referral) => referral.id === id)
+        if (!exists) return prev
+        return {
+          ...prev,
+          recentIncoming: prev.recentIncoming.filter((referral) => referral.id !== id),
+          pendingIncoming: Math.max(0, prev.pendingIncoming - 1),
+        }
+      })
+
       // Update status to ACCEPTED (which shows as "Appointment Scheduled" in the timeline)
       // This removes it from pending list (which only shows SUBMITTED status)
       await referralsService.updateStatus(id, 'ACCEPTED')
@@ -69,9 +81,11 @@ export default function DashboardPage() {
       await loadDashboardData(false, true) // Force refresh without showing loading
     } catch (error: any) {
       console.error('Failed to accept referral:', error)
+      // Revert optimistic update on failure
+      loadDashboardData(false, true)
       alert(error.response?.data?.message || 'Failed to accept referral. Please try again.')
     } finally {
-      setAcceptingId(null)
+      setAcceptingIds((prev) => prev.filter((existingId) => existingId !== id))
     }
   }
 
@@ -172,7 +186,7 @@ export default function DashboardPage() {
           referrals={stats.recentIncoming}
           onAccept={handleAcceptReferral}
           onView={handleViewReferral}
-          acceptingId={acceptingId}
+          acceptingIds={acceptingIds}
         />
 
         {/* Outgoing Referrals - Track Status */}

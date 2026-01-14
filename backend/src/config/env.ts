@@ -28,6 +28,19 @@ export const config = {
   // File Upload
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'), // 10MB default
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
+
+  // Email (SMTP)
+  smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+  smtpPort: parseInt(process.env.SMTP_PORT || '465'),
+  smtpSecure: process.env.SMTP_SECURE
+    ? process.env.SMTP_SECURE === 'true'
+    : parseInt(process.env.SMTP_PORT || '465') === 465,
+  smtpUser: process.env.SMTP_USER || '',
+  smtpPass: process.env.SMTP_PASS || '',
+  emailFrom: process.env.EMAIL_FROM || 'rohith@rdventurestudios.com',
+
+  // Email (Resend)
+  resendApiKey: process.env.RESEND_API_KEY || 're_QtQLnWri_PgAptPNvfoo7cpVczGjpjkJp',
 }
 
 // Validate required environment variables

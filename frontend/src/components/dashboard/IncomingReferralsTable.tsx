@@ -10,10 +10,10 @@ interface IncomingReferralsTableProps {
   referrals: Referral[]
   onAccept?: (id: string) => void
   onView?: (id: string) => void
-  acceptingId?: string | null
+  acceptingIds?: string[]
 }
 
-export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingId }: IncomingReferralsTableProps) {
+export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingIds }: IncomingReferralsTableProps) {
   // Handle undefined or empty data
   const safeReferrals = referrals || []
   
@@ -106,10 +106,10 @@ export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingI
                           variant="primary"
                           className="gap-1"
                           onClick={() => onAccept?.(referral.id)}
-                          disabled={acceptingId === referral.id}
+                          disabled={acceptingIds?.includes(referral.id)}
                         >
                           <CheckCircle className="h-4 w-4" />
-                          {acceptingId === referral.id ? 'Accepting...' : 'Accept'}
+                          {acceptingIds?.includes(referral.id) ? 'Accepting...' : 'Accept'}
                         </Button>
                         <Button
                           size="sm"

@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
+import { config } from '../config/env'
 import { errors } from '../utils/errors'
 import { verifyAccessCode, generateStatusToken } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
+import { sendEmail } from '../utils/email'
 
 /**
  * Get clinic by slug (public - no auth required)
@@ -90,6 +92,9 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
       throw errors.badRequest('This referral link is currently inactive')
     }
 
+    // Generate status token for status tracking page
+    const statusToken = generateStatusToken()
+
     // Create INCOMING referral
     const referral = await prisma.referral.create({
       data: {
@@ -107,6 +112,7 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
         urgency: urgency.toUpperCase() as 'ROUTINE' | 'URGENT' | 'EMERGENCY',
         status: 'SENT', // Ready for clinic to review
         notes,
+        statusToken,
       },
       include: {
         files: true,
@@ -124,11 +130,26 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
       },
     })
 
+    // Send status tracking link to referring clinic
+    if (fromClinicEmail) {
+      const statusUrl = `${config.corsOrigin}/referral-status/${statusToken}`
+      await sendEmail({
+        to: fromClinicEmail,
+        replyTo: fromClinicEmail,
+        subject: 'Referral Received - Track Status',
+        body:
+          `Your referral has been received by ${referralLink.clinic.name}.\n\n` +
+          `Track the status here:\n${statusUrl}\n\n` +
+          `Thank you,\n${referralLink.clinic.name}`,
+      })
+    }
+
     res.status(201).json({
       success: true,
       message: 'Referral submitted successfully',
       data: {
         referralId: referral.id,
+        statusToken,
       },
     })
   } catch (error) {
@@ -395,11 +416,26 @@ export async function submitReferral(
       },
     })
 
+    // Send status tracking link to submitter (if email provided)
+    if (submittedByEmail) {
+      const statusUrl = `${config.corsOrigin}/referral-status/${statusToken}`
+      await sendEmail({
+        to: submittedByEmail,
+        replyTo: submittedByEmail,
+        subject: 'Referral Received - Track Status',
+        body:
+          `Your referral has been received by ${referralLink.specialist.clinic.name}.\n\n` +
+          `Track the status here:\n${statusUrl}\n\n` +
+          `Thank you,\n${referralLink.specialist.clinic.name}`,
+      })
+    }
+
     res.status(201).json({
       success: true,
       message: 'Referral submitted successfully',
       data: {
         referralId: referral.id,
+        statusToken,
       },
     })
   } catch (error) {
