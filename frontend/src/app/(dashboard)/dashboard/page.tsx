@@ -7,33 +7,40 @@ import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
 import { SpecialtyBreakdown } from '@/components/dashboard/SpecialtyBreakdown'
 import { IncomingReferralsTable } from '@/components/dashboard/IncomingReferralsTable'
 import { OutgoingReferralsTable } from '@/components/dashboard/OutgoingReferralsTable'
+import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
 import { dashboardService } from '@/services/dashboard.service'
-import type { DashboardStats } from '@/types'
+import { referralsService } from '@/services/referrals.service'
+import type { DashboardStats, Referral } from '@/types'
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [acceptingId, setAcceptingId] = useState<string | null>(null)
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
 
   useEffect(() => {
     // Initial load - show loading
     loadDashboardData(true)
 
-    // Auto-refresh dashboard data every 60 seconds (silent refresh - no loading indicator)
+    // Auto-refresh dashboard data every 2 minutes (silent refresh - no loading indicator)
+    // Cache will handle showing stale data while fetching fresh
     const interval = setInterval(() => {
       loadDashboardData(false) // Silent refresh - don't show loading
-    }, 60000) // 60 seconds
+    }, 120000) // 2 minutes (cache TTL)
 
     return () => clearInterval(interval)
   }, [])
 
-  const loadDashboardData = async (showLoading: boolean = true) => {
+  const loadDashboardData = async (showLoading: boolean = true, forceRefresh: boolean = false) => {
     try {
       if (showLoading) {
         setLoading(true)
       }
       setError(null)
-      const data = await dashboardService.getStats()
+      
+      // getStats() will use cache if available and fresh
+      const data = await dashboardService.getStats(forceRefresh)
       setStats(data)
     } catch (err) {
       console.error('Failed to load dashboard data:', err)
@@ -48,18 +55,51 @@ export default function DashboardPage() {
     }
   }
 
-  const handleAcceptReferral = (id: string) => {
-    alert(`Accepting referral ${id} - Feature will be implemented!`)
-  }
+  const handleAcceptReferral = async (id: string) => {
+    if (acceptingId) return // Prevent multiple simultaneous requests
 
-  const handleRejectReferral = (id: string) => {
-    if (confirm('Are you sure you want to reject this referral?')) {
-      alert(`Rejected referral ${id}`)
+    try {
+      setAcceptingId(id)
+      // Update status to ACCEPTED (which shows as "Appointment Scheduled" in the timeline)
+      // This removes it from pending list (which only shows SUBMITTED status)
+      await referralsService.updateStatus(id, 'ACCEPTED')
+      
+      // Clear dashboard cache and refresh data
+      dashboardService.clearCache()
+      await loadDashboardData(false, true) // Force refresh without showing loading
+    } catch (error: any) {
+      console.error('Failed to accept referral:', error)
+      alert(error.response?.data?.message || 'Failed to accept referral. Please try again.')
+    } finally {
+      setAcceptingId(null)
     }
   }
 
-  const handleViewReferral = (id: string) => {
-    alert(`Viewing referral ${id} - Full details modal coming soon!`)
+  const handleViewReferral = async (id: string) => {
+    try {
+      // Fetch the referral details
+      const referral = await referralsService.getById(id)
+      
+      // If status is SUBMITTED, update it to ACCEPTED (which removes it from pending list)
+      if (referral.status === 'SUBMITTED') {
+        try {
+          const updatedReferral = await referralsService.updateStatus(id, 'ACCEPTED')
+          setSelectedReferral(updatedReferral)
+          // Refresh dashboard data
+          dashboardService.clearCache()
+          await loadDashboardData(false, true)
+        } catch (error: any) {
+          console.error('Failed to auto-update status:', error)
+          // Still show the modal even if status update fails
+          setSelectedReferral(referral)
+        }
+      } else {
+        setSelectedReferral(referral)
+      }
+    } catch (error: any) {
+      console.error('Failed to load referral:', error)
+      alert(error.response?.data?.message || 'Failed to load referral. Please try again.')
+    }
   }
 
   if (loading) {
@@ -131,7 +171,8 @@ export default function DashboardPage() {
         <IncomingReferralsTable
           referrals={stats.recentIncoming}
           onAccept={handleAcceptReferral}
-          onReject={handleRejectReferral}
+          onView={handleViewReferral}
+          acceptingId={acceptingId}
         />
 
         {/* Outgoing Referrals - Track Status */}
@@ -140,6 +181,22 @@ export default function DashboardPage() {
           onView={handleViewReferral}
         />
       </div>
+
+      {/* Referral Details Modal */}
+      <ReferralDetailsModal
+        isOpen={!!selectedReferral}
+        onClose={() => setSelectedReferral(null)}
+        referral={selectedReferral}
+        onStatusUpdate={() => {
+          // Refresh dashboard data when status is updated from modal
+          dashboardService.clearCache()
+          loadDashboardData(false, true)
+          // Refresh the selected referral
+          if (selectedReferral) {
+            referralsService.getById(selectedReferral.id).then(setSelectedReferral).catch(console.error)
+          }
+        }}
+      />
     </DashboardLayout>
   )
 }

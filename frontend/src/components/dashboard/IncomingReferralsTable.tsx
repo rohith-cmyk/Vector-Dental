@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@/components/ui'
-import { Search, CheckCircle, XCircle } from 'lucide-react'
+import { Search, CheckCircle, Eye } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 import { URGENCY_LEVELS } from '@/constants'
 import type { Referral } from '@/types'
@@ -9,10 +9,11 @@ import type { Referral } from '@/types'
 interface IncomingReferralsTableProps {
   referrals: Referral[]
   onAccept?: (id: string) => void
-  onReject?: (id: string) => void
+  onView?: (id: string) => void
+  acceptingId?: string | null
 }
 
-export function IncomingReferralsTable({ referrals, onAccept, onReject }: IncomingReferralsTableProps) {
+export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingId }: IncomingReferralsTableProps) {
   // Handle undefined or empty data
   const safeReferrals = referrals || []
   
@@ -105,18 +106,19 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
                           variant="primary"
                           className="gap-1"
                           onClick={() => onAccept?.(referral.id)}
+                          disabled={acceptingId === referral.id}
                         >
                           <CheckCircle className="h-4 w-4" />
-                          Accept
+                          {acceptingId === referral.id ? 'Accepting...' : 'Accept'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           className="gap-1"
-                          onClick={() => onReject?.(referral.id)}
+                          onClick={() => onView?.(referral.id)}
                         >
-                          <XCircle className="h-4 w-4" />
-                          Reject
+                          <Eye className="h-4 w-4" />
+                          View
                         </Button>
                       </div>
                     </td>

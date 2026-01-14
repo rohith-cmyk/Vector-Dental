@@ -45,7 +45,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     // Pending incoming (need your action to accept/reject)
     const pendingIncoming = await prisma.referral.count({
       where: {
-        status: 'SENT', // Waiting for your action
+        status: 'SUBMITTED', // Only show SUBMITTED status (new referrals from referral links)
         OR: [
           { fromClinicId: clinicId, referralType: 'INCOMING' },
           { toClinicId: clinicId }
@@ -250,9 +250,10 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       })
     }
 
-    // Get recent incoming referrals (last 5)
+    // Get recent incoming referrals (last 5) - only pending (SUBMITTED status)
     const recentIncoming = await prisma.referral.findMany({
       where: {
+        status: 'SUBMITTED', // Only show SUBMITTED status (new referrals from referral links)
         OR: [
           { fromClinicId: clinicId, referralType: 'INCOMING' },
           { toClinicId: clinicId }

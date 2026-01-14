@@ -208,7 +208,14 @@ export default function NotificationsPage() {
                         {/* View Referral Link */}
                         {notification.referralId && (
                           <button
-                            onClick={() => window.location.href = `/referrals?id=${notification.referralId}`}
+                            onClick={async () => {
+                              // Mark notification as read first
+                              if (!notification.isRead) {
+                                await handleMarkAsRead(notification.id)
+                              }
+                              // Navigate to referrals page
+                              window.location.href = `/referrals?id=${notification.referralId}`
+                            }}
                             className="mt-2 text-sm text-brand-600 hover:text-brand-700 font-medium"
                           >
                             View Referral →

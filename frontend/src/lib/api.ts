@@ -34,7 +34,7 @@ export const API_URL = getApiUrl()
  */
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased timeout to 30 seconds for dashboard stats endpoint
   headers: {
     'Content-Type': 'application/json',
   },
