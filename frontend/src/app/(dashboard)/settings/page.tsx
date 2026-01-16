@@ -3,17 +3,24 @@
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
-import { Link as LinkIcon, User, Bell, Lock, Palette } from 'lucide-react'
+import { Link as LinkIcon, User, Bell, Lock, Palette, Key } from 'lucide-react'
 
 export default function SettingsPage() {
   const settingsSections = [
     {
-      title: 'Referral Link',
-      description: 'Manage your public referral link and share it with other clinics',
-      icon: <LinkIcon className="h-6 w-6 text-brand-500" />,
-      href: '/settings/referral-link',
+      title: 'Referral Links',
+      description: 'Create secure token-based referral links with access codes',
+      icon: <Key className="h-6 w-6 text-purple-500" />,
+      href: '/settings/referral-links',
       badge: 'New',
     },
+    // Disabled: Referral Link (singular) - not currently in use
+    // {
+    //   title: 'Referral Link',
+    //   description: 'Manage your public referral link and share it with other clinics',
+    //   icon: <LinkIcon className="h-6 w-6 text-brand-500" />,
+    //   href: '/settings/referral-link',
+    // },
     {
       title: 'Profile Settings',
       description: 'Update your personal information and preferences',

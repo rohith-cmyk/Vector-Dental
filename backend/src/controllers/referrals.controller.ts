@@ -1,6 +1,27 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
+import { generateShareToken } from '../utils/tokens'
+import { sendEmail } from '../utils/email'
+import { config } from '../config/env'
+
+/**
+ * Status mapping for timeline display
+ * Maps referral statuses to timeline stages
+ */
+const STATUS_TO_TIMELINE_STAGE: Record<string, string> = {
+  SUBMITTED: 'reviewed',
+  ACCEPTED: 'appointment_scheduled',
+  SENT: 'patient_attended',
+  COMPLETED: 'completed',
+}
+
+const TIMELINE_STAGES = [
+  { key: 'reviewed', label: 'Reviewed', status: 'SUBMITTED' },
+  { key: 'appointment_scheduled', label: 'Appointment Scheduled', status: 'ACCEPTED' },
+  { key: 'patient_attended', label: 'Patient Attended', status: 'SENT' },
+  { key: 'completed', label: 'Completed', status: 'COMPLETED' },
+]
 
 /**
  * Get all referrals for the clinic
@@ -8,19 +29,48 @@ import { errors } from '../utils/errors'
 export async function getAllReferrals(req: Request, res: Response, next: NextFunction) {
   try {
     const clinicId = req.user!.clinicId
-    const { page = 1, limit = 10, search, status, urgency } = req.query
+    const { page = 1, limit = 10, search, status, urgency, type } = req.query
 
     const skip = (Number(page) - 1) * Number(limit)
     const take = Number(limit)
 
     // Build where clause
-    const where: any = { clinicId }
+    const where: any = {}
+
+    // Filter by type (sent vs received)
+    if (type === 'received') {
+      // Incoming referrals:
+      // 1. P2P: Sent TO this clinic (toClinicId = clinicId)
+      // 2. Magic Link/Legacy: Created presumably by this clinic with type INCOMING (fromClinicId = clinicId AND referralType = INCOMING)
+      where.OR = [
+        { toClinicId: clinicId },
+        {
+          fromClinicId: clinicId,
+          referralType: 'INCOMING'
+        }
+      ]
+    } else {
+      // Default or 'sent': Outgoing referrals
+      // Sent BY this clinic (fromClinicId = clinicId AND referralType = OUTGOING)
+      where.fromClinicId = clinicId
+      where.referralType = 'OUTGOING'
+    }
 
     if (search) {
-      where.OR = [
+      const searchFilter = [
         { patientName: { contains: search as string, mode: 'insensitive' } },
         { reason: { contains: search as string, mode: 'insensitive' } },
       ]
+
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          { OR: searchFilter }
+        ]
+        delete where.OR // Move original OR to AND block
+      } else {
+        where.OR = searchFilter
+      }
     }
 
     if (status) {
@@ -40,6 +90,7 @@ export async function getAllReferrals(req: Request, res: Response, next: NextFun
         include: {
           contact: true,
           files: true,
+          clinic: true, // Include sending clinic info
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -68,10 +119,17 @@ export async function getReferralById(req: Request, res: Response, next: NextFun
     const clinicId = req.user!.clinicId
 
     const referral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: {
+        id,
+        OR: [
+          { fromClinicId: clinicId }, // Sender
+          { toClinicId: clinicId },   // Receiver
+        ]
+      },
       include: {
         contact: true,
         files: true,
+        clinic: true,
       },
     })
 
@@ -116,8 +174,9 @@ export async function createReferral(req: Request, res: Response, next: NextFunc
 
     const referral = await prisma.referral.create({
       data: {
-        clinicId,
-        contactId,
+        referralType: 'OUTGOING',
+        fromClinicId: clinicId,
+        toContactId: contactId,
         patientName,
         patientDob: new Date(patientDob),
         patientPhone,
@@ -161,7 +220,7 @@ export async function updateReferral(req: Request, res: Response, next: NextFunc
 
     // Check if referral exists and belongs to clinic
     const existingReferral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
     })
 
     if (!existingReferral) {
@@ -182,7 +241,7 @@ export async function updateReferral(req: Request, res: Response, next: NextFunc
     const referral = await prisma.referral.update({
       where: { id },
       data: {
-        contactId,
+        toContactId: contactId,
         patientName,
         patientDob: patientDob ? new Date(patientDob) : undefined,
         patientPhone,
@@ -217,7 +276,7 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
 
     // Check if referral exists and belongs to clinic
     const existingReferral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
     })
 
     if (!existingReferral) {
@@ -251,7 +310,7 @@ export async function deleteReferral(req: Request, res: Response, next: NextFunc
 
     // Check if referral exists and belongs to clinic
     const referral = await prisma.referral.findFirst({
-      where: { id, clinicId },
+      where: { id, fromClinicId: clinicId },
     })
 
     if (!referral) {
@@ -265,6 +324,163 @@ export async function deleteReferral(req: Request, res: Response, next: NextFunc
     res.json({
       success: true,
       message: 'Referral deleted successfully',
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Get referral status by status token (for status tracking page)
+ */
+export async function getReferralStatusByToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { statusToken } = req.params
+
+    if (!statusToken) {
+      throw errors.badRequest('Status token is required')
+    }
+
+    // Find referral by status token
+    const referral = await prisma.referral.findUnique({
+      where: { statusToken },
+      include: {
+        clinic: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            phone: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    if (!referral) {
+      throw errors.notFound('Referral status not found')
+    }
+
+    // Determine current timeline stage based on status
+    const currentStage = STATUS_TO_TIMELINE_STAGE[referral.status] || 'reviewed'
+
+    // Build timeline stages
+    const timeline = TIMELINE_STAGES.map((stage) => {
+      const stageIndex = TIMELINE_STAGES.findIndex((s) => s.key === stage.key)
+      const currentIndex = TIMELINE_STAGES.findIndex((s) => s.key === currentStage)
+      
+      return {
+        key: stage.key,
+        label: stage.label,
+        status: stage.status,
+        isCompleted: stageIndex < currentIndex,
+        isCurrent: stageIndex === currentIndex,
+        isPending: stageIndex > currentIndex,
+      }
+    })
+
+    res.json({
+      success: true,
+      data: {
+        referralId: referral.id,
+        patientName: referral.patientFirstName && referral.patientLastName
+          ? `${referral.patientFirstName} ${referral.patientLastName}`
+          : referral.patientName,
+        status: referral.status,
+        currentStage,
+        timeline,
+        submittedAt: referral.createdAt,
+        clinic: referral.clinic,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Share referral - Generate share token and send email
+ */
+export async function shareReferral(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params
+    const clinicId = req.user!.clinicId
+
+    // Find referral - must belong to clinic
+    // For INCOMING referrals: fromClinicId is the receiving clinic
+    // For OUTGOING referrals: fromClinicId is the sending clinic
+    const referral = await prisma.referral.findFirst({
+      where: {
+        id,
+        fromClinicId: clinicId, // Clinic must own this referral (receiving for INCOMING, sending for OUTGOING)
+      },
+      include: {
+        clinic: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    })
+
+    if (!referral) {
+      throw errors.notFound('Referral not found')
+    }
+
+    // Generate share token if it doesn't exist
+    let shareToken = referral.shareToken
+    if (!shareToken) {
+      shareToken = generateShareToken()
+      await prisma.referral.update({
+        where: { id },
+        data: { shareToken },
+      })
+    }
+
+    // Get recipient email (GP's email - the one who submitted the referral)
+    const recipientEmail = referral.fromClinicEmail
+
+    if (!recipientEmail) {
+      throw errors.badRequest('No email address found for the referring clinic')
+    }
+
+    // Get patient name
+    const patientName = referral.patientFirstName && referral.patientLastName
+      ? `${referral.patientFirstName} ${referral.patientLastName}`
+      : referral.patientName
+
+    // Build share URL
+    const shareUrl = `${config.corsOrigin}/view-referral/${shareToken}`
+
+    // Prepare email
+    const emailSubject = `Referral Shared - ${patientName}`
+    const emailBody = `Hello ${referral.submittedByName || referral.referringDentist || 'there'},
+
+Your referral for ${patientName} has been reviewed by ${referral.clinic.name}. You can view the referral details using the link below:
+
+${shareUrl}
+
+This link provides a read-only view of the referral information you submitted.
+
+Thank you,
+${referral.clinic.name}`
+
+    // Send email (or get mailto link)
+    const emailResult = await sendEmail({
+      to: recipientEmail,
+      subject: emailSubject,
+      body: emailBody,
+    })
+
+    res.json({
+      success: true,
+      message: 'Referral shared successfully',
+      data: {
+        shareUrl,
+        shareToken,
+        emailSent: !!emailResult.mailtoLink, // Will be true for mailto fallback
+        mailtoLink: emailResult.mailtoLink, // For client to handle if needed
+      },
     })
   } catch (error) {
     next(error)

@@ -47,16 +47,16 @@ export interface Contact {
   email: string
   address?: string
   notes?: string
-  status: 'active' | 'inactive'
+  status: 'ACTIVE' | 'INACTIVE'
   lastAccess?: string
   createdAt: string
   updatedAt: string
 }
 
 // Referral Types
-export type ReferralStatus = 'draft' | 'sent' | 'accepted' | 'completed' | 'cancelled'
-export type ReferralUrgency = 'routine' | 'urgent' | 'emergency'
-export type ReferralType = 'outgoing' | 'incoming'
+export type ReferralStatus = 'DRAFT' | 'SENT' | 'SUBMITTED' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED'
+export type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
+export type ReferralType = 'OUTGOING' | 'INCOMING'
 
 export interface Referral {
   id: string
@@ -90,6 +90,9 @@ export interface Referral {
   
   // Files
   files?: ReferralFile[]
+  
+  // Status tracking
+  statusToken?: string // Token for status tracking page (only for referrals submitted via referral link)
   
   // Timestamps
   createdAt: string
@@ -128,6 +131,43 @@ export interface ClinicReferralLink {
   updatedAt: string
 }
 
+// Referral Link (token-based with access code)
+export interface ReferralLink {
+  id: string
+  specialistId: string
+  token: string
+  isActive: boolean
+  label?: string
+  referralCount?: number
+  referralUrl?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateReferralLinkRequest {
+  label?: string
+  accessCode?: string
+}
+
+export interface CreateReferralLinkResponse {
+  referralLink: ReferralLink
+  referralUrl: string
+}
+
+export interface ReferralSubmission {
+  accessCode: string
+  patientFirstName: string
+  patientLastName: string
+  patientDob?: string
+  insurance?: string
+  reasonForReferral: string
+  notes?: string
+  gpClinicName: string
+  submittedByName: string
+  submittedByPhone?: string
+  files?: File[]
+}
+
 export interface ReferralFile {
   id: string
   referralId: string
@@ -144,6 +184,11 @@ export interface DashboardStats {
   totalReferrals: number
   totalOutgoing: number
   totalIncoming: number
+  
+  // Percentage changes (compared to previous period)
+  outgoingChange?: number  // Percentage change for outgoing referrals
+  incomingChange?: number  // Percentage change for incoming referrals
+  completedChange?: number // Percentage change for completed referrals
   
   // Action needed
   pendingIncoming: number  // Need to accept/reject

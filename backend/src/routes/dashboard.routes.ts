@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import * as dashboardController from '../controllers/dashboard.controller'
-import { authenticate } from '../middleware/auth.middleware'
+import { authenticateSupabase } from '../middleware/auth.supabase.middleware'
 
 const router = Router()
 
-// All routes require authentication
-router.use(authenticate)
+// Apply authentication middleware to all routes
+router.use(authenticateSupabase)
 
 /**
  * @route   GET /api/dashboard/stats

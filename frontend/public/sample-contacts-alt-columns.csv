@@ -1,0 +1,4 @@
+fname,lname,specialty,e-mail,telephone,fax,website,practice,address,city,state,zip,notes
+John,Smith,Orthodontics,john.smith@test.com,555-123-4567,555-123-4568,https://test.com,Smith Clinic,123 Test St,New York,NY,10001,Test contact 1
+Jane,Doe,Periodontics,jane.doe@test.com,555-234-5678,555-234-5679,https://jane.com,Doe Practice,456 Test Ave,Los Angeles,CA,90001,Test contact 2
+Bob,Johnson,Endodontics,bob.johnson@test.com,555-345-6789,555-345-6790,https://bob.com,Johnson Dental,789 Test Blvd,Chicago,IL,60601,Test contact 3

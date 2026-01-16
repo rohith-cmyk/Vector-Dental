@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button, Input, Card, CardContent } from '@/components/ui'
-import { authService } from '@/services/auth.service'
+import { authService } from '@/services/auth.supabase.service'
 import { handleApiError } from '@/lib/api'
 
 export default function SignupPage() {
@@ -19,6 +19,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [generalError, setGeneralError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -33,6 +34,7 @@ export default function SignupPage() {
     e.preventDefault()
     setIsLoading(true)
     setGeneralError('')
+    setSuccessMessage('')
     setErrors({})
 
     // Basic validation
@@ -43,10 +45,36 @@ export default function SignupPage() {
     }
 
     try {
-      await authService.signup(formData)
-      router.push('/dashboard')
-    } catch (error) {
-      const errorMessage = handleApiError(error)
+      const result = await authService.signup(formData)
+      
+      if (result.requiresEmailVerification) {
+        setSuccessMessage(result.message || 'Account created! Please check your email to verify your account.')
+        // Don't redirect - show success message
+      } else {
+        router.push('/dashboard')
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error)
+      console.error('Error details:', error?.response?.data || error?.message || error)
+      
+      // Extract more detailed error message
+      let errorMessage = 'An unexpected error occurred'
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error?.message) {
+        errorMessage = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      
+      // Handle network errors
+      if (error?.code === 'ECONNREFUSED' || error?.message?.includes('Network Error') || error?.message?.includes('fetch')) {
+        errorMessage = 'Unable to connect to server. Please check if the backend is running.'
+      }
+      
       setGeneralError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -67,6 +95,16 @@ export default function SignupPage() {
             <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
             <p className="text-gray-600 mt-2">Start managing your dental referrals</p>
           </div>
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800 font-medium">✅ {successMessage}</p>
+              <p className="text-xs text-green-600 mt-2">
+                Check your spam folder if you don't see the email within a few minutes.
+              </p>
+            </div>
+          )}
 
           {/* Error Message */}
           {generalError && (

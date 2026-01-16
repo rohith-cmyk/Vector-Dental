@@ -3,7 +3,7 @@ export const APP_NAME = 'Dental Referral System'
 export const APP_DESCRIPTION = 'A CRM tool for managing dental and clinical referrals'
 
 // API Configuration
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 10
@@ -11,18 +11,18 @@ export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 
 // Referral Statuses
 export const REFERRAL_STATUSES = {
-  draft: { label: 'Draft', color: 'gray' },
-  sent: { label: 'Sent', color: 'blue' },
-  accepted: { label: 'Accepted', color: 'yellow' },
-  completed: { label: 'Completed', color: 'green' },
-  cancelled: { label: 'Cancelled', color: 'red' },
+  DRAFT: { label: 'Draft', color: 'gray' },
+  SENT: { label: 'Sent', color: 'blue' },
+  ACCEPTED: { label: 'Accepted', color: 'yellow' },
+  COMPLETED: { label: 'Completed', color: 'green' },
+  CANCELLED: { label: 'Cancelled', color: 'red' },
 } as const
 
 // Referral Urgency Levels
 export const URGENCY_LEVELS = {
-  routine: { label: 'Routine', color: 'green' },
-  urgent: { label: 'Urgent', color: 'yellow' },
-  emergency: { label: 'Emergency', color: 'red' },
+  ROUTINE: { label: 'Routine', color: 'green' },
+  URGENT: { label: 'Urgent', color: 'yellow' },
+  EMERGENCY: { label: 'Emergency', color: 'red' },
 } as const
 
 // Common Dental Specialties

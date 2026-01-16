@@ -2,25 +2,26 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { authService } from '@/services/auth.supabase.service'
+import { api } from '@/lib/api'
 
 export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    // Skip authentication in development - go straight to dashboard
-    router.push('/dashboard')
+    const redirect = async () => {
+      const session = await authService.getSession()
+      if (session?.access_token) {
+        localStorage.setItem('auth_token', session.access_token)
+        api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+        router.replace('/dashboard')
+      } else {
+        router.replace('/login')
+      }
+    }
+
+    redirect()
   }, [router])
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <img 
-          src="/logo.png" 
-          alt="Logo" 
-          className="h-16 w-16 mx-auto mb-4 animate-pulse"
-        />
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    </div>
-  )
+  return null
 }

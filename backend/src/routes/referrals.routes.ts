@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
 import * as referralsController from '../controllers/referrals.controller'
-import { authenticate } from '../middleware/auth.middleware'
+import { authenticateSupabase } from '../middleware/auth.supabase.middleware'
 import { validateRequest } from '../middleware/validation.middleware'
 
 const router = Router()
 
 // All routes require authentication
-router.use(authenticate)
+router.use(authenticateSupabase)
 
 /**
  * @route   GET /api/referrals
@@ -15,13 +15,6 @@ router.use(authenticate)
  * @access  Private
  */
 router.get('/', referralsController.getAllReferrals)
-
-/**
- * @route   GET /api/referrals/:id
- * @desc    Get referral by ID
- * @access  Private
- */
-router.get('/:id', referralsController.getReferralById)
 
 /**
  * @route   POST /api/referrals
@@ -41,11 +34,11 @@ router.post(
 )
 
 /**
- * @route   PUT /api/referrals/:id
- * @desc    Update referral
+ * @route   POST /api/referrals/:id/share
+ * @desc    Share referral - Generate share token and send email
  * @access  Private
  */
-router.put('/:id', referralsController.updateReferral)
+router.post('/:id/share', referralsController.shareReferral)
 
 /**
  * @route   PATCH /api/referrals/:id/status
@@ -56,11 +49,26 @@ router.patch(
   '/:id/status',
   validateRequest([
     body('status')
-      .isIn(['DRAFT', 'SENT', 'ACCEPTED', 'COMPLETED', 'CANCELLED'])
+      .isIn(['DRAFT', 'SENT', 'SUBMITTED', 'ACCEPTED', 'COMPLETED', 'CANCELLED'])
       .withMessage('Invalid status'),
   ]),
   referralsController.updateReferralStatus
 )
+
+
+/**
+ * @route   GET /api/referrals/:id
+ * @desc    Get referral by ID
+ * @access  Private
+ */
+router.get('/:id', referralsController.getReferralById)
+
+/**
+ * @route   PUT /api/referrals/:id
+ * @desc    Update referral
+ * @access  Private
+ */
+router.put('/:id', referralsController.updateReferral)
 
 /**
  * @route   DELETE /api/referrals/:id

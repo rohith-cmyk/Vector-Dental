@@ -23,8 +23,11 @@ export const referralsService = {
    * Get referral by ID
    */
   async getById(id: string): Promise<Referral> {
-    const response = await api.get<Referral>(`/referrals/${id}`)
-    return response.data
+    const response = await api.get<{ success: boolean; data: Referral }>(`/referrals/${id}`)
+    if (response.data.success && response.data.data) {
+      return response.data.data
+    }
+    throw new Error('Failed to get referral')
   },
 
   /**
@@ -54,8 +57,33 @@ export const referralsService = {
    * Update referral status
    */
   async updateStatus(id: string, status: ReferralStatus): Promise<Referral> {
-    const response = await api.patch<Referral>(`/referrals/${id}/status`, { status })
-    return response.data
+    const response = await api.patch<{ success: boolean; data: Referral }>(`/referrals/${id}/status`, { status })
+    if (response.data.success && response.data.data) {
+      return response.data.data
+    }
+    throw new Error('Failed to update referral status')
+  },
+
+  /**
+   * Share referral - Generate share token and send email
+   */
+  async shareReferral(id: string): Promise<{ shareUrl: string; shareToken: string; mailtoLink?: string }> {
+    const response = await api.post<{ success: boolean; data: { shareUrl: string; shareToken: string; mailtoLink?: string } }>(`/referrals/${id}/share`)
+    if (response.data.success && response.data.data) {
+      return response.data.data
+    }
+    throw new Error('Failed to share referral')
+  },
+
+  /**
+   * Get referral status by status token
+   */
+  async getStatusByToken(statusToken: string): Promise<any> {
+    const response = await api.get<{ success: boolean; data: any }>(`/referrals/status/${statusToken}`)
+    if (response.data.success && response.data.data) {
+      return response.data.data
+    }
+    throw new Error('Failed to get referral status')
   },
 }
 

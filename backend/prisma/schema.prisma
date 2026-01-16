@@ -41,7 +41,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinic         Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  referralLinks  ReferralLink[]
+  intendedReferrals Referral[] @relation("IntendedRecipient")
 
   @@index([clinicId])
   @@map("users")
@@ -106,11 +108,28 @@ model Referral {
   patientPhone String?
   patientEmail String?
   
+  // New fields for magic link flow (optional for backward compatibility)
+  patientFirstName      String?  // Split from patientName for new flow
+  patientLastName       String?  // Split from patientName for new flow
+  insurance             String?  // Insurance information
+  gpClinicName          String?  // GP clinic name (maps to fromClinicName)
+  submittedByName       String?  // Name of person submitting (maps to referringDentist)
+  submittedByPhone      String?  // Phone of person submitting
+  
   // Referral Details
   reason       String
   urgency      ReferralUrgency  @default(ROUTINE)
   status       ReferralStatus   @default(DRAFT)
   notes        String?
+  
+  intendedRecipientId String? // FK to User (Specialist)
+  specialty    String?          // Specialty category (e.g. Orthodontist)
+  referralLinkId String?  // FK to ReferralLink
+  shareToken   String?   @unique // Token for sharing referral (view-only access)
+  statusToken  String?   @unique // Token for status tracking page
+  
+  // Clinical Data
+  selectedTeeth String[]  @default([]) // Array of tooth IDs (e.g. ["1", "3", "32"])
   
   // Timestamps
   createdAt    DateTime         @default(now())
@@ -119,15 +138,21 @@ model Referral {
   // Relations
   clinic        Clinic          @relation(fields: [fromClinicId], references: [id], onDelete: Cascade)
   contact       Contact?        @relation(fields: [toContactId], references: [id], onDelete: Restrict)
+  intendedRecipient User?       @relation("IntendedRecipient", fields: [intendedRecipientId], references: [id])
+  referralLink  ReferralLink?   @relation(fields: [referralLinkId], references: [id], onDelete: SetNull)
   files         ReferralFile[]
   notifications Notification[]
 
   @@index([fromClinicId])
   @@index([toContactId])
   @@index([toClinicId])
+  @@index([intendedRecipientId])
   @@index([referralType])
   @@index([status])
   @@index([createdAt])
+  @@index([referralLinkId])
+  @@index([shareToken])
+  @@index([statusToken])
   @@map("referrals")
 }
 
@@ -139,7 +164,10 @@ enum ReferralType {
 enum ReferralStatus {
   DRAFT
   SENT
+  SUBMITTED        // New: from magic link
+  PENDING_REVIEW   // New
   ACCEPTED
+  REJECTED         // New
   COMPLETED
   CANCELLED
 }
@@ -158,6 +186,8 @@ model ReferralFile {
   fileType   String
   fileUrl    String
   fileSize   Int
+  storageKey String?  // Where file lives (S3 key, Supabase path, etc.)
+  mimeType   String?  // More accurate MIME type
   uploadedAt DateTime @default(now())
 
   // Relations
@@ -180,6 +210,26 @@ model ClinicReferralLink {
   clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("clinic_referral_links")
+}
+
+// Magic Referral Link Model (Token-based with access code)
+model ReferralLink {
+  id             String   @id @default(uuid())
+  specialistId   String   // FK to User.id (the specialist creating the link)
+  token          String   @unique // Random 32-64 char token (unguessable)
+  accessCodeHash String   // Hashed access code (bcrypt)
+  isActive       Boolean  @default(true)
+  label          String?  // Optional label like "Standing GP Link"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  specialist User       @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  referrals  Referral[]
+
+  @@index([specialistId])
+  @@index([token])
+  @@map("referral_links")
 }
 
 // Notification Model

@@ -49,3 +49,6 @@ tmp/
 # Prisma
 backend/prisma/migrations/
 
+
+# Uploads
+backend/uploads/

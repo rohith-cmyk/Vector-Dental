@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+import path from 'path'
 import { config } from './config/env'
 import { connectDatabase, disconnectDatabase } from './config/database'
 import routes from './routes'
@@ -14,11 +15,36 @@ const app = express()
  * Middleware
  */
 app.use(cors({
-  origin: config.corsOrigin,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true)
+
+    // Allow localhost on any port
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true)
+    }
+
+    // Allow configured origin
+    if (origin === config.corsOrigin) {
+      return callback(null, true)
+    }
+
+    callback(new Error('Not allowed by CORS'))
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+
+// Serve static files in development (for local uploads)
+if (config.nodeEnv !== 'production') {
+  app.use('/uploads', express.static(path.join(process.cwd(), config.uploadDir || 'uploads')))
+}
 
 /**
  * Routes

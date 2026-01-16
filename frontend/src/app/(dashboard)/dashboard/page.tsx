@@ -1,158 +1,142 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { StatsCardsV2 } from '@/components/dashboard/StatsCardsV2'
 import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
 import { SpecialtyBreakdown } from '@/components/dashboard/SpecialtyBreakdown'
 import { IncomingReferralsTable } from '@/components/dashboard/IncomingReferralsTable'
 import { OutgoingReferralsTable } from '@/components/dashboard/OutgoingReferralsTable'
-import type { Referral } from '@/types'
+import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
+import { dashboardService } from '@/services/dashboard.service'
+import { referralsService } from '@/services/referrals.service'
+import type { DashboardStats, Referral } from '@/types'
 
 export default function DashboardPage() {
-  // Mock data for two-way referral system
-  const stats = {
-    totalReferrals: 124,
-    totalOutgoing: 77,      // Referrals sent out
-    totalIncoming: 47,      // Referrals received
-    pendingIncoming: 12,    // Need your action
-    pendingOutgoing: 8,     // Waiting for specialist
-    completedThisMonth: 23,
-    referralsBySpecialty: [
-      { specialty: 'Orthodontics', count: 45, percentage: 36 },
-      { specialty: 'Oral Surgery', count: 32, percentage: 26 },
-      { specialty: 'Periodontics', count: 28, percentage: 23 },
-      { specialty: 'Endodontics', count: 19, percentage: 15 },
-    ],
-    referralTrends: [
-      { month: 'Jan', outgoing: 8, incoming: 4 },
-      { month: 'Feb', outgoing: 12, incoming: 6 },
-      { month: 'Mar', outgoing: 15, incoming: 8 },
-      { month: 'Apr', outgoing: 18, incoming: 10 },
-      { month: 'May', outgoing: 22, incoming: 12 },
-      { month: 'Jun', outgoing: 25, incoming: 14 },
-      { month: 'Jul', outgoing: 28, incoming: 16 },
-      { month: 'Aug', outgoing: 32, incoming: 18 },
-      { month: 'Sep', outgoing: 30, incoming: 16 },
-      { month: 'Oct', outgoing: 35, incoming: 20 },
-      { month: 'Nov', outgoing: 38, incoming: 22 },
-      { month: 'Dec', outgoing: 42, incoming: 24 },
-    ]
-  }
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [acceptingIds, setAcceptingIds] = useState<string[]>([])
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
 
-  // Mock incoming referrals (from other clinics to you)
-  const incomingReferrals: Referral[] = [
-    {
-      id: 'inc-1',
-      referralType: 'incoming',
-      fromClinicId: 'clinic-1',
-      fromClinicName: 'Oak Street Dental',
-      fromClinicEmail: 'info@oakstreetdental.com',
-      fromClinicPhone: '(555) 234-5678',
-      referringDentist: 'Sarah Johnson',
-      patientName: 'John Doe',
-      patientDob: '1985-03-15',
-      patientPhone: '(555) 111-2222',
-      patientEmail: 'john.doe@email.com',
-      reason: 'Patient needs orthodontic evaluation for severe crowding',
-      urgency: 'urgent',
-      status: 'sent',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'inc-2',
-      referralType: 'incoming',
-      fromClinicId: 'clinic-2',
-      fromClinicName: 'Pine Dental Clinic',
-      fromClinicEmail: 'contact@pinedental.com',
-      fromClinicPhone: '(555) 345-6789',
-      referringDentist: 'Michael Chen',
-      patientName: 'Jane Smith',
-      patientDob: '1992-07-22',
-      patientPhone: '(555) 333-4444',
-      reason: 'Impacted wisdom tooth removal needed',
-      urgency: 'routine',
-      status: 'sent',
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-      updatedAt: new Date().toISOString(),
-    }
-  ]
+  useEffect(() => {
+    // Initial load - show loading
+    loadDashboardData(true)
 
-  // Mock outgoing referrals (you sent to specialists)
-  const outgoingReferrals: Referral[] = [
-    {
-      id: 'out-1',
-      referralType: 'outgoing',
-      fromClinicId: 'my-clinic',
-      toContactId: 'contact-1',
-      contact: {
-        id: 'contact-1',
-        name: 'Dr. Brian Fred M.',
-        specialty: 'Orthodontics',
-        email: 'brianfred@email.com',
-        phone: '(319) 555-0115',
-        status: 'ACTIVE',
-        clinicId: '1',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
-      },
-      patientName: 'Bob Wilson',
-      patientDob: '1978-11-30',
-      patientPhone: '(555) 777-8888',
-      reason: 'Orthodontic consultation for adult braces',
-      urgency: 'routine',
-      status: 'accepted',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'out-2',
-      referralType: 'outgoing',
-      fromClinicId: 'my-clinic',
-      toContactId: 'contact-2',
-      contact: {
-        id: 'contact-2',
-        name: 'Dr. Courtney Henry',
-        specialty: 'Oral Surgery',
-        email: 'courtney.h@email.com',
-        phone: '(405) 555-0128',
-        status: 'ACTIVE',
-        clinicId: '1',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-01',
-      },
-      patientName: 'Alice Brown',
-      patientDob: '1995-05-18',
-      patientPhone: '(555) 999-0000',
-      reason: 'Wisdom teeth extraction',
-      urgency: 'routine',
-      status: 'sent',
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      updatedAt: new Date().toISOString(),
-    }
-  ]
+    // Auto-refresh dashboard data every 2 minutes (silent refresh - no loading indicator)
+    // Cache will handle showing stale data while fetching fresh
+    const interval = setInterval(() => {
+      loadDashboardData(false) // Silent refresh - don't show loading
+    }, 120000) // 2 minutes (cache TTL)
 
-  const loading = false
+    return () => clearInterval(interval)
+  }, [])
 
-  const handleAcceptReferral = (id: string) => {
-    alert(`Accepting referral ${id} - Feature will be implemented!`)
-  }
-
-  const handleRejectReferral = (id: string) => {
-    if (confirm('Are you sure you want to reject this referral?')) {
-      alert(`Rejected referral ${id}`)
+  const loadDashboardData = async (showLoading: boolean = true, forceRefresh: boolean = false) => {
+    try {
+      if (showLoading) {
+        setLoading(true)
+      }
+      setError(null)
+      
+      // getStats() will use cache if available and fresh
+      const data = await dashboardService.getStats(forceRefresh)
+      setStats(data)
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err)
+      // Only show error on initial load, not on auto-refresh failures
+      if (showLoading) {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
+      }
+    } finally {
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
-  const handleViewReferral = (id: string) => {
-    alert(`Viewing referral ${id} - Full details modal coming soon!`)
+  const handleAcceptReferral = async (id: string) => {
+    if (acceptingIds.includes(id)) return // Prevent duplicate request for same row
+
+    try {
+      setAcceptingIds((prev) => [...new Set([...prev, id])])
+      // Optimistically remove from pending list for instant UI feedback
+      setStats((prev) => {
+        if (!prev) return prev
+        const exists = prev.recentIncoming.some((referral) => referral.id === id)
+        if (!exists) return prev
+        return {
+          ...prev,
+          recentIncoming: prev.recentIncoming.filter((referral) => referral.id !== id),
+          pendingIncoming: Math.max(0, prev.pendingIncoming - 1),
+        }
+      })
+
+      // Update status to ACCEPTED (which shows as "Appointment Scheduled" in the timeline)
+      // This removes it from pending list (which only shows SUBMITTED status)
+      await referralsService.updateStatus(id, 'ACCEPTED')
+      
+      // Clear dashboard cache and refresh data
+      dashboardService.clearCache()
+      await loadDashboardData(false, true) // Force refresh without showing loading
+    } catch (error: any) {
+      console.error('Failed to accept referral:', error)
+      // Revert optimistic update on failure
+      loadDashboardData(false, true)
+      alert(error.response?.data?.message || 'Failed to accept referral. Please try again.')
+    } finally {
+      setAcceptingIds((prev) => prev.filter((existingId) => existingId !== id))
+    }
+  }
+
+  const handleViewReferral = async (id: string) => {
+    try {
+      // Fetch the referral details
+      const referral = await referralsService.getById(id)
+      
+      // If status is SUBMITTED, update it to ACCEPTED (which removes it from pending list)
+      if (referral.status === 'SUBMITTED') {
+        try {
+          const updatedReferral = await referralsService.updateStatus(id, 'ACCEPTED')
+          setSelectedReferral(updatedReferral)
+          // Refresh dashboard data
+          dashboardService.clearCache()
+          await loadDashboardData(false, true)
+        } catch (error: any) {
+          console.error('Failed to auto-update status:', error)
+          // Still show the modal even if status update fails
+          setSelectedReferral(referral)
+        }
+      } else {
+        setSelectedReferral(referral)
+      }
+    } catch (error: any) {
+      console.error('Failed to load referral:', error)
+      alert(error.response?.data?.message || 'Failed to load referral. Please try again.')
+    }
   }
 
   if (loading) {
     return (
       <DashboardLayout title="Dashboard">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-gray-500">Loading dashboard data...</div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout title="Dashboard">
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+          <div className="text-red-500">{error}</div>
+          <button
+            onClick={loadDashboardData}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+          >
+            Try Again
+          </button>
         </div>
       </DashboardLayout>
     )
@@ -178,6 +162,9 @@ export default function DashboardPage() {
             totalIncoming: stats.totalIncoming,
             pendingIncoming: stats.pendingIncoming,
             completedThisMonth: stats.completedThisMonth,
+            outgoingChange: stats.outgoingChange,
+            incomingChange: stats.incomingChange,
+            completedChange: stats.completedChange,
           }}
         />
 
@@ -187,23 +174,43 @@ export default function DashboardPage() {
             <ReferralTrendsChart data={stats.referralTrends} />
           </div>
           <div className="lg:col-span-1">
-            <SpecialtyBreakdown data={stats.referralsBySpecialty} />
+            <SpecialtyBreakdown
+              data={stats.incomingReferralsBySpecialty || []}
+              title="Incoming by Specialty"
+            />
           </div>
         </div>
 
         {/* Incoming Referrals - PRIORITY (Need Your Action) */}
-        <IncomingReferralsTable 
-          referrals={incomingReferrals}
+        <IncomingReferralsTable
+          referrals={stats.recentIncoming}
           onAccept={handleAcceptReferral}
-          onReject={handleRejectReferral}
+          onView={handleViewReferral}
+          acceptingIds={acceptingIds}
         />
 
         {/* Outgoing Referrals - Track Status */}
-        <OutgoingReferralsTable 
-          referrals={outgoingReferrals}
+        <OutgoingReferralsTable
+          referrals={stats.recentOutgoing}
           onView={handleViewReferral}
         />
       </div>
+
+      {/* Referral Details Modal */}
+      <ReferralDetailsModal
+        isOpen={!!selectedReferral}
+        onClose={() => setSelectedReferral(null)}
+        referral={selectedReferral}
+        onStatusUpdate={() => {
+          // Refresh dashboard data when status is updated from modal
+          dashboardService.clearCache()
+          loadDashboardData(false, true)
+          // Refresh the selected referral
+          if (selectedReferral) {
+            referralsService.getById(selectedReferral.id).then(setSelectedReferral).catch(console.error)
+          }
+        }}
+      />
     </DashboardLayout>
   )
 }

@@ -1,11 +1,46 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { authService } from '@/services/auth.supabase.service'
+import { api } from '@/lib/api'
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Skip authentication check in development
+  const router = useRouter()
+  const [checkingAuth, setCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const session = await authService.getSession()
+        if (!session?.access_token) {
+          router.replace('/login')
+          return
+        }
+
+        // Ensure API requests have the token on refresh
+        localStorage.setItem('auth_token', session.access_token)
+        api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+      } finally {
+        setCheckingAuth(false)
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    )
+  }
+
   return <>{children}</>
 }
 

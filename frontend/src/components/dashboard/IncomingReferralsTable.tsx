@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from '@/components/ui'
-import { Search, CheckCircle, XCircle } from 'lucide-react'
+import { Search, CheckCircle, Eye } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 import { URGENCY_LEVELS } from '@/constants'
 import type { Referral } from '@/types'
@@ -9,10 +9,14 @@ import type { Referral } from '@/types'
 interface IncomingReferralsTableProps {
   referrals: Referral[]
   onAccept?: (id: string) => void
-  onReject?: (id: string) => void
+  onView?: (id: string) => void
+  acceptingIds?: string[]
 }
 
-export function IncomingReferralsTable({ referrals, onAccept, onReject }: IncomingReferralsTableProps) {
+export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingIds }: IncomingReferralsTableProps) {
+  // Handle undefined or empty data
+  const safeReferrals = referrals || []
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -32,7 +36,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        {referrals.length === 0 ? (
+        {safeReferrals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-gray-500">No pending incoming referrals</p>
             <p className="text-sm text-gray-400 mt-1">You're all caught up! 🎉</p>
@@ -63,7 +67,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {referrals.map((referral) => (
+                {safeReferrals.length > 0 ? safeReferrals.map((referral) => (
                   <tr key={referral.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{referral.patientName}</div>
@@ -102,23 +106,30 @@ export function IncomingReferralsTable({ referrals, onAccept, onReject }: Incomi
                           variant="primary"
                           className="gap-1"
                           onClick={() => onAccept?.(referral.id)}
+                          disabled={acceptingIds?.includes(referral.id)}
                         >
                           <CheckCircle className="h-4 w-4" />
-                          Accept
+                          {acceptingIds?.includes(referral.id) ? 'Accepting...' : 'Accept'}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           className="gap-1"
-                          onClick={() => onReject?.(referral.id)}
+                          onClick={() => onView?.(referral.id)}
                         >
-                          <XCircle className="h-4 w-4" />
-                          Reject
+                          <Eye className="h-4 w-4" />
+                          View
                         </Button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                      No incoming referrals at this time
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -1,14 +1,14 @@
 # Dental Referral Backend
 
-Express.js + TypeScript + PostgreSQL + Prisma backend API for the Dental Referral Management System.
+Express.js + TypeScript + Supabase (PostgreSQL) + Prisma backend API for the Dental Referral Management System.
 
 ## Tech Stack
 
 - **Node.js + Express** - REST API framework
 - **TypeScript** - Type safety
-- **PostgreSQL** - Database
-- **Prisma** - ORM
-- **JWT** - Authentication
+- **Supabase (PostgreSQL)** - Cloud database
+- **Prisma** - ORM for database management
+- **Supabase Auth** - Authentication (with JWT fallback)
 - **bcryptjs** - Password hashing
 
 ## Getting Started
@@ -90,16 +90,33 @@ prisma/
 ### Dashboard
 - `GET /api/dashboard/stats` - Get dashboard statistics
 
+### Notifications
+- `GET /api/notifications` - Get all notifications
+- `GET /api/notifications/unread-count` - Get unread count
+- `PATCH /api/notifications/:id/read` - Mark as read
+- `PATCH /api/notifications/mark-all-read` - Mark all as read
+- `DELETE /api/notifications/:id` - Delete notification
+
+### Public Routes
+- `GET /api/public/clinic/:slug` - Get clinic by slug
+- `POST /api/public/referral/:slug` - Submit public referral
+
+### Referral Links
+- `GET /api/referral-link` - Get clinic referral link
+- `PUT /api/referral-link` - Update referral link
+
 ## Database Schema
 
 See `prisma/schema.prisma` for the complete database schema.
 
 ### Main Models:
 - **Clinic** - Dental clinic information
-- **User** - Clinic staff users with roles
+- **User** - Clinic staff users with roles (ADMIN/STAFF)
 - **Contact** - Referral recipients (specialists)
-- **Referral** - Patient referrals
+- **Referral** - Patient referrals (two-way: INCOMING/OUTGOING)
 - **ReferralFile** - Attached files for referrals
+- **ClinicReferralLink** - Public referral links
+- **Notification** - System notifications
 
 ## Development Commands
 
@@ -129,12 +146,15 @@ npm run prisma:studio     # Open database GUI
 
 See `.env.example` for required environment variables.
 
-## Migration to Supabase
+## Supabase Configuration
 
-When ready to migrate to Supabase:
+The backend is configured to use Supabase. See [docs/SUPABASE.md](../docs/SUPABASE.md) for complete setup instructions.
 
-1. Update `DATABASE_URL` in `.env` to your Supabase PostgreSQL connection string
-2. Run `npm run prisma:migrate` to apply migrations
-3. Update `JWT_SECRET` if needed
-4. No code changes required! 🎉
+**Quick Setup:**
+1. Update `DATABASE_URL` in `.env` with your Supabase connection string
+2. Add Supabase credentials (URL, keys)
+3. Run `npm run prisma:migrate` to apply migrations
+4. Start server: `npm run dev`
+
+**Current Status:** ✅ Connected to Supabase
 
