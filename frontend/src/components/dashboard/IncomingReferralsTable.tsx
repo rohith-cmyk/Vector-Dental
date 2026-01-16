@@ -21,7 +21,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingI
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>🔔 Pending Incoming Referrals</CardTitle>
+          <CardTitle>Pending Incoming Referrals</CardTitle>
           <p className="text-sm text-gray-500 mt-1">Referrals sent to you that need your action</p>
         </div>
         <div className="flex items-center gap-3">
@@ -39,7 +39,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingI
         {safeReferrals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-gray-500">No pending incoming referrals</p>
-            <p className="text-sm text-gray-400 mt-1">You're all caught up! 🎉</p>
+            <p className="text-sm text-gray-400 mt-1">You're all caught up!</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

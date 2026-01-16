@@ -9,9 +9,11 @@ interface ReferralTrendsChartProps {
     outgoing: number
     incoming: number
   }>
+  period: 'monthly' | 'weekly' | 'yearly'
+  onPeriodChange: (period: 'monthly' | 'weekly' | 'yearly') => void
 }
 
-export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
+export function ReferralTrendsChart({ data, period, onPeriodChange }: ReferralTrendsChartProps) {
   // Handle undefined or empty data
   const safeData = data || []
   
@@ -22,10 +24,14 @@ export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
           <CardTitle>Referral Trends</CardTitle>
           <p className="text-sm text-gray-500 mt-1">Sent vs Received over time</p>
         </div>
-        <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
-          <option>Monthly</option>
-          <option>Weekly</option>
-          <option>Yearly</option>
+        <select
+          className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+          value={period}
+          onChange={(event) => onPeriodChange(event.target.value as 'monthly' | 'weekly' | 'yearly')}
+        >
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
         </select>
       </CardHeader>
       <CardContent>

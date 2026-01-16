@@ -6,6 +6,7 @@ import { Card, CardContent, Badge, Button } from '@/components/ui'
 import { Bell, CheckCheck, Trash2, ArrowDownLeft, CheckCircle, XCircle } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
+import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
 import type { Notification } from '@/types'
 
 export default function NotificationsPage() {
@@ -13,23 +14,38 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const cacheKey = `notifications_${filter}`
+  const cacheTtl = 2 * 60 * 1000
 
   // Load notifications
   useEffect(() => {
-    loadNotifications()
+    const cached = getCachedData<Notification[]>(cacheKey)
+    if (cached) {
+      setNotifications(cached)
+      setLoading(false)
+      loadNotifications(false)
+      return
+    }
+
+    loadNotifications(true)
   }, [filter])
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       setError(null)
       const data = await notificationsService.getAll(filter)
       setNotifications(data)
+      setCachedData(cacheKey, data, cacheTtl)
     } catch (err) {
       console.error('Failed to load notifications:', err)
       setError(err instanceof Error ? err.message : 'Failed to load notifications')
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
@@ -43,6 +59,8 @@ export default function NotificationsPage() {
       await notificationsService.markAsRead(id)
       // Update local state optimistically
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+      clearCache('notifications_all')
+      clearCache('notifications_unread')
     } catch (err) {
       console.error('Failed to mark as read:', err)
       // Reload to sync with server
@@ -55,6 +73,8 @@ export default function NotificationsPage() {
       await notificationsService.markAllAsRead()
       // Update local state optimistically
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+      clearCache('notifications_all')
+      clearCache('notifications_unread')
     } catch (err) {
       console.error('Failed to mark all as read:', err)
       // Reload to sync with server
@@ -67,11 +87,32 @@ export default function NotificationsPage() {
       await notificationsService.delete(id)
       // Update local state optimistically
       setNotifications(prev => prev.filter(n => n.id !== id))
+      clearCache('notifications_all')
+      clearCache('notifications_unread')
     } catch (err) {
       console.error('Failed to delete notification:', err)
       // Reload to sync with server
       loadNotifications()
     }
+  }
+
+  const extractClinicName = (message: string): string | null => {
+    const match = message.match(/from\s+(.+?)(?:\s+for\b|$)/i)
+    return match?.[1]?.trim() || null
+  }
+
+  const getDisplayTitle = (notification: Notification): string => {
+    if (notification.type === 'new_incoming_referral') {
+      return extractClinicName(notification.message) || notification.title
+    }
+    return notification.title
+  }
+
+  const getDisplayMessage = (notification: Notification): string => {
+    if (notification.type === 'new_incoming_referral') {
+      return notification.message.replace(/from\s+(.+?)(?:\s+for\b|$)/i, '').trim()
+    }
+    return notification.message
   }
 
   const getNotificationIcon = (type: string) => {
@@ -171,13 +212,13 @@ export default function NotificationsPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <h3 className="text-sm font-semibold text-gray-900">
-                              {notification.title}
+                              {getDisplayTitle(notification)}
                               {!notification.isRead && (
                                 <span className="ml-2 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
                               )}
                             </h3>
                             <p className="text-sm text-gray-600 mt-1">
-                              {notification.message}
+                              {getDisplayMessage(notification)}
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
                               {formatRelativeTime(notification.createdAt)}
@@ -209,11 +250,13 @@ export default function NotificationsPage() {
                         {notification.referralId && (
                           <button
                             onClick={async () => {
-                              // Mark notification as read first
-                              if (!notification.isRead) {
-                                await handleMarkAsRead(notification.id)
+                              const referralId = notification.referralId
+                              if (referralId) {
+                                setNotifications((prev) => prev.filter((n) => n.referralId !== referralId))
+                                await notificationsService.deleteByReferral(referralId)
+                                clearCache('notifications_all')
+                                clearCache('notifications_unread')
                               }
-                              // Navigate to referrals page
                               window.location.href = `/referrals?id=${notification.referralId}`
                             }}
                             className="mt-2 text-sm text-brand-600 hover:text-brand-700 font-medium"

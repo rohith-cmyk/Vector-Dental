@@ -10,11 +10,13 @@ interface SpecialtyBreakdownProps {
     count: number
     percentage: number
   }>
+  period: 'monthly' | 'weekly' | 'yearly'
+  onPeriodChange: (period: 'monthly' | 'weekly' | 'yearly') => void
 }
 
 const COLORS = ['#84cc16', '#65a30d', '#4d7c0f', '#fbbf24']
 
-export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty' }: SpecialtyBreakdownProps) {
+export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty', period, onPeriodChange }: SpecialtyBreakdownProps) {
   // Handle undefined or empty data
   const safeData = data || []
 
@@ -29,10 +31,14 @@ export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty' }: S
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
-        <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
-          <option>Monthly</option>
-          <option>Weekly</option>
-          <option>Yearly</option>
+        <select
+          className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+          value={period}
+          onChange={(event) => onPeriodChange(event.target.value as 'monthly' | 'weekly' | 'yearly')}
+        >
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
         </select>
       </CardHeader>
       <CardContent>

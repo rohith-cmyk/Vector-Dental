@@ -29,10 +29,10 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         setCurrentReferral(referral)
     }, [referral])
 
-    // Mark associated notifications as read when viewing referral
+    // Clear associated notifications when viewing referral
     useEffect(() => {
         if (isOpen && referral?.id) {
-            notificationsService.markAsReadByReferral(referral.id)
+            notificationsService.deleteByReferral(referral.id)
         }
         // Reset share state when modal opens/closes
         setShareSuccess(false)

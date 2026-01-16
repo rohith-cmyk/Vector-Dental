@@ -155,6 +155,33 @@ export async function markAsReadByReferral(req: Request, res: Response, next: Ne
 }
 
 /**
+ * Delete notifications by referral ID
+ */
+export async function deleteByReferral(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { referralId } = req.params
+    const clinicId = req.user?.clinicId
+
+    if (!clinicId) {
+      throw new Error('User does not belong to a clinic')
+    }
+
+    const result = await prisma.notification.deleteMany({
+      where: {
+        referralId,
+        clinicId,
+      },
+    })
+
+    res.json({
+      success: true,
+      data: { count: result.count },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+/**
  * Mark all notifications as read for a clinic
  */
 export async function markAllAsRead(req: Request, res: Response, next: NextFunction) {

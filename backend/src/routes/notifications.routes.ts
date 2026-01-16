@@ -37,6 +37,13 @@ router.patch('/:id/read', notificationsController.markAsRead)
 router.patch('/referral/:referralId/read', notificationsController.markAsReadByReferral)
 
 /**
+ * @route   DELETE /api/notifications/referral/:referralId
+ * @desc    Delete notifications by referral ID
+ * @access  Public (dev mode)
+ */
+router.delete('/referral/:referralId', notificationsController.deleteByReferral)
+
+/**
  * @route   PATCH /api/notifications/mark-all-read
  * @desc    Mark all notifications as read
  * @access  Public (dev mode)

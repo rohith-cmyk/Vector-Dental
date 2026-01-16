@@ -19,6 +19,14 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     const currentMonth = now.getMonth()
     const currentYear = now.getFullYear()
 
+    const normalizePeriod = (value: unknown): 'monthly' | 'weekly' | 'yearly' => {
+      if (value === 'weekly' || value === 'yearly' || value === 'monthly') return value
+      return 'monthly'
+    }
+
+    const trendsPeriod = normalizePeriod(req.query.trendsPeriod)
+    const specialtyPeriod = normalizePeriod(req.query.specialtyPeriod)
+
     // Total referrals (all)
     const totalReferrals = await prisma.referral.count({
       where: { fromClinicId: clinicId },
@@ -65,8 +73,11 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     // Completed this month
     const completedThisMonth = await prisma.referral.count({
       where: {
-        fromClinicId: clinicId,
         status: 'COMPLETED',
+        OR: [
+          { fromClinicId: clinicId },
+          { toClinicId: clinicId },
+        ],
         updatedAt: {
           gte: new Date(currentYear, currentMonth, 1),
           lt: new Date(currentYear, currentMonth + 1, 1),
@@ -105,12 +116,14 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     // Previous month incoming count
     const previousIncoming = await prisma.referral.count({
       where: {
-        fromClinicId: clinicId,
-        referralType: 'INCOMING',
         createdAt: {
           gte: new Date(previousMonthYear, previousMonth, 1),
           lt: new Date(previousMonthYear, previousMonth + 1, 1),
         },
+        OR: [
+          { fromClinicId: clinicId, referralType: 'INCOMING' },
+          { toClinicId: clinicId },
+        ],
       },
     })
 
@@ -194,6 +207,19 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
 
     // Referrals by specialty (Incoming - from Magic Links etc)
     // @ts-ignore - Prisma client update might lag in editor
+    const specialtyRange = (() => {
+      if (specialtyPeriod === 'weekly') {
+        const start = new Date(now)
+        start.setDate(now.getDate() - 7)
+        return { start, end: now }
+      }
+      if (specialtyPeriod === 'yearly') {
+        return { start: new Date(currentYear, 0, 1), end: new Date(currentYear + 1, 0, 1) }
+      }
+      // monthly (default)
+      return { start: new Date(currentYear, currentMonth, 1), end: new Date(currentYear, currentMonth + 1, 1) }
+    })()
+
     const incomingBySpecialty = await prisma.referral.groupBy({
       by: ['specialty'],
       where: {
@@ -202,52 +228,146 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
           { toClinicId: clinicId }
         ],
         specialty: { not: null }, // Only count those with specialty set
+        createdAt: {
+          gte: specialtyRange.start,
+          lt: specialtyRange.end,
+        },
       },
       _count: true,
     })
+
+    const totalIncomingForSpecialty = incomingBySpecialty.reduce((sum: number, item: any) => sum + item._count, 0)
 
     const incomingReferralsBySpecialtyData = incomingBySpecialty
       .map((r: any) => ({
         specialty: r.specialty as string,
         count: r._count,
-        percentage: totalIncoming > 0 ? Math.round((r._count / totalIncoming) * 100) : 0,
+        percentage: totalIncomingForSpecialty > 0 ? Math.round((r._count / totalIncomingForSpecialty) * 100) : 0,
       }))
       .sort((a: any, b: any) => b.count - a.count)
       .slice(0, 5)
 
     // Referral trends (last 12 months) - split by incoming/outgoing
-    const referralTrends = []
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentYear, currentMonth - i, 1)
-      const nextDate = new Date(currentYear, currentMonth - i + 1, 1)
+    const referralTrends: Array<{ month: string; outgoing: number; incoming: number }> = []
 
-      const outgoingCount = await prisma.referral.count({
-        where: {
-          fromClinicId: clinicId,
-          referralType: 'OUTGOING',
-          createdAt: {
-            gte: date,
-            lt: nextDate,
+    if (trendsPeriod === 'yearly') {
+      for (let i = 4; i >= 0; i--) {
+        const year = currentYear - i
+        const date = new Date(year, 0, 1)
+        const nextDate = new Date(year + 1, 0, 1)
+
+        const outgoingCount = await prisma.referral.count({
+          where: {
+            fromClinicId: clinicId,
+            referralType: 'OUTGOING',
+            createdAt: {
+              gte: date,
+              lt: nextDate,
+            },
           },
-        },
-      })
+        })
 
-      const incomingCount = await prisma.referral.count({
-        where: {
-          fromClinicId: clinicId,
-          referralType: 'INCOMING',
-          createdAt: {
-            gte: date,
-            lt: nextDate,
+        const incomingCount = await prisma.referral.count({
+          where: {
+            createdAt: {
+              gte: date,
+              lt: nextDate,
+            },
+            OR: [
+              { fromClinicId: clinicId, referralType: 'INCOMING' },
+              { toClinicId: clinicId },
+            ],
           },
-        },
-      })
+        })
 
-      referralTrends.push({
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
-        outgoing: outgoingCount,
-        incoming: incomingCount,
-      })
+        referralTrends.push({
+          month: `${year}`,
+          outgoing: outgoingCount,
+          incoming: incomingCount,
+        })
+      }
+    } else if (trendsPeriod === 'weekly') {
+      const startOfWeek = (date: Date) => {
+        const d = new Date(date)
+        const day = d.getDay()
+        const diff = (day === 0 ? -6 : 1) - day // Monday as first day of week
+        d.setDate(d.getDate() + diff)
+        d.setHours(0, 0, 0, 0)
+        return d
+      }
+
+      for (let i = 11; i >= 0; i--) {
+        const offset = new Date(now)
+        offset.setDate(now.getDate() - i * 7)
+        const date = startOfWeek(offset)
+        const nextDate = new Date(date)
+        nextDate.setDate(date.getDate() + 7)
+
+        const outgoingCount = await prisma.referral.count({
+          where: {
+            fromClinicId: clinicId,
+            referralType: 'OUTGOING',
+            createdAt: {
+              gte: date,
+              lt: nextDate,
+            },
+          },
+        })
+
+        const incomingCount = await prisma.referral.count({
+          where: {
+            createdAt: {
+              gte: date,
+              lt: nextDate,
+            },
+            OR: [
+              { fromClinicId: clinicId, referralType: 'INCOMING' },
+              { toClinicId: clinicId },
+            ],
+          },
+        })
+
+        referralTrends.push({
+          month: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          outgoing: outgoingCount,
+          incoming: incomingCount,
+        })
+      }
+    } else {
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date(currentYear, currentMonth - i, 1)
+        const nextDate = new Date(currentYear, currentMonth - i + 1, 1)
+
+        const outgoingCount = await prisma.referral.count({
+          where: {
+            fromClinicId: clinicId,
+            referralType: 'OUTGOING',
+            createdAt: {
+              gte: date,
+              lt: nextDate,
+            },
+          },
+        })
+
+        const incomingCount = await prisma.referral.count({
+          where: {
+            createdAt: {
+              gte: date,
+              lt: nextDate,
+            },
+            OR: [
+              { fromClinicId: clinicId, referralType: 'INCOMING' },
+              { toClinicId: clinicId },
+            ],
+          },
+        })
+
+        referralTrends.push({
+          month: date.toLocaleDateString('en-US', { month: 'short' }),
+          outgoing: outgoingCount,
+          incoming: incomingCount,
+        })
+      }
     }
 
     // Get recent incoming referrals (last 5) - only pending (SUBMITTED status)

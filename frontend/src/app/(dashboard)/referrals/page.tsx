@@ -10,6 +10,7 @@ import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES } from '@/constants'
 import type { Referral, ReferralStatus } from '@/types'
 import { api } from '@/lib/api'
+import { getCachedData, setCachedData } from '@/lib/cache'
 import { referralsService } from '@/services/referrals.service'
 
 export default function ReferralsPage() {
@@ -22,11 +23,15 @@ export default function ReferralsPage() {
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
+  const cacheKey = `referrals_${activeTab}_${statusFilter}_${searchQuery.trim().toLowerCase()}`
+  const cacheTtl = 2 * 60 * 1000
 
   // Fetch referrals
-  const fetchReferrals = useCallback(async () => {
+  const fetchReferrals = useCallback(async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       const params: any = {
         type: activeTab,
         limit: 50, // Get more for list view
@@ -44,23 +49,33 @@ export default function ReferralsPage() {
       if (response.data.success) {
         setReferrals(response.data.data)
         setTotal(response.data.total)
+        setCachedData(cacheKey, { referrals: response.data.data, total: response.data.total }, cacheTtl)
       }
     } catch (error) {
       console.error('Failed to fetch referrals:', error)
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
-  }, [activeTab, statusFilter, searchQuery])
+  }, [activeTab, statusFilter, searchQuery, cacheKey])
 
   // Initial fetch and refetch on filters change
   useEffect(() => {
+    const cached = getCachedData<{ referrals: Referral[]; total: number }>(cacheKey)
+    if (cached) {
+      setReferrals(cached.referrals)
+      setTotal(cached.total)
+      setLoading(false)
+    }
+
     // Debounce search
     const timer = setTimeout(() => {
-      fetchReferrals()
+      fetchReferrals(!cached)
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [fetchReferrals])
+  }, [fetchReferrals, cacheKey])
 
   // Handle status update
   const handleStatusUpdate = async (id: string, newStatus: ReferralStatus) => {

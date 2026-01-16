@@ -360,7 +360,7 @@ export async function submitReferral(
         reason: reasonForReferral,
         notes: notes || null,
         status: 'SUBMITTED', // New status for magic link submissions
-        urgency: 'ROUTINE', // Default urgency
+        urgency: (urgency || 'ROUTINE').toUpperCase() as 'ROUTINE' | 'URGENT' | 'EMERGENCY',
         statusToken, // Store the status token for status tracking page
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,

@@ -70,6 +70,18 @@ export const notificationsService = {
   },
 
   /**
+   * Delete notifications by referral ID
+   */
+  async deleteByReferral(referralId: string): Promise<void> {
+    try {
+      await api.delete(`/notifications/referral/${referralId}`)
+    } catch (error) {
+      console.error('Failed to delete notifications by referral:', error)
+      // Don't throw, just log - this is a background action
+    }
+  },
+
+  /**
    * Mark all notifications as read
    */
   async markAllAsRead(): Promise<void> {

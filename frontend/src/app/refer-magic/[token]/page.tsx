@@ -41,6 +41,7 @@ export default function ReferMagicPage() {
     // Referral details
     reasonForReferral: '',
     notes: '',
+    urgency: 'ROUTINE',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -117,6 +118,7 @@ export default function ReferMagicPage() {
       formDataToSend.append('submittedByName', formData.submittedByName.trim())
       formDataToSend.append('submittedByEmail', formData.submittedByEmail.trim())
       formDataToSend.append('reasonForReferral', formData.reasonForReferral.trim())
+      formDataToSend.append('urgency', formData.urgency)
       
       if (formData.patientDob) {
         formDataToSend.append('patientDob', formData.patientDob)
@@ -363,6 +365,21 @@ export default function ReferMagicPage() {
                   <p className="text-xs text-gray-500 mt-1">
                     {formData.notes?.length || 0}/500 characters
                   </p>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Urgency
+                  </label>
+                  <Select
+                    value={formData.urgency}
+                    onChange={(e) => handleChange('urgency', e.target.value)}
+                    options={[
+                      { value: 'ROUTINE', label: 'Routine' },
+                      { value: 'URGENT', label: 'Urgent' },
+                      { value: 'EMERGENCY', label: 'Emergency' },
+                    ]}
+                  />
                 </div>
               </div>
 

@@ -29,7 +29,7 @@ export function OutgoingReferralsTable({ referrals, onView }: OutgoingReferralsT
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>📤 Recent Outgoing Referrals</CardTitle>
+          <CardTitle>Recent Outgoing Referrals</CardTitle>
           <p className="text-sm text-gray-500 mt-1">Referrals you sent to specialists</p>
         </div>
         <div className="flex items-center gap-3">

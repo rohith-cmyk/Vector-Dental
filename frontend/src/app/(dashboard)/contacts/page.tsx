@@ -6,6 +6,7 @@ import { Button, Card, CardContent, Badge } from '@/components/ui'
 import { Plus, Search, Edit, Trash2 } from 'lucide-react'
 import { ContactFormModal } from '@/components/contacts/ContactFormModal'
 import { contactsService } from '@/services/contacts.service'
+import { getCachedData, setCachedData } from '@/lib/cache'
 import { formatPhoneNumber } from '@/lib/utils'
 import type { Contact } from '@/types'
 
@@ -16,19 +17,32 @@ export default function ContactsPage() {
   const [successMessage, setSuccessMessage] = useState('')
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
+  const cacheKey = 'contacts_all'
+  const cacheTtl = 2 * 60 * 1000
 
   // Load contacts from API
   useEffect(() => {
-    loadContacts()
+    const cached = getCachedData<Contact[]>(cacheKey)
+    if (cached) {
+      setContacts(cached)
+      setLoading(false)
+      loadContacts(false)
+      return
+    }
+
+    loadContacts(true)
   }, [])
 
-  const loadContacts = async () => {
+  const loadContacts = async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       // Request all contacts with a high limit
       const response = await contactsService.getAll({ limit: 100 })
       console.log('Contacts API response:', response)
       setContacts(response.data || [])
+      setCachedData(cacheKey, response.data || [], cacheTtl)
     } catch (error: any) {
       console.error('Failed to load contacts:', error)
       console.error('Error details:', error.response?.data || error.message)
@@ -36,7 +50,9 @@ export default function ContactsPage() {
       setContacts([])
       alert(`Failed to load contacts: ${error.response?.data?.message || error.message || 'Unknown error'}`)
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 

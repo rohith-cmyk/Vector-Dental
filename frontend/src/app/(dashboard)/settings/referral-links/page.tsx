@@ -18,6 +18,7 @@ import {
 import { referralLinkService } from '@/services/referral-link.service'
 import type { ReferralLink } from '@/types'
 import { Modal } from '@/components/ui'
+import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
 
 interface CreateLinkModalProps {
   isOpen: boolean
@@ -145,23 +146,38 @@ export default function ReferralLinksPage() {
   const [error, setError] = useState<string | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const cacheKey = 'referral_links'
+  const cacheTtl = 2 * 60 * 1000
 
-  const fetchLinks = async () => {
+  const fetchLinks = async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       setError(null)
       const data = await referralLinkService.list()
       setLinks(data)
+      setCachedData(cacheKey, data, cacheTtl)
     } catch (error: any) {
       console.error('Failed to load referral links:', error)
       setError(error.response?.data?.message || 'Failed to load referral links')
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    fetchLinks()
+    const cached = getCachedData<ReferralLink[]>(cacheKey)
+    if (cached) {
+      setLinks(cached)
+      setLoading(false)
+      fetchLinks(false)
+      return
+    }
+
+    fetchLinks(true)
   }, [])
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -169,7 +185,8 @@ export default function ReferralLinksPage() {
       const data = await referralLinkService.update(id, {
         isActive: !currentStatus,
       })
-      await fetchLinks()
+      clearCache(cacheKey)
+      await fetchLinks(false)
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to update link')
     }
@@ -182,7 +199,8 @@ export default function ReferralLinksPage() {
 
     try {
       await referralLinkService.delete(id)
-      await fetchLinks()
+      clearCache(cacheKey)
+      await fetchLinks(false)
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to delete link')
     }
@@ -340,7 +358,10 @@ export default function ReferralLinksPage() {
       <CreateLinkModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={fetchLinks}
+        onSuccess={() => {
+          clearCache(cacheKey)
+          fetchLinks(false)
+        }}
       />
     </DashboardLayout>
   )

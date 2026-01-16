@@ -18,6 +18,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [acceptingIds, setAcceptingIds] = useState<string[]>([])
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
+  const [trendsPeriod, setTrendsPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly')
+  const [specialtyPeriod, setSpecialtyPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly')
 
   useEffect(() => {
     // Initial load - show loading
@@ -30,7 +32,7 @@ export default function DashboardPage() {
     }, 120000) // 2 minutes (cache TTL)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [trendsPeriod, specialtyPeriod])
 
   const loadDashboardData = async (showLoading: boolean = true, forceRefresh: boolean = false) => {
     try {
@@ -40,7 +42,10 @@ export default function DashboardPage() {
       setError(null)
       
       // getStats() will use cache if available and fresh
-      const data = await dashboardService.getStats(forceRefresh)
+      const data = await dashboardService.getStats(
+        { trendsPeriod, specialtyPeriod },
+        forceRefresh
+      )
       setStats(data)
     } catch (err) {
       console.error('Failed to load dashboard data:', err)
@@ -132,7 +137,7 @@ export default function DashboardPage() {
         <div className="flex flex-col items-center justify-center h-64 space-y-4">
           <div className="text-red-500">{error}</div>
           <button
-            onClick={loadDashboardData}
+            onClick={() => loadDashboardData(true, true)}
             className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
           >
             Try Again
@@ -171,12 +176,18 @@ export default function DashboardPage() {
         {/* Charts Row - Now Shows Sent vs Received */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <ReferralTrendsChart data={stats.referralTrends} />
+            <ReferralTrendsChart
+              data={stats.referralTrends}
+              period={trendsPeriod}
+              onPeriodChange={setTrendsPeriod}
+            />
           </div>
           <div className="lg:col-span-1">
             <SpecialtyBreakdown
               data={stats.incomingReferralsBySpecialty || []}
               title="Incoming by Specialty"
+              period={specialtyPeriod}
+              onPeriodChange={setSpecialtyPeriod}
             />
           </div>
         </div>
