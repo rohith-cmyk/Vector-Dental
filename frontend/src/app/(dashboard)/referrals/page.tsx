@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Button, Card, CardContent, Badge, Select, Tabs } from '@/components/ui'
+import { Button, Card, CardContent, Badge, Select, Tabs, LoadingState } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
 import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle } from 'lucide-react'
@@ -178,9 +178,11 @@ export default function ReferralsPage() {
               <Card>
                 <CardContent className="p-0">
                   {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                      <div className="text-gray-500">Loading...</div>
-                    </div>
+                    <LoadingState
+                      className="h-64"
+                      title="Loading referrals..."
+                      subtitle="Syncing the latest updates"
+                    />
                   ) : referrals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                       <p>No referrals found</p>

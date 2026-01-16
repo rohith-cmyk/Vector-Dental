@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Button, Card, CardContent, Badge } from '@/components/ui'
+import { Button, Card, CardContent, Badge, LoadingState } from '@/components/ui'
 import { Plus, Search, Edit, Trash2 } from 'lucide-react'
 import { ContactFormModal } from '@/components/contacts/ContactFormModal'
 import { contactsService } from '@/services/contacts.service'
@@ -194,9 +194,11 @@ export default function ContactsPage() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-gray-500">Loading...</div>
-              </div>
+              <LoadingState
+                className="h-64"
+                title="Loading contacts..."
+                subtitle="Fetching your clinic contacts"
+              />
             ) : filteredContacts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <p className="text-gray-500">No contacts found</p>

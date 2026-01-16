@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '@/services/auth.supabase.service'
 import { api } from '@/lib/api'
+import { LoadingState } from '@/components/ui'
 
 export default function DashboardLayout({
   children,
@@ -35,9 +36,11 @@ export default function DashboardLayout({
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
-      </div>
+      <LoadingState
+        className="min-h-screen"
+        title="Preparing your dashboard..."
+        subtitle="Checking your session"
+      />
     )
   }
 

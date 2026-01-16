@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui'
-import { Button, Input, Select } from '@/components/ui'
+import { Button, Input, Select, LoadingState } from '@/components/ui'
 import { useAuth } from '@/hooks/useAuth'
 import { contactsService } from '@/services/contacts.service'
 import { referralsService } from '@/services/referrals.service'
@@ -336,7 +336,11 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
               </div>
               <div className="overflow-y-auto flex-1 space-y-2">
                 {loadingContacts ? (
-                  <div className="text-center py-8 text-gray-500">Loading contacts...</div>
+                  <LoadingState
+                    className="py-8"
+                    title="Loading contacts..."
+                    subtitle="Searching your directory"
+                  />
                 ) : (() => {
                   const filteredContacts = contacts.filter(contact =>
                     contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||

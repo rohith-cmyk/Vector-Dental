@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, LoadingState } from '@/components/ui'
 import { StatusTimeline, type TimelineStage } from '@/components/referrals/StatusTimeline'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { api } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 
@@ -62,12 +62,11 @@ export default function ReferralStatusPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          <span className="text-gray-600">Loading referral status...</span>
-        </div>
-      </div>
+      <LoadingState
+        className="min-h-screen bg-gray-50"
+        title="Loading referral status..."
+        subtitle="Fetching the latest timeline"
+      />
     )
   }
 

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui'
-import { FileText, Download, Phone, Mail, Calendar, AlertCircle, Loader2 } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, LoadingState } from '@/components/ui'
+import { FileText, Download, Phone, Mail, Calendar, AlertCircle } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { api, API_URL } from '@/lib/api'
 
@@ -105,8 +105,10 @@ export default function ViewReferralPage() {
       <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
         <Card className="w-full max-w-4xl">
           <CardContent className="p-8 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-brand-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading referral...</p>
+            <LoadingState
+              title="Loading referral..."
+              subtitle="Fetching the referral details"
+            />
           </CardContent>
         </Card>
       </div>

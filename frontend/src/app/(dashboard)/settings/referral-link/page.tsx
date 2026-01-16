@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState } from '@/components/ui'
 import { Copy, ExternalLink, QrCode, Mail, Check, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
 
@@ -95,10 +95,11 @@ ${referralLink.clinicName}
   if (loading) {
     return (
       <DashboardLayout title="Referral Link">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          <span className="ml-2 text-gray-600">Loading referral link...</span>
-        </div>
+        <LoadingState
+          className="h-64"
+          title="Loading referral link..."
+          subtitle="Preparing your shareable link"
+        />
       </DashboardLayout>
     )
   }

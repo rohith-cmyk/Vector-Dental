@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { DashboardLayout } from '@/components/layout'
+import { LoadingState } from '@/components/ui'
 import { StatsCardsV2 } from '@/components/dashboard/StatsCardsV2'
 import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
 import { SpecialtyBreakdown } from '@/components/dashboard/SpecialtyBreakdown'
@@ -124,9 +125,11 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <DashboardLayout title="Dashboard">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Loading dashboard data...</div>
-        </div>
+        <LoadingState
+          className="h-64"
+          title="Loading dashboard data..."
+          subtitle="Fetching your latest stats"
+        />
       </DashboardLayout>
     )
   }
