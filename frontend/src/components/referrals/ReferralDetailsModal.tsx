@@ -135,6 +135,9 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         if (statusIndex < currentIndex) {
             return { isCompleted: true, isCurrent: false, isPending: false }
         } else if (statusIndex === currentIndex) {
+            if (currentStatus === 'COMPLETED') {
+                return { isCompleted: true, isCurrent: false, isPending: false }
+            }
             return { isCompleted: false, isCurrent: true, isPending: false }
         } else {
             return { isCompleted: false, isCurrent: false, isPending: true }
@@ -148,6 +151,19 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
             return null
         }
         return STATUS_ORDER[currentIndex + 1]
+    }
+
+    const getAppointmentDisplay = () => {
+        const appointmentDate = new Date()
+        appointmentDate.setDate(appointmentDate.getDate() + 1)
+        appointmentDate.setHours(10, 0, 0, 0)
+        return appointmentDate.toLocaleString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        })
     }
 
     // Use currentReferral for display (updated when status changes)
@@ -180,11 +196,10 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
             <button
                 type="button"
                 onClick={() => handleCopy(value, field)}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 hover:text-gray-900"
+                className="inline-flex items-center rounded-md p-1 text-gray-500 hover:text-gray-900"
                 title={isCopied ? 'Copied' : 'Copy'}
             >
                 {isCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                {isCopied ? 'Copied' : 'Copy'}
             </button>
         )
     }
@@ -411,6 +426,9 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                     <CardContent>
                         <div className="space-y-3">
                             <p className="text-sm font-medium text-gray-700">Change Referral Status</p>
+                            <p className="text-xs text-gray-500">
+                                Appointment: {getAppointmentDisplay()}
+                            </p>
                             <div className="flex flex-wrap gap-2">
                                 {STATUS_ORDER.map((status) => {
                                     const state = getStatusState(status)
@@ -427,13 +445,9 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                                         // Clicking a completed step - go back to that status
                                                         handleStatusUpdate(status)
                                                     } else if (state.isCurrent) {
-                                                        // Clicking the current step - advance to next status
                                                         const nextStatus = getNextStatus(displayReferral.status)
                                                         if (nextStatus) {
                                                             handleStatusUpdate(nextStatus)
-                                                        } else {
-                                                            // Already at last step - just ensure it's marked as completed
-                                                            handleStatusUpdate(status)
                                                         }
                                                     }
                                                 }

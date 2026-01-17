@@ -154,11 +154,12 @@ export default function ReferralsPage() {
                     onChange={(e) => setStatusFilter(e.target.value as ReferralStatus | 'all')}
                     options={[
                       { value: 'all', label: 'All Status' },
-                      { value: 'draft', label: 'Draft' },
-                      { value: 'sent', label: 'Sent' },
-                      { value: 'accepted', label: 'Accepted' },
-                      { value: 'completed', label: 'Completed' },
-                      { value: 'cancelled', label: 'Cancelled' },
+                      { value: 'DRAFT', label: 'Draft' },
+                      { value: 'SUBMITTED', label: 'Reviewed' },
+                      { value: 'ACCEPTED', label: 'Appointment Scheduled' },
+                      { value: 'SENT', label: 'Patient Attended' },
+                      { value: 'COMPLETED', label: 'Completed' },
+                      { value: 'CANCELLED', label: 'Cancelled' },
                     ]}
                   />
                 </div>

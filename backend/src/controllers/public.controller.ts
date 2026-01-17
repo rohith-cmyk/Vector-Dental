@@ -504,13 +504,14 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
     const timeline = TIMELINE_STAGES.map((stage) => {
       const stageIndex = TIMELINE_STAGES.findIndex((s) => s.key === stage.key)
       const currentIndex = TIMELINE_STAGES.findIndex((s) => s.key === currentStage)
+      const isCompletedStage = currentStage === 'completed'
       
       return {
         key: stage.key,
         label: stage.label,
         status: stage.status,
-        isCompleted: stageIndex < currentIndex,
-        isCurrent: stageIndex === currentIndex,
+        isCompleted: stageIndex < currentIndex || (isCompletedStage && stageIndex === currentIndex),
+        isCurrent: stageIndex === currentIndex && !isCompletedStage,
         isPending: stageIndex > currentIndex,
       }
     })
