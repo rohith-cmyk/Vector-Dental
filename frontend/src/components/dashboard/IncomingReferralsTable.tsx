@@ -16,7 +16,7 @@ interface IncomingReferralsTableProps {
 export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingIds }: IncomingReferralsTableProps) {
   // Handle undefined or empty data
   const safeReferrals = referrals || []
-  
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -87,10 +87,10 @@ export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingI
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge 
+                      <Badge
                         variant={
-                          referral.urgency === 'emergency' ? 'danger' :
-                          referral.urgency === 'urgent' ? 'warning' : 'default'
+                          referral.urgency === 'EMERGENCY' ? 'danger' :
+                            referral.urgency === 'URGENT' ? 'warning' : 'default'
                         }
                       >
                         {referral.urgency.toUpperCase()}
