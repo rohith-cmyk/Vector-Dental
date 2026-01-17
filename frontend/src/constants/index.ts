@@ -13,7 +13,9 @@ export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 export const REFERRAL_STATUSES = {
   DRAFT: { label: 'Draft', color: 'gray' },
   SENT: { label: 'Sent', color: 'blue' },
+  SUBMITTED: { label: 'Submitted', color: 'orange' },
   ACCEPTED: { label: 'Accepted', color: 'yellow' },
+  REJECTED: { label: 'Rejected', color: 'red' },
   COMPLETED: { label: 'Completed', color: 'green' },
   CANCELLED: { label: 'Cancelled', color: 'red' },
 } as const
