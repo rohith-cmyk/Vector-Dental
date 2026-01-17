@@ -60,47 +60,47 @@ export type ReferralType = 'OUTGOING' | 'INCOMING'
 
 export interface Referral {
   id: string
-  
+
   // Referral Direction
   referralType: ReferralType
-  
+
   // For OUTGOING (you send)
   fromClinicId: string
   toContactId?: string
   toClinicId?: string
   contact?: Contact
-  
+
   // For INCOMING (you receive)
   fromClinicName?: string
   fromClinicEmail?: string
   fromClinicPhone?: string
   referringDentist?: string
-  
+
   // Patient Information
   patientName: string
   patientDob: string
   patientPhone?: string
   patientEmail?: string
-  
+
   // Referral Details
   reason: string
   urgency: ReferralUrgency
   status: ReferralStatus
   notes?: string
-  
+
   // Files
   files?: ReferralFile[]
-  
+
   // Status tracking
   statusToken?: string // Token for status tracking page (only for referrals submitted via referral link)
-  
+
   // Timestamps
   createdAt: string
   updatedAt: string
 }
 
 // Notification Types
-export type NotificationType = 
+export type NotificationType =
   | 'new_incoming_referral'
   | 'referral_accepted'
   | 'referral_rejected'
@@ -184,21 +184,31 @@ export interface DashboardStats {
   totalReferrals: number
   totalOutgoing: number
   totalIncoming: number
-  
+
   // Percentage changes (compared to previous period)
   outgoingChange?: number  // Percentage change for outgoing referrals
   incomingChange?: number  // Percentage change for incoming referrals
   completedChange?: number // Percentage change for completed referrals
-  
+
   // Action needed
   pendingIncoming: number  // Need to accept/reject
   pendingOutgoing: number  // Waiting for response
-  
+
   // Completed
   completedThisMonth: number
-  
+
   // Charts
   referralsBySpecialty: Array<{
+    specialty: string
+    count: number
+    percentage: number
+  }>
+  outgoingReferralsBySpecialty?: Array<{
+    specialty: string
+    count: number
+    percentage: number
+  }>
+  incomingReferralsBySpecialty?: Array<{
     specialty: string
     count: number
     percentage: number
@@ -208,7 +218,7 @@ export interface DashboardStats {
     outgoing: number
     incoming: number
   }>
-  
+
   // Recent referrals
   recentIncoming: Referral[]
   recentOutgoing: Referral[]
