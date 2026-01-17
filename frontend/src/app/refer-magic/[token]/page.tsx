@@ -37,6 +37,7 @@ export default function ReferMagicPage() {
     patientFirstName: '',
     patientLastName: '',
     patientDob: '',
+    patientPhone: '',
     insurance: '',
     // Referral details
     reasonForReferral: '',
@@ -122,6 +123,9 @@ export default function ReferMagicPage() {
       
       if (formData.patientDob) {
         formDataToSend.append('patientDob', formData.patientDob)
+      }
+      if (formData.patientPhone?.trim()) {
+        formDataToSend.append('patientPhone', formData.patientPhone.trim())
       }
       if (formData.insurance?.trim()) {
         formDataToSend.append('insurance', formData.insurance.trim())
@@ -330,6 +334,15 @@ export default function ReferMagicPage() {
                     placeholder="Insurance provider"
                   />
                 </div>
+                <div className="mt-4">
+                  <Input
+                    label="Patient Phone (Optional)"
+                    type="tel"
+                    value={formData.patientPhone}
+                    onChange={(e) => handleChange('patientPhone', e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
               </div>
 
               {/* Referral Details */}
@@ -403,7 +416,7 @@ export default function ReferMagicPage() {
                 )}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <p className="text-sm text-blue-800">
-                    📧 You will receive an email confirmation once {linkInfo.clinicName} reviews your referral.
+                    Once you submit the referral, you will get an email from {linkInfo.clinicName} for patient status.
                   </p>
                 </div>
                 <Button

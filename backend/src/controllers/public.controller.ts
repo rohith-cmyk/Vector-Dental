@@ -294,9 +294,11 @@ export async function submitReferral(
       submittedByName,
       submittedByEmail,
       submittedByPhone,
+      patientPhone,
       // Referral details
       reasonForReferral,
       notes,
+      urgency,
     } = req.body
 
     // Validate required fields (access code no longer required)
@@ -352,6 +354,7 @@ export async function submitReferral(
         patientLastName,
         patientName: `${patientFirstName} ${patientLastName}`, // Keep for backward compatibility
         patientDob: patientDob ? new Date(patientDob) : new Date(), // Default to today if not provided
+        patientPhone: patientPhone || null,
         insurance: insurance || null,
         gpClinicName,
         submittedByName,

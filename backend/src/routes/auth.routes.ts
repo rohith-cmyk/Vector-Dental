@@ -23,11 +23,25 @@ router.post(
 )
 
 /**
+ * @route   POST /api/auth/oauth/complete
+ * @desc    Complete OAuth signup (create clinic + profile)
+ * @access  Private (requires Supabase token)
+ */
+router.post('/oauth/complete', authSupabaseController.completeOAuthSignup)
+
+/**
  * @route   GET /api/auth/profile
  * @desc    Get current user profile
  * @access  Private (requires Supabase token)
  */
 router.get('/profile', authenticateSupabase, authSupabaseController.getProfile)
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update clinic profile
+ * @access  Private (requires Supabase token)
+ */
+router.put('/profile', authenticateSupabase, authSupabaseController.updateProfile)
 
 /**
  * @route   POST /api/auth/resend-verification

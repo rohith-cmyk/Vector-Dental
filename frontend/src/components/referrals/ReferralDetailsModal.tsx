@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import type { ComponentType } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDate, cn } from '@/lib/utils'
 import { Modal, Badge, Button, Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
-import { FileText, Download, Phone, Mail, Calendar, User, Building2, Share2, Loader2, ExternalLink, CheckCircle, Check } from 'lucide-react'
+import { FileText, Download, Phone, Mail, Calendar, User, Building2, Share2, Loader2, ExternalLink, CheckCircle, Check, Copy } from 'lucide-react'
 import type { Referral, ReferralFile, ReferralStatus } from '@/types'
 import { API_URL } from '@/lib/api'
 import { InteractiveToothChart } from './InteractiveToothChart'
@@ -23,6 +24,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
     const [statusUpdateSuccess, setStatusUpdateSuccess] = useState(false)
     const [currentReferral, setCurrentReferral] = useState<Referral | null>(referral)
+    const [copiedField, setCopiedField] = useState<string | null>(null)
 
     // Update current referral when referral prop changes
     useEffect(() => {
@@ -160,6 +162,67 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     const clinicName = displayReferral.gpClinicName || displayReferral.fromClinicName || 'Unknown Clinic'
     const doctorName = displayReferral.submittedByName || displayReferral.referringDentist
 
+    const handleCopy = async (value: string | undefined | null, field: string) => {
+        if (!value) return
+        try {
+            await navigator.clipboard.writeText(value)
+            setCopiedField(field)
+            setTimeout(() => setCopiedField((current) => (current === field ? null : current)), 1500)
+        } catch (error) {
+            console.error('Failed to copy value:', error)
+        }
+    }
+
+    const CopyButton = ({ value, field }: { value?: string | null; field: string }) => {
+        if (!value) return null
+        const isCopied = copiedField === field
+        return (
+            <button
+                type="button"
+                onClick={() => handleCopy(value, field)}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 hover:text-gray-900"
+                title={isCopied ? 'Copied' : 'Copy'}
+            >
+                {isCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                {isCopied ? 'Copied' : 'Copy'}
+            </button>
+        )
+    }
+
+    const FieldRow = ({
+        label,
+        value,
+        field,
+        icon: Icon,
+        href,
+    }: {
+        label: string
+        value?: string | null
+        field: string
+        icon?: ComponentType<{ className?: string }>
+        href?: string
+    }) => {
+        if (!value) return null
+        return (
+            <div className="flex items-start justify-between gap-3 py-3">
+                <div className="space-y-1">
+                    <p className="text-xs font-medium text-gray-500">{label}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-900">
+                        {Icon && <Icon className="h-4 w-4 text-gray-400" />}
+                        {href ? (
+                            <a href={href} className="text-brand-600 hover:text-brand-700">
+                                {value}
+                            </a>
+                        ) : (
+                            <span className="text-gray-900">{value}</span>
+                        )}
+                    </div>
+                </div>
+                <CopyButton value={value} field={field} />
+            </div>
+        )
+    }
+
     return (
         <Modal
             isOpen={isOpen}
@@ -174,26 +237,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                         <div className="flex justify-between items-start">
                             <div>
                                 <CardTitle className="text-2xl">{patientName}</CardTitle>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <Calendar className="h-4 w-4" />
-                                        <span suppressHydrationWarning>
-                                            DOB: {formatDate(displayReferral.patientDob)}
-                                        </span>
-                                    </div>
-                                    {displayReferral.patientPhone && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Phone className="h-4 w-4" />
-                                            <span>{displayReferral.patientPhone}</span>
-                                        </div>
-                                    )}
-                                    {displayReferral.patientEmail && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Mail className="h-4 w-4" />
-                                            <span>{displayReferral.patientEmail}</span>
-                                        </div>
-                                    )}
-                                </div>
+                                <p className="text-sm text-gray-500 mt-1">Patient Information</p>
                             </div>
                             <div className="flex gap-2">
                                 <Badge variant={getUrgencyVariant(displayReferral.urgency)}>
@@ -206,67 +250,95 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {displayReferral.insurance && (
-                            <div className="mb-4">
-                                <p className="text-sm font-medium text-gray-500 mb-1">Insurance</p>
-                                <p className="text-base text-gray-900">{displayReferral.insurance}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                <h4 className="text-sm font-semibold text-gray-900 mb-2">Patient Information</h4>
+                                <div className="divide-y divide-gray-200">
+                                    <FieldRow
+                                        label="First Name"
+                                        value={displayReferral.patientFirstName || patientName.split(' ')[0]}
+                                        field="patientFirstName"
+                                        icon={User}
+                                    />
+                                    <FieldRow
+                                        label="Last Name"
+                                        value={displayReferral.patientLastName || patientName.split(' ').slice(1).join(' ') || ''}
+                                        field="patientLastName"
+                                        icon={User}
+                                    />
+                                    <FieldRow
+                                        label="Date of Birth"
+                                        value={formatDate(displayReferral.patientDob)}
+                                        field="patientDob"
+                                        icon={Calendar}
+                                    />
+                                </div>
                             </div>
-                        )}
+                            <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                                <h4 className="text-sm font-semibold text-gray-900 mb-2">Contact Information</h4>
+                                <div className="divide-y divide-gray-200">
+                                    <FieldRow
+                                        label="Email"
+                                        value={displayReferral.patientEmail}
+                                        field="patientEmail"
+                                        icon={Mail}
+                                        href={displayReferral.patientEmail ? `mailto:${displayReferral.patientEmail}` : undefined}
+                                    />
+                                    <FieldRow
+                                        label="Phone"
+                                        value={displayReferral.patientPhone}
+                                        field="patientPhone"
+                                        icon={Phone}
+                                        href={displayReferral.patientPhone ? `tel:${displayReferral.patientPhone}` : undefined}
+                                    />
+                                    <FieldRow
+                                        label="Insurance"
+                                        value={displayReferral.insurance}
+                                        field="insurance"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
                 {/* Referrer Information Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>From</CardTitle>
+                        <CardTitle>Referring Clinic</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-3">
-                            <div>
-                                <p className="text-sm font-medium text-gray-500 mb-1">Clinic Name</p>
-                                <p className="text-base text-gray-900">{clinicName}</p>
-                            </div>
-                            {doctorName && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Doctor</p>
-                                    <p className="text-base text-gray-900">
-                                        {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
-                                    </p>
-                                </div>
-                            )}
-                            {displayReferral.fromClinicEmail && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4 text-gray-400" />
-                                        <a href={`mailto:${displayReferral.fromClinicEmail}`} className="text-base text-blue-600 hover:text-blue-800">
-                                            {displayReferral.fromClinicEmail}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-                            {displayReferral.fromClinicPhone && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Phone</p>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-gray-400" />
-                                        <a href={`tel:${displayReferral.fromClinicPhone}`} className="text-base text-blue-600 hover:text-blue-800">
-                                            {displayReferral.fromClinicPhone}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-                            {(displayReferral.submittedByPhone || displayReferral.fromClinicPhone) && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Contact Phone</p>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-gray-400" />
-                                        <a href={`tel:${displayReferral.submittedByPhone || displayReferral.fromClinicPhone}`} className="text-base text-blue-600 hover:text-blue-800">
-                                            {displayReferral.submittedByPhone || displayReferral.fromClinicPhone}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
+                        <div className="divide-y divide-gray-100">
+                            <FieldRow label="Clinic Name" value={clinicName} field="clinicName" icon={Building2} />
+                            <FieldRow
+                                label="Doctor"
+                                value={doctorName ? (doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`) : undefined}
+                                field="doctorName"
+                                icon={User}
+                            />
+                            <FieldRow
+                                label="Clinic Email"
+                                value={displayReferral.fromClinicEmail}
+                                field="clinicEmail"
+                                icon={Mail}
+                                href={displayReferral.fromClinicEmail ? `mailto:${displayReferral.fromClinicEmail}` : undefined}
+                            />
+                            <FieldRow
+                                label="Clinic Phone"
+                                value={displayReferral.fromClinicPhone}
+                                field="clinicPhone"
+                                icon={Phone}
+                                href={displayReferral.fromClinicPhone ? `tel:${displayReferral.fromClinicPhone}` : undefined}
+                            />
+                            <FieldRow
+                                label="Contact Phone"
+                                value={displayReferral.submittedByPhone || displayReferral.fromClinicPhone}
+                                field="contactPhone"
+                                icon={Phone}
+                                href={(displayReferral.submittedByPhone || displayReferral.fromClinicPhone)
+                                    ? `tel:${displayReferral.submittedByPhone || displayReferral.fromClinicPhone}`
+                                    : undefined}
+                            />
                         </div>
                     </CardContent>
                 </Card>
@@ -274,7 +346,10 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                 {/* Referral Details Card */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Reason for Referral</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <CardTitle>Reason for Referral</CardTitle>
+                            <CopyButton value={displayReferral.reason} field="reason" />
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="bg-gray-50 rounded-lg p-4">
@@ -287,7 +362,10 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                 {displayReferral.notes && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Additional Notes</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Additional Notes</CardTitle>
+                                <CopyButton value={displayReferral.notes} field="notes" />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="bg-gray-50 rounded-lg p-4">

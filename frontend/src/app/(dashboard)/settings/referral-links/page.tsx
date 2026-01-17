@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState, Modal } from '@/components/ui'
 import {
   Copy,
   ExternalLink,
@@ -17,7 +17,6 @@ import {
 } from 'lucide-react'
 import { referralLinkService } from '@/services/referral-link.service'
 import type { ReferralLink } from '@/types'
-import { Modal } from '@/components/ui'
 import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
 
 interface CreateLinkModalProps {
@@ -146,6 +145,8 @@ export default function ReferralLinksPage() {
   const [error, setError] = useState<string | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ReferralLink | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const cacheKey = 'referral_links'
   const cacheTtl = 2 * 60 * 1000
 
@@ -193,16 +194,16 @@ export default function ReferralLinksPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this referral link? This cannot be undone.')) {
-      return
-    }
-
     try {
+      setDeleting(true)
       await referralLinkService.delete(id)
       clearCache(cacheKey)
       await fetchLinks(false)
+      setDeleteTarget(null)
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to delete link')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -342,7 +343,7 @@ export default function ReferralLinksPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleDelete(link.id)}
+                        onClick={() => setDeleteTarget(link)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -364,6 +365,40 @@ export default function ReferralLinksPage() {
           fetchLinks(false)
         }}
       />
+
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteTarget(null)
+          }
+        }}
+        title="Delete Referral Link"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete{' '}
+            <span className="font-medium text-gray-900">{deleteTarget?.label || 'this link'}</span>?
+            This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => deleteTarget && handleDelete(deleteTarget.id)}
+              isLoading={deleting}
+            >
+              Delete Link
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </DashboardLayout>
   )
 }

@@ -16,6 +16,7 @@ export default function LoginPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState(false)
   const [generalError, setGeneralError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +45,16 @@ export default function LoginPage() {
     }
   }
 
+  const handleGoogleLogin = async () => {
+    try {
+      setOauthLoading(true)
+      await authService.loginWithGoogle()
+    } catch (error: any) {
+      setGeneralError(error.message || 'Google login failed')
+      setOauthLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 to-gray-100 px-4">
       <Card className="w-full max-w-md">
@@ -65,6 +76,24 @@ export default function LoginPage() {
               <p className="text-sm text-red-600">{generalError}</p>
             </div>
           )}
+
+          {/* OAuth */}
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={handleGoogleLogin}
+            isLoading={oauthLoading}
+          >
+            Continue with Google
+          </Button>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-500">or</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -41,7 +41,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // ✅ Auto-confirm for development (set to false in production)
+      email_confirm: false, // Send verification email
       user_metadata: {
         name,
         clinicName,
@@ -147,6 +147,54 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
 }
 
 /**
+ * Update clinic profile (name/email) for current user
+ */
+export async function updateProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      throw errors.unauthorized()
+    }
+
+    const { clinicName, clinicEmail } = req.body as { clinicName?: string; clinicEmail?: string }
+
+    if (!clinicName && !clinicEmail) {
+      throw errors.badRequest('No profile fields provided')
+    }
+
+    const clinic = await prisma.clinic.update({
+      where: { id: req.user.clinicId },
+      data: {
+        name: clinicName?.trim() || undefined,
+        email: clinicEmail?.trim() || undefined,
+      },
+    })
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: { clinic: true },
+    })
+
+    if (!user) {
+      throw errors.notFound('User profile not found')
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        clinicId: user.clinicId,
+        clinic: clinic || user.clinic,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * Handle post-signup webhook from Supabase
  * (Optional: for additional processing after email confirmation)
  */
@@ -163,6 +211,94 @@ export async function handleAuthWebhook(req: Request, res: Response, next: NextF
     }
 
     res.json({ success: true })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Complete OAuth signup by creating clinic + user profile
+ */
+export async function completeOAuthSignup(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw errors.unauthorized('No token provided')
+    }
+
+    const token = authHeader.substring(7)
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+
+    if (error || !user) {
+      throw errors.unauthorized('Invalid or expired token')
+    }
+
+    const { clinicName, name } = req.body as { clinicName?: string; name?: string }
+
+    if (!clinicName) {
+      throw errors.badRequest('Clinic name is required')
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { clinic: true },
+    })
+
+    if (existingUser) {
+      return res.json({
+        success: true,
+        data: {
+          id: existingUser.id,
+          email: existingUser.email,
+          name: existingUser.name,
+          role: existingUser.role,
+          clinicId: existingUser.clinicId,
+          clinic: existingUser.clinic,
+        },
+      })
+    }
+
+    const displayName =
+      name ||
+      (user.user_metadata?.full_name as string | undefined) ||
+      (user.user_metadata?.name as string | undefined) ||
+      user.email?.split('@')[0] ||
+      'User'
+
+    const result = await prisma.$transaction(async (tx) => {
+      const clinic = await tx.clinic.create({
+        data: {
+          name: clinicName,
+        },
+      })
+
+      const createdUser = await tx.user.create({
+        data: {
+          id: user.id,
+          email: user.email || '',
+          password: '',
+          name: displayName,
+          role: 'ADMIN',
+          clinicId: clinic.id,
+        },
+        include: { clinic: true },
+      })
+
+      return { user: createdUser, clinic }
+    })
+
+    res.json({
+      success: true,
+      data: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+        clinicId: result.user.clinicId,
+        clinic: result.user.clinic,
+      },
+    })
   } catch (error) {
     next(error)
   }

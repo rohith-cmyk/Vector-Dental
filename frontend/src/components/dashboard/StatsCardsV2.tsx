@@ -17,7 +17,7 @@ interface StatsCardsV2Props {
 
 export function StatsCardsV2({ stats }: StatsCardsV2Props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
       <StatCard
         title="Sent Out"
         value={stats.totalOutgoing}
