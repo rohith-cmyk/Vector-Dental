@@ -4,15 +4,15 @@
   "description": "Backend API for Dental Referral Management System",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "npx tsx watch src/index.ts",
-    "build": "npx tsc",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
     "start": "node dist/index.js",
-    "prisma:generate": "npx prisma generate",
-    "prisma:migrate": "npx prisma migrate dev",
-    "prisma:studio": "npx prisma studio",
-    "prisma:seed": "npx tsx prisma/seed.ts",
-    "lint": "npx eslint src --ext .ts",
-    "type-check": "npx tsc --noEmit"
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "dental",

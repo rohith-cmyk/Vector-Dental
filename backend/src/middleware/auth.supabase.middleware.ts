@@ -21,7 +21,7 @@ declare global {
  * Authentication middleware for Supabase Auth
  * Verifies Supabase JWT token and attaches user info to request
  */
-export function authenticateSupabase(req: Request, res: Response, next: NextFunction) {
+export function authenticateSupabase(req: Request, _res: Response, next: NextFunction) {
   const asyncHandler = async () => {
     try {
       const authHeader = req.headers.authorization
@@ -86,7 +86,7 @@ export function authenticateSupabase(req: Request, res: Response, next: NextFunc
  * Role-based authorization middleware
  */
 export function authorize(...roles: string[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(errors.unauthorized())
     }

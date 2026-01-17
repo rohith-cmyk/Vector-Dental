@@ -58,6 +58,8 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       throw errors.internal('No user returned from Supabase')
     }
 
+    const userId = authData.user.id
+
     try {
       // Create clinic and user in our database
       const result = await prisma.$transaction(async (tx) => {
@@ -71,7 +73,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
         // Create user profile linked to Supabase auth user
         const user = await tx.user.create({
           data: {
-            id: authData.user.id, // Use Supabase auth user ID
+            id: userId, // Use Supabase auth user ID
             email,
             password: '', // Password managed by Supabase
             name,
@@ -247,7 +249,7 @@ export async function completeOAuthSignup(req: Request, res: Response, next: Nex
     })
 
     if (existingUser) {
-      return res.json({
+      res.json({
         success: true,
         data: {
           id: existingUser.id,
@@ -258,6 +260,7 @@ export async function completeOAuthSignup(req: Request, res: Response, next: Nex
           clinic: existingUser.clinic,
         },
       })
+      return
     }
 
     const displayName =

@@ -6,7 +6,7 @@ import { errors } from '../utils/errors'
  * Validation middleware
  * Checks for validation errors from express-validator
  */
-export function validate(req: Request, res: Response, next: NextFunction) {
+export function validate(req: Request, _res: Response, next: NextFunction) {
   const validationErrors = validationResult(req)
 
   if (!validationErrors.isEmpty()) {

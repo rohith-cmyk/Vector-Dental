@@ -21,7 +21,7 @@ router.use('/referral-links', magicReferralLinkRoutes) // Referral link manageme
 router.use('/notifications', notificationsRoutes) // Notifications
 
 // Health check
-router.get('/health', (req, res) => {
+router.get('/health', (_req, res) => {
   res.json({
     success: true,
     message: 'API is running',
