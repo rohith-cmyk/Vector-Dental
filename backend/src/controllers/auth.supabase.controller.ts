@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { supabaseAdmin } from '../config/supabase'
+import { supabaseAdmin, supabase } from '../config/supabase'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
 
@@ -37,14 +37,15 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
       throw errors.conflict('User with this email already exists')
     }
 
-    // Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // Create user in Supabase Auth (using public client to trigger email)
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: false, // Send verification email
-      user_metadata: {
-        name,
-        clinicName,
+      options: {
+        data: {
+          name,
+          clinicName,
+        },
       },
     })
 
@@ -205,7 +206,7 @@ export async function handleAuthWebhook(req: Request, res: Response, next: NextF
     if (type === 'INSERT' && record.email_confirmed_at) {
       // User has confirmed their email
       console.log(`✅ User ${record.email} confirmed their email`)
-      
+
       // You can add additional logic here
       // e.g., send welcome email, create initial data, etc.
     }
@@ -317,7 +318,7 @@ export async function resendVerificationEmail(req: Request, res: Response, next:
 
     // Supabase doesn't have a direct "resend" method
     // User needs to try logging in, which will send a new email if unverified
-    
+
     res.json({
       success: true,
       message: 'Please try logging in. If your email is not verified, we will send a new verification email.',
