@@ -22,7 +22,7 @@ interface FormData {
   // Referring doctor
   referringDoctorFirstName: string
   referringDoctorLastName: string
-  
+
   // Patient information
   patientFirstName: string
   patientLastName: string
@@ -31,17 +31,17 @@ interface FormData {
   patientDob: string
   patientAddress: string
   textPatientCopy: boolean
-  
+
   // Referral details
   toContactId: string
   reason: string
   customReason: string
   urgency: ReferralUrgency
   notes: string
-  
+
   // Teeth selection
   selectedTeeth: Array<string | number>
-  
+
   // Files
   files: File[]
 }
@@ -167,7 +167,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
         patientEmail: formData.patientEmail || undefined,
         reason: formData.customReason.trim() || formData.reason,
         urgency: formData.urgency,
-        status: saveAsDraft ? 'DRAFT' : 'SENT',
+        status: (saveAsDraft ? 'DRAFT' : 'SENT') as import('@/types').ReferralStatus,
         notes: formData.notes || undefined,
         // TODO: Add teeth and files once backend supports them
         // selectedTeeth: formData.selectedTeeth,
@@ -211,10 +211,10 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
   const clinic = user?.clinic
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      title="" 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title=""
       size="xl"
     >
       <div className="space-y-6">
@@ -316,7 +316,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
             </div>
           ) : (
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 border-dashed">
-              <p className="text-sm text-gray-500">No contact selected. Click "Select" to choose a doctor/contact.</p>
+              <p className="text-sm text-gray-500">No contact selected. Click &quot;Select&quot; to choose a doctor/contact.</p>
             </div>
           )}
 
@@ -368,11 +368,10 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
                           setErrors(prev => ({ ...prev, toContactId: '' }))
                         }
                       }}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-                        formData.toContactId === contact.id
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                      }`}
+                      className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${formData.toContactId === contact.id
+                        ? 'border-emerald-500 bg-emerald-50'
+                        : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
@@ -480,7 +479,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
             <div className="absolute right-3 top-9 group">
               <Info className="w-4 h-4 text-gray-400 cursor-help" />
               <div className="hidden group-hover:block absolute right-0 top-full mt-1 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-                Patient's contact phone number
+                Patient&apos;s contact phone number
               </div>
             </div>
           </div>

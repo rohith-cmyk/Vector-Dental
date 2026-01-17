@@ -14,13 +14,13 @@ interface OutgoingReferralsTableProps {
 export function OutgoingReferralsTable({ referrals, onView }: OutgoingReferralsTableProps) {
   // Handle undefined or empty data
   const safeReferrals = referrals || []
-  
+
   function getStatusBadgeVariant(status: ReferralStatus) {
     switch (status) {
-      case 'completed': return 'success'
-      case 'sent': return 'info'
-      case 'accepted': return 'warning'
-      case 'cancelled': return 'danger'
+      case 'COMPLETED': return 'success'
+      case 'SENT': return 'info'
+      case 'ACCEPTED': return 'warning'
+      case 'CANCELLED': return 'danger'
       default: return 'default'
     }
   }

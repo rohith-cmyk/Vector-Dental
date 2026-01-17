@@ -139,8 +139,8 @@ export default function NotificationsPage() {
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'all'
-                  ? 'bg-brand-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-brand-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               All ({notifications.length})
@@ -148,8 +148,8 @@ export default function NotificationsPage() {
             <button
               onClick={() => setFilter('unread')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'unread'
-                  ? 'bg-brand-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-brand-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Unread ({unreadCount})
@@ -189,7 +189,7 @@ export default function NotificationsPage() {
               <div className="flex flex-col items-center justify-center py-12">
                 <Bell className="h-12 w-12 text-gray-300 mb-3" />
                 <p className="text-gray-500">No notifications</p>
-                <p className="text-sm text-gray-400">You're all caught up!</p>
+                <p className="text-sm text-gray-400">You&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">

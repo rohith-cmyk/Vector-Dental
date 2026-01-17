@@ -111,6 +111,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     const STATUS_ORDER: ReferralStatus[] = ['SUBMITTED', 'ACCEPTED', 'SENT', 'COMPLETED']
     const STATUS_LABELS: Record<ReferralStatus, string> = {
         SUBMITTED: 'Reviewed',
+        REJECTED: 'Rejected',
         ACCEPTED: 'Appointment Scheduled',
         SENT: 'Patient Attended',
         COMPLETED: 'Completed',
@@ -123,12 +124,12 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         const currentStatus = displayReferral.status
         const currentIndex = STATUS_ORDER.indexOf(currentStatus)
         const statusIndex = STATUS_ORDER.indexOf(status)
-        
+
         if (statusIndex === -1) {
             // Status not in progression (like CANCELLED)
             return { isCompleted: false, isCurrent: false, isPending: true }
         }
-        
+
         // If current status is SUBMITTED, "Reviewed" (SUBMITTED) is current
         // If current status is ACCEPTED, "Reviewed" (SUBMITTED) is completed, "Appointment Scheduled" (ACCEPTED) is current
         // And so on...
@@ -434,7 +435,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                     const state = getStatusState(status)
                                     // Allow clicking completed steps (to go back) or current step (to advance)
                                     const canClick = !isUpdatingStatus && (state.isCompleted || state.isCurrent)
-                                    
+
                                     return (
                                         <button
                                             key={status}
@@ -458,8 +459,8 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                                 state.isCompleted
                                                     ? 'bg-green-50 border-green-500 text-green-700'
                                                     : state.isCurrent
-                                                    ? 'bg-white border-green-500 text-gray-900 ring-2 ring-green-500 ring-offset-2'
-                                                    : 'bg-white border-gray-300 text-gray-500',
+                                                        ? 'bg-white border-green-500 text-gray-900 ring-2 ring-green-500 ring-offset-2'
+                                                        : 'bg-white border-gray-300 text-gray-500',
                                                 !canClick && 'opacity-50 cursor-not-allowed',
                                                 canClick && 'hover:bg-green-50 cursor-pointer'
                                             )}

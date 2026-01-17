@@ -89,6 +89,15 @@ export interface Referral {
   status: ReferralStatus
   notes?: string
 
+  // New fields for magic link flow
+  patientFirstName?: string
+  patientLastName?: string
+  insurance?: string
+  gpClinicName?: string
+  submittedByName?: string
+  submittedByPhone?: string
+  selectedTeeth?: string[]
+
   // Files
   files?: ReferralFile[]
 
