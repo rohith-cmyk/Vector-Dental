@@ -164,329 +164,285 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Referral Details"
+            title=""
             size="xl"
         >
-            <div className="space-y-6">
-                {/* Patient Information Card */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-2xl">{patientName}</CardTitle>
-                                <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <Calendar className="h-4 w-4" />
-                                        <span suppressHydrationWarning>
-                                            DOB: {formatDate(displayReferral.patientDob)}
-                                        </span>
-                                    </div>
-                                    {displayReferral.patientPhone && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Phone className="h-4 w-4" />
-                                            <span>{displayReferral.patientPhone}</span>
-                                        </div>
-                                    )}
-                                    {displayReferral.patientEmail && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Mail className="h-4 w-4" />
-                                            <span>{displayReferral.patientEmail}</span>
-                                        </div>
-                                    )}
+            <div className="space-y-8">
+                {/* Header */}
+                <div className="text-center space-y-6">
+                    <div className="flex justify-center gap-3">
+                        <Badge variant={getUrgencyVariant(displayReferral.urgency)} className="text-xs px-3 py-1">
+                            {displayReferral.urgency || 'ROUTINE'}
+                        </Badge>
+                        <Badge variant={getStatusVariant(displayReferral.status)} className="text-xs px-3 py-1">
+                            {displayReferral.status}
+                        </Badge>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold text-neutral-700">{patientName}</h1>
+                        <div className="flex items-center justify-center gap-6 mt-4 text-sm text-neutral-400">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                <span suppressHydrationWarning>
+                                    {formatDate(displayReferral.patientDob)}
+                                </span>
+                            </div>
+                            {displayReferral.patientPhone && (
+                                <div className="flex items-center gap-2">
+                                    <Phone className="h-4 w-4" />
+                                    <span>{displayReferral.patientPhone}</span>
                                 </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Badge variant={getUrgencyVariant(displayReferral.urgency)}>
-                                    {displayReferral.urgency || 'ROUTINE'}
-                                </Badge>
-                                <Badge variant={getStatusVariant(displayReferral.status)}>
-                                    {displayReferral.status}
-                                </Badge>
-                            </div>
+                            )}
+                            {displayReferral.patientEmail && (
+                                <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4" />
+                                    <span>{displayReferral.patientEmail}</span>
+                                </div>
+                            )}
                         </div>
-                    </CardHeader>
-                    <CardContent>
                         {displayReferral.insurance && (
-                            <div className="mb-4">
-                                <p className="text-sm font-medium text-gray-500 mb-1">Insurance</p>
-                                <p className="text-base text-gray-900">{displayReferral.insurance}</p>
-                            </div>
+                            <p className="text-sm text-neutral-500 mt-3">{displayReferral.insurance}</p>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                {/* Referrer Information Card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>From</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
+                {/* Patient Information Card */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-8">
+                    {/* Referrer Information Card */}
+                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <h3 className="text-lg font-semibold text-neutral-700">Referring Clinic</h3>
+                        </div>
+                        <div className="space-y-5">
                             <div>
-                                <p className="text-sm font-medium text-gray-500 mb-1">Clinic Name</p>
-                                <p className="text-base text-gray-900">{clinicName}</p>
+                                <p className="text-sm font-medium text-neutral-400">Clinic Name</p>
+                                <p className="text-sm text-neutral-700 mt-2">{clinicName}</p>
                             </div>
                             {doctorName && (
                                 <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Doctor</p>
-                                    <p className="text-base text-gray-900">
+                                    <p className="text-sm font-medium text-neutral-400">Referring Doctor</p>
+                                    <p className="text-sm text-neutral-700 mt-2">
                                         {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
                                     </p>
                                 </div>
                             )}
-                            {displayReferral.fromClinicEmail && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Email</p>
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="h-4 w-4 text-gray-400" />
-                                        <a href={`mailto:${displayReferral.fromClinicEmail}`} className="text-base text-blue-600 hover:text-blue-800">
-                                            {displayReferral.fromClinicEmail}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-                            {displayReferral.fromClinicPhone && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Phone</p>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-gray-400" />
-                                        <a href={`tel:${displayReferral.fromClinicPhone}`} className="text-base text-blue-600 hover:text-blue-800">
-                                            {displayReferral.fromClinicPhone}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-                            {(displayReferral.submittedByPhone || displayReferral.fromClinicPhone) && (
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500 mb-1">Contact Phone</p>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-gray-400" />
-                                        <a href={`tel:${displayReferral.submittedByPhone || displayReferral.fromClinicPhone}`} className="text-base text-blue-600 hover:text-blue-800">
-                                            {displayReferral.submittedByPhone || displayReferral.fromClinicPhone}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
+                            <div className="grid grid-cols-1 gap-3 pt-3">
+                                {displayReferral.fromClinicEmail && (
+                                    <a href={`mailto:${displayReferral.fromClinicEmail}`}
+                                       className="flex items-center gap-3 p-3 bg-black/5 rounded-lg hover:bg-neutral-100 transition-colors">
+                                        <Mail className="h-4 w-4 text-neutral-500" />
+                                        <span className="text-sm text-neutral-700">{displayReferral.fromClinicEmail}</span>
+                                    </a>
+                                )}
+                                {(displayReferral.submittedByPhone || displayReferral.fromClinicPhone) && (
+                                    <a href={`tel:${displayReferral.submittedByPhone || displayReferral.fromClinicPhone}`}
+                                       className="flex items-center gap-3 p-3 bg-black/5 rounded-lg hover:bg-neutral-100 transition-colors">
+                                        <Phone className="h-4 w-4 text-neutral-500" />
+                                        <span className="text-sm text-neutral-700">{displayReferral.submittedByPhone || displayReferral.fromClinicPhone}</span>
+                                    </a>
+                                )}
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
 
-                {/* Referral Details Card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Reason for Referral</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-gray-900 whitespace-pre-wrap">{displayReferral.reason}</p>
+                    {/* Referral Details Card */}
+                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <h3 className="text-lg font-semibold text-neutral-700">Referral Reason</h3>
                         </div>
-                    </CardContent>
-                </Card>
+                        <p className="text-neutral-500 text-sm whitespace-pre-wrap leading-relaxed">{displayReferral.reason}</p>
+                    </div>
+                </div>
 
                 {/* Notes Card */}
                 {displayReferral.notes && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Additional Notes</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="bg-gray-50 rounded-lg p-4">
-                                <p className="text-gray-700 whitespace-pre-wrap text-sm">{displayReferral.notes}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-neutral-700 mb-6">Additional Notes</h3>
+                        <p className="text-neutral-500 text-sm whitespace-pre-wrap leading-relaxed">{displayReferral.notes}</p>
+                    </div>
                 )}
 
                 {/* Selected Teeth Card */}
                 {displayReferral.selectedTeeth && displayReferral.selectedTeeth.length > 0 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Selected Teeth</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="border rounded-lg overflow-hidden bg-gray-900">
-                                <div className="scale-90 origin-top">
-                                    <InteractiveToothChart
-                                        selectedTeeth={displayReferral.selectedTeeth}
-                                        onTeethChange={() => { }}
-                                        readOnly={true}
-                                    />
-                                </div>
+                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
+                        <h3 className="text-lg font-semibold text-neutral-700 mb-6">Selected Teeth</h3>
+                        <div className="bg-white rounded-lg p-5 border border-neutral-300">
+                            <div className="scale-90 origin-top">
+                                <InteractiveToothChart
+                                    selectedTeeth={displayReferral.selectedTeeth}
+                                    onTeethChange={() => { }}
+                                    readOnly={true}
+                                />
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 )}
 
                 {/* Status Update Card */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <CardTitle>Update Status</CardTitle>
-                            {statusUpdateSuccess && (
-                                <div className="flex items-center gap-2 text-green-600 text-sm">
-                                    <CheckCircle className="h-4 w-4" />
-                                    Status updated!
-                                </div>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                            <p className="text-sm font-medium text-gray-700">Change Referral Status</p>
-                            <div className="flex flex-wrap gap-2">
-                                {STATUS_ORDER.map((status) => {
-                                    const state = getStatusState(status)
-                                    // Allow clicking completed steps (to go back) or current step (to advance)
-                                    const canClick = !isUpdatingStatus && (state.isCompleted || state.isCurrent)
-                                    
-                                    return (
-                                        <button
-                                            key={status}
-                                            type="button"
-                                            onClick={() => {
-                                                if (canClick) {
-                                                    if (state.isCompleted) {
-                                                        // Clicking a completed step - go back to that status
-                                                        handleStatusUpdate(status)
-                                                    } else if (state.isCurrent) {
-                                                        // Clicking the current step - advance to next status
-                                                        const nextStatus = getNextStatus(displayReferral.status)
-                                                        if (nextStatus) {
-                                                            handleStatusUpdate(nextStatus)
-                                                        } else {
-                                                            // Already at last step - just ensure it's marked as completed
-                                                            handleStatusUpdate(status)
-                                                        }
-                                                    }
-                                                }
-                                            }}
-                                            disabled={!canClick}
-                                            className={cn(
-                                                'relative px-4 py-2 text-sm font-medium rounded-lg border-2 transition-all flex items-center gap-2',
-                                                state.isCompleted
-                                                    ? 'bg-green-50 border-green-500 text-green-700'
-                                                    : state.isCurrent
-                                                    ? 'bg-white border-green-500 text-gray-900 ring-2 ring-green-500 ring-offset-2'
-                                                    : 'bg-white border-gray-300 text-gray-500',
-                                                !canClick && 'opacity-50 cursor-not-allowed',
-                                                canClick && 'hover:bg-green-50 cursor-pointer'
-                                            )}
-                                        >
-                                            {state.isCompleted && (
-                                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                                                    <Check className="h-3 w-3 text-white" />
-                                                </div>
-                                            )}
-                                            {state.isCurrent && !state.isCompleted && (
-                                                <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-green-500 bg-white"></div>
-                                            )}
-                                            {!state.isCompleted && !state.isCurrent && (
-                                                <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-gray-300 bg-white"></div>
-                                            )}
-                                            <span>{STATUS_LABELS[status]}</span>
-                                        </button>
-                                    )
-                                })}
-                                {/* Cancelled option (separate from progression) */}
-                                {displayReferral.status !== 'CANCELLED' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => !isUpdatingStatus && handleStatusUpdate('CANCELLED')}
-                                        disabled={isUpdatingStatus}
-                                        className={cn(
-                                            'px-4 py-2 text-sm font-medium rounded-lg border-2 transition-all',
-                                            'bg-white border-red-300 text-red-700 hover:border-red-400 hover:bg-red-50',
-                                            isUpdatingStatus && 'opacity-50 cursor-not-allowed'
-                                        )}
-                                    >
-                                        {STATUS_LABELS.CANCELLED}
-                                    </button>
-                                )}
-                            </div>
-                            {isUpdatingStatus && (
-                                <div className="flex items-center gap-2 text-gray-600">
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    <span className="text-sm">Updating...</span>
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Attached Files Card */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Attached Files ({displayReferral.files?.length || 0})</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {displayReferral.files && displayReferral.files.length > 0 ? (
-                            <div className="space-y-3">
-                                {displayReferral.files.map((file) => {
-                                    // Handle local development URLs
-                                    const fileUrl = file.fileUrl.startsWith('/')
-                                        ? `${API_URL.replace('/api', '')}${file.fileUrl}`
-                                        : file.fileUrl
-
-                                    return (
-                                        <a
-                                            key={file.id}
-                                            href={fileUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all group"
-                                        >
-                                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                                                <div className="flex-shrink-0 p-3 bg-gray-100 rounded-lg">
-                                                    <FileText className="h-5 w-5 text-gray-600" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                                        {file.fileName}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mt-1">
-                                                        {(file.fileSize / 1024).toFixed(1)} KB
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex-shrink-0 ml-4">
-                                                <Button variant="outline" size="sm" className="group-hover:bg-gray-100">
-                                                    <Download className="h-4 w-4 mr-2" />
-                                                    Download
-                                                </Button>
-                                            </div>
-                                        </a>
-                                    )
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                                <p className="text-sm text-gray-500">No files attached</p>
+                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-semibold text-neutral-700">Update Status</h3>
+                        {statusUpdateSuccess && (
+                            <div className="flex items-center gap-2 text-emerald-600 text-sm bg-black/5 px-3 py-1 rounded-lg">
+                                <CheckCircle className="h-4 w-4" />
+                                Status updated!
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                    <div className="space-y-5">
+                        <p className="text-sm text-neutral-500">Progress through referral stages</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {STATUS_ORDER.map((status) => {
+                                const state = getStatusState(status)
+                                // Allow clicking completed steps (to go back) or current step (to advance)
+                                const canClick = !isUpdatingStatus && (state.isCompleted || state.isCurrent)
+
+                                return (
+                                    <button
+                                        key={status}
+                                        type="button"
+                                        onClick={() => {
+                                            if (canClick) {
+                                                if (state.isCompleted) {
+                                                    // Clicking a completed step - go back to that status
+                                                    handleStatusUpdate(status)
+                                                } else if (state.isCurrent) {
+                                                    // Clicking the current step - advance to next status
+                                                    const nextStatus = getNextStatus(displayReferral.status)
+                                                    if (nextStatus) {
+                                                        handleStatusUpdate(nextStatus)
+                                                    } else {
+                                                        // Already at last step - just ensure it's marked as completed
+                                                        handleStatusUpdate(status)
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                        disabled={!canClick}
+                                        className={cn(
+                                            'relative p-4 text-sm rounded-lg border transition-all flex flex-col items-center gap-2 min-h-[70px] justify-center',
+                                            state.isCompleted
+                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                : state.isCurrent
+                                                ? 'bg-white border-neutral-200 text-neutral-700'
+                                                : 'bg-white border-neutral-200 text-neutral-500 hover:border-neutral-300',
+                                            !canClick && 'opacity-50 cursor-not-allowed',
+                                            canClick && 'hover:bg-neutral-50 cursor-pointer'
+                                        )}
+                                    >
+                                        {state.isCompleted && (
+                                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                                                <Check className="h-3 w-3 text-white" />
+                                            </div>
+                                        )}
+                                        {state.isCurrent && !state.isCompleted && (
+                                            <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-emerald-500"></div>
+                                        )}
+                                        {!state.isCompleted && !state.isCurrent && (
+                                            <div className="flex-shrink-0 w-5 h-5 rounded-full border border-neutral-300 bg-white"></div>
+                                        )}
+                                        <span className="text-center leading-tight text-xs">{STATUS_LABELS[status]}</span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                        {/* Cancelled option (separate from progression) */}
+                        {displayReferral.status !== 'CANCELLED' && (
+                            <div className="pt-4 border-t border-neutral-200">
+                                <button
+                                    type="button"
+                                    onClick={() => !isUpdatingStatus && handleStatusUpdate('CANCELLED')}
+                                    disabled={isUpdatingStatus}
+                                    className="w-full px-4 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                >
+                                    {STATUS_LABELS.CANCELLED}
+                                </button>
+                            </div>
+                        )}
+                        {isUpdatingStatus && (
+                            <div className="flex items-center justify-center gap-2 text-neutral-500 bg-black/5 px-4 py-2 rounded-lg">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Updating status...</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Attached Files Card */}
+                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <h3 className="text-lg font-semibold text-neutral-700">
+                            Attached Files ({displayReferral.files?.length || 0})
+                        </h3>
+                    </div>
+                    {displayReferral.files && displayReferral.files.length > 0 ? (
+                        <div className="space-y-4">
+                            {displayReferral.files.map((file) => {
+                                // Handle local development URLs
+                                const fileUrl = file.fileUrl.startsWith('/')
+                                    ? `${API_URL.replace('/api', '')}${file.fileUrl}`
+                                    : file.fileUrl
+
+                                return (
+                                    <a
+                                        key={file.id}
+                                        href={fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between p-5 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all"
+                                    >
+                                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="flex-shrink-0 p-3 bg-neutral-50 rounded-lg">
+                                                <FileText className="h-5 w-5 text-neutral-500" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-neutral-700 truncate">
+                                                    {file.fileName}
+                                                </p>
+                                                <p className="text-xs text-neutral-500 mt-2">
+                                                    {(file.fileSize / 1024).toFixed(1)} KB
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex-shrink-0 ml-4">
+                                            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors">
+                                                <Download className="h-4 w-4" />
+                                                Download
+                                            </button>
+                                        </div>
+                                    </a>
+                                )
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-sm text-neutral-500">No files attached to this referral</p>
+                        </div>
+                    )}
+                </div>
 
                 {/* Footer Actions */}
-                <div className="flex justify-between items-center pt-4 border-t">
-                    <div className="flex gap-2">
+                <div className="flex justify-between items-center pt-6 border-t border-neutral-200">
+                    <div className="flex gap-3">
                         {displayReferral.statusToken && (
-                            <Button
-                                variant="outline"
+                            <button
                                 onClick={() => {
                                     window.open(`/referral-status/${displayReferral.statusToken}`, '_blank')
                                 }}
-                                className="gap-2"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 bg-white rounded-lg hover:bg-neutral-50 transition-colors border border-neutral-200"
                             >
                                 <ExternalLink className="h-4 w-4" />
-                                View Status
-                            </Button>
+                                View Status Page
+                            </button>
                         )}
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={onClose}>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onClose}
+                            className="px-6 py-2 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                        >
                             Close
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>

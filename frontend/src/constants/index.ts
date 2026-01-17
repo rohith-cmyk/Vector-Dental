@@ -2,6 +2,9 @@
 export const APP_NAME = 'Dental Referral System'
 export const APP_DESCRIPTION = 'A CRM tool for managing dental and clinical referrals'
 
+// Development Mode - Set to true to use mock data instead of API calls
+export const USE_MOCK_DATA = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true'
+
 // API Configuration
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -16,6 +19,7 @@ export const REFERRAL_STATUSES = {
   ACCEPTED: { label: 'Accepted', color: 'yellow' },
   COMPLETED: { label: 'Completed', color: 'green' },
   CANCELLED: { label: 'Cancelled', color: 'red' },
+  REJECTED: { label: 'Rejected', color: 'red' },
 } as const
 
 // Referral Urgency Levels

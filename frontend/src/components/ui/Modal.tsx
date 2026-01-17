@@ -52,7 +52,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalPr
       <div className="flex min-h-full items-center justify-center p-4">
         <div 
           className={cn(
-            'relative w-full bg-white rounded-lg shadow-xl transform transition-all',
+            'relative w-full bg-white rounded-2xl shadow-xl transform transition-all',
             sizeClasses[size]
           )}
           onClick={(e) => e.stopPropagation()}
