@@ -69,6 +69,7 @@ export interface Referral {
   toContactId?: string
   toClinicId?: string
   contact?: Contact
+  clinic?: Clinic
 
   // For INCOMING (you receive)
   fromClinicName?: string
