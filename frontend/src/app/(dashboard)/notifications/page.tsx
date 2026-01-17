@@ -50,7 +50,7 @@ export default function NotificationsPage() {
   }
 
   const unreadCount = notifications.filter(n => !n.isRead).length
-  const filteredNotifications = filter === 'unread' 
+  const filteredNotifications = filter === 'unread'
     ? notifications.filter(n => !n.isRead)
     : notifications
 
@@ -138,26 +138,24 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'all'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'all'
                   ? 'bg-brand-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               All ({notifications.length})
             </button>
             <button
               onClick={() => setFilter('unread')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'unread'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'unread'
                   ? 'bg-brand-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Unread ({unreadCount})
             </button>
           </div>
-          
+
           {unreadCount > 0 && (
             <Button
               variant="outline"
@@ -183,7 +181,7 @@ export default function NotificationsPage() {
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <p className="text-red-500 mb-2">{error}</p>
-                <Button variant="outline" size="sm" onClick={loadNotifications}>
+                <Button variant="outline" size="sm" onClick={() => loadNotifications(true)}>
                   Try Again
                 </Button>
               </div>
@@ -198,16 +196,15 @@ export default function NotificationsPage() {
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? 'bg-blue-50' : ''
-                    }`}
+                    className={`p-4 hover:bg-gray-50 transition-colors ${!notification.isRead ? 'bg-blue-50' : ''
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Icon */}
                       <div className="flex-shrink-0 mt-1">
                         {getNotificationIcon(notification.type)}
                       </div>
-                      
+
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
@@ -225,7 +222,7 @@ export default function NotificationsPage() {
                               {formatRelativeTime(notification.createdAt)}
                             </p>
                           </div>
-                          
+
                           {/* Actions */}
                           <div className="flex items-center gap-2">
                             {!notification.isRead && (
@@ -246,7 +243,7 @@ export default function NotificationsPage() {
                             </button>
                           </div>
                         </div>
-                        
+
                         {/* View Referral Link */}
                         {notification.referralId && (
                           <button
