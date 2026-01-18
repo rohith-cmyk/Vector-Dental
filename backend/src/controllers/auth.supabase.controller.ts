@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { supabaseAdmin, supabase } from '../config/supabase'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
+import { uploadClinicLogo } from '../utils/storage'
 
 /**
  * Supabase Auth Controller
@@ -169,6 +170,64 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       data: {
         name: clinicName?.trim() || undefined,
         email: clinicEmail?.trim() || undefined,
+      },
+    })
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: { clinic: true },
+    })
+
+    if (!user) {
+      throw errors.notFound('User profile not found')
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        clinicId: user.clinicId,
+        clinic: clinic || user.clinic,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Upload clinic logo for current user
+ */
+export async function uploadClinicLogoForProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      throw errors.unauthorized()
+    }
+
+    const file = req.file as Express.Multer.File | undefined
+    if (!file) {
+      throw errors.badRequest('No logo file provided')
+    }
+
+    if (!file.mimetype.startsWith('image/')) {
+      throw errors.badRequest('Logo must be an image file')
+    }
+
+    const uploadResult = await uploadClinicLogo(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      req.user.clinicId
+    )
+
+    const clinic = await prisma.clinic.update({
+      where: { id: req.user.clinicId },
+      data: {
+        logoUrl: uploadResult.fileUrl,
+        logoStorageKey: uploadResult.storageKey,
       },
     })
 

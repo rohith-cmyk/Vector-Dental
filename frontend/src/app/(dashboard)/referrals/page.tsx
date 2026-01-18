@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout'
-import { Button, Card, CardContent, Badge, Select, Tabs, LoadingState } from '@/components/ui'
+import { Button, Card, CardContent, Badge, Select, Tabs, LoadingState, Modal } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
+import { FileUpload } from '@/components/referrals/FileUpload'
 import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle, CheckIcon, CrossIcon, X, ClipboardList } from 'lucide-react'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES, USE_MOCK_DATA } from '@/constants'
@@ -245,6 +246,11 @@ export default function ReferralsPage() {
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
   const [activeTab, setActiveTab] = useState('received')
   const [autoOpenHandled, setAutoOpenHandled] = useState(false)
+  const [isOpsModalOpen, setIsOpsModalOpen] = useState(false)
+  const [opsReferral, setOpsReferral] = useState<Referral | null>(null)
+  const [opsComment, setOpsComment] = useState('')
+  const [opsFiles, setOpsFiles] = useState<File[]>([])
+  const [isSendingOps, setIsSendingOps] = useState(false)
 
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
@@ -261,13 +267,13 @@ export default function ReferralsPage() {
         // Use mock data for development
         let filteredReferrals = mockReferrals
 
-        // Filter by type (received = INCOMING, sent = OUTGOING, ops-report = OUTGOING with SENT status)
+        // Filter by type (received = INCOMING, sent = OUTGOING, ops-report = INCOMING)
         if (activeTab === 'received') {
           filteredReferrals = filteredReferrals.filter(r => r.referralType === 'INCOMING')
         } else if (activeTab === 'sent') {
           filteredReferrals = filteredReferrals.filter(r => r.referralType === 'OUTGOING')
         } else if (activeTab === 'ops-report') {
-          filteredReferrals = filteredReferrals.filter(r => r.referralType === 'OUTGOING' && r.status === 'SENT')
+          filteredReferrals = filteredReferrals.filter(r => r.referralType === 'INCOMING')
         }
 
         // Filter by status
@@ -297,7 +303,7 @@ export default function ReferralsPage() {
       } else {
         // Use real API
         const params: any = {
-          type: activeTab,
+          type: activeTab === 'ops-report' ? 'received' : activeTab,
           limit: 50, // Get more for list view
         }
 
@@ -407,6 +413,72 @@ export default function ReferralsPage() {
     }
   }
 
+  function getReceivedStatusLabel(status: ReferralStatus) {
+    switch (status) {
+      case 'COMPLETED':
+        return 'COMPLETED'
+      case 'ACCEPTED':
+      case 'SENT':
+        return 'SCHEDULED'
+      case 'SUBMITTED':
+      case 'PENDING_REVIEW':
+        return 'ACCEPTED'
+      case 'REJECTED':
+        return 'REJECTED'
+      case 'CANCELLED':
+        return 'CANCELLED'
+      default:
+        return status
+    }
+  }
+
+  function getOpsStatusLabel(status: ReferralStatus) {
+    return status === 'COMPLETED' ? 'SENT' : 'DRAFT'
+  }
+
+  function getReceivedStatusVariant(label: string) {
+    switch (label) {
+      case 'COMPLETED':
+        return 'success'
+      case 'SCHEDULED':
+        return 'warning'
+      case 'ACCEPTED':
+        return 'info'
+      case 'REJECTED':
+        return 'danger'
+      case 'CANCELLED':
+        return 'danger'
+      default:
+        return 'default'
+    }
+  }
+
+  const openOpsModal = (referral: Referral) => {
+    setOpsReferral(referral)
+    setOpsComment(referral.notes || '')
+    setOpsFiles([])
+    setIsOpsModalOpen(true)
+  }
+
+  const closeOpsModal = () => {
+    setIsOpsModalOpen(false)
+    setOpsReferral(null)
+    setOpsComment('')
+    setOpsFiles([])
+  }
+
+  const handleSendOps = async () => {
+    if (!opsReferral) return
+    setIsSendingOps(true)
+    try {
+      // Placeholder until backend endpoint is available
+      alert('Ops report sent successfully.')
+      closeOpsModal()
+    } finally {
+      setIsSendingOps(false)
+    }
+  }
+
   function getUrgencyBadgeVariant(urgency: string) {
     if (!urgency) return 'default'
     switch (urgency) {
@@ -473,11 +545,11 @@ export default function ReferralsPage() {
                       onChange={(e) => setStatusFilter(e.target.value as ReferralStatus | 'all')}
                       options={[
                         { value: 'all', label: 'All Status' },
-                        { value: 'draft', label: 'Draft' },
-                        { value: 'sent', label: 'Sent' },
-                        { value: 'accepted', label: 'Accepted' },
-                        { value: 'completed', label: 'Completed' },
-                        { value: 'cancelled', label: 'Cancelled' },
+                        { value: 'DRAFT', label: 'Draft' },
+                        { value: 'SENT', label: 'Sent' },
+                        { value: 'ACCEPTED', label: 'Accepted' },
+                        { value: 'COMPLETED', label: 'Completed' },
+                        { value: 'CANCELLED', label: 'Cancelled' },
                       ]}
                     />
                   </div>
@@ -526,6 +598,9 @@ export default function ReferralsPage() {
                               <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Status
                               </th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                                Ops Status
+                              </th>
                               <th className="w-16 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
                                 
                               </th>
@@ -533,7 +608,11 @@ export default function ReferralsPage() {
                           </thead>
                           <tbody className="bg-white divide-y divide-black/5">
                             {referrals.map((referral) => (
-                              <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
+                              <tr
+                                key={referral.id}
+                                className="hover:bg-neutral-50 transition-colors cursor-pointer"
+                                onClick={() => openOpsModal(referral)}
+                              >
                                 <td className="px-6 py-4">
                                   <div className="text-sm font-medium text-neutral-800">
                                     {referral.patientName}
@@ -546,17 +625,22 @@ export default function ReferralsPage() {
                                 </td>
                                 <td className="px-6 py-4">
                                   <div className="text-sm text-neutral-700">
-                                    {referral.contact ? referral.contact.name : 'N/A'}
+                                    {referral.submittedByName || referral.referringDentist || 'N/A'}
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
                                   <div className="text-sm text-neutral-700">
-                                    {referral.contact ? referral.contact.specialty : 'N/A'}
+                                    {referral.fromClinicName || referral.gpClinicName || referral.clinic?.name || 'N/A'}
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                  <Badge variant={getStatusBadgeVariant(referral.status)}>
-                                    {(referral.status || '').toUpperCase()}
+                                  <Badge variant={getReceivedStatusVariant(getReceivedStatusLabel(referral.status))}>
+                                    {getReceivedStatusLabel(referral.status)}
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <Badge variant="default">
+                                    {getOpsStatusLabel(referral.status)}
                                   </Badge>
                                 </td>
                                 <td className="w-16 px-6 py-4 text-right">
@@ -634,8 +718,8 @@ export default function ReferralsPage() {
                                   </Badge>
                                 </td>
                                 <td className="px-6 py-4">
-                                  <Badge variant={getStatusBadgeVariant(referral.status)}>
-                                    {(referral.status || '').toUpperCase()}
+                                  <Badge variant={getReceivedStatusVariant(getReceivedStatusLabel(referral.status))}>
+                                    {getReceivedStatusLabel(referral.status)}
                                   </Badge>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
@@ -790,6 +874,62 @@ export default function ReferralsPage() {
             setIsNewReferralModalOpen(false)
           }}
         />
+
+        <Modal
+          isOpen={isOpsModalOpen}
+          onClose={closeOpsModal}
+          title="Ops Report"
+          size="xl"
+        >
+          {opsReferral && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="text-xs text-neutral-400">Patient Name</div>
+                  <div className="text-sm text-neutral-800 mt-1">{opsReferral.patientName}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-neutral-400">Patient Phone</div>
+                  <div className="text-sm text-neutral-800 mt-1">{opsReferral.patientPhone || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-neutral-400">Patient Email</div>
+                  <div className="text-sm text-neutral-800 mt-1">{opsReferral.patientEmail || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-neutral-400">Date of Birth</div>
+                  <div className="text-sm text-neutral-800 mt-1" suppressHydrationWarning>
+                    {opsReferral.patientDob ? formatDate(opsReferral.patientDob) : '—'}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold text-neutral-800 mb-2">Comments</div>
+                <textarea
+                  value={opsComment}
+                  onChange={(e) => setOpsComment(e.target.value)}
+                  placeholder="Add comments for ops report..."
+                  className="w-full min-h-[120px] rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+              </div>
+
+              <div>
+                <div className="text-sm font-semibold text-neutral-800 mb-2">Documents</div>
+                <FileUpload files={opsFiles} onFilesChange={setOpsFiles} />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button variant="outline" onClick={closeOpsModal}>
+                  Cancel
+                </Button>
+                <Button variant="primary" onClick={handleSendOps} isLoading={isSendingOps}>
+                  Send Ops
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </DashboardLayout>
   )

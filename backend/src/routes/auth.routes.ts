@@ -1,10 +1,16 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
+import multer from 'multer'
 import * as authSupabaseController from '../controllers/auth.supabase.controller'
 import { authenticateSupabase } from '../middleware/auth.supabase.middleware'
 import { validateRequest } from '../middleware/validation.middleware'
 
 const router = Router()
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+})
 
 /**
  * @route   POST /api/auth/signup
@@ -42,6 +48,25 @@ router.get('/profile', authenticateSupabase, authSupabaseController.getProfile)
  * @access  Private (requires Supabase token)
  */
 router.put('/profile', authenticateSupabase, authSupabaseController.updateProfile)
+
+/**
+ * @route   PUT /api/auth/profile/logo
+ * @desc    Upload clinic logo
+ * @access  Private (requires Supabase token)
+ */
+router.put(
+  '/profile/logo',
+  authenticateSupabase,
+  upload.single('logo'),
+  authSupabaseController.uploadClinicLogoForProfile
+)
+
+router.post(
+  '/profile/logo',
+  authenticateSupabase,
+  upload.single('logo'),
+  authSupabaseController.uploadClinicLogoForProfile
+)
 
 /**
  * @route   POST /api/auth/resend-verification

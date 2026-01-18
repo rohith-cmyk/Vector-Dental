@@ -154,6 +154,18 @@ export const authService = {
   },
 
   /**
+   * Upload clinic logo
+   */
+  async uploadClinicLogo(file: File): Promise<User> {
+    const formData = new FormData()
+    formData.append('logo', file)
+    const response = await api.post<{ success: boolean; data: User }>('/auth/profile/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data.data
+  },
+
+  /**
    * Check if user is authenticated
    */
   async isAuthenticated(): Promise<boolean> {

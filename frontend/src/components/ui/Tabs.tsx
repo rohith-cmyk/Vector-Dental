@@ -27,17 +27,17 @@ export function Tabs({ tabs, defaultTab, onChange, children }: TabsProps) {
 
   return (
     <div>
-      <div className="bg-white border border-black/5 rounded-xl p-1 max-w-fit shadow-sm">
-        <nav className="flex gap-2">
+      <div className="bg-white border border-black/10 rounded-2xl p-1.5 max-w-fit shadow-sm">
+        <nav className="flex gap-3">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
               className={cn(
-                'flex w-fit items-center gap-2 py-2 px-4 rounded-lg border font-medium text-xs transition-all duration-200 flex-1 justify-center',
+                'flex w-fit items-center gap-2 py-3 px-6 rounded-xl border font-semibold text-sm transition-all duration-200 flex-1 justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200',
                 activeTab === tab.id
-                  ? 'bg-white text-neutral-600 shadow-sm border-black/5'
-                  : 'text-neutral-400 hover:bg-neutral-100 border-transparent hover:text-neutral-700 hover:shadow-sm'
+                  ? 'bg-white text-neutral-800 shadow-md border-neutral-200'
+                  : 'text-neutral-500 bg-neutral-50/60 hover:bg-neutral-100 border-transparent hover:text-neutral-800 hover:shadow-sm'
               )}
             >
               {tab.icon}

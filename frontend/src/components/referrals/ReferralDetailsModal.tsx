@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { ComponentType } from 'react'
-import { useRouter } from 'next/navigation'
 import { formatDate, cn } from '@/lib/utils'
-import { Modal, Badge, Button, Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
-import { FileText, Download, Phone, Mail, Calendar, User, Building2, Share2, Loader2, ExternalLink, CheckCircle, Check, Copy } from 'lucide-react'
-import type { Referral, ReferralFile, ReferralStatus } from '@/types'
+import { Modal, Badge } from '@/components/ui'
+import { FileText, Download, Phone, Mail, Calendar, CalendarCheck, Loader2, ExternalLink, CheckCircle, Check, CheckCircle2, MapPin } from 'lucide-react'
+import type { Referral, ReferralStatus } from '@/types'
 import { API_URL } from '@/lib/api'
 import { InteractiveToothChart } from './InteractiveToothChart'
 import { notificationsService } from '@/services/notifications.service'
@@ -18,13 +16,9 @@ interface ReferralDetailsModalProps {
 }
 
 export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate }: ReferralDetailsModalProps) {
-    const router = useRouter()
-    const [isSharing, setIsSharing] = useState(false)
-    const [shareSuccess, setShareSuccess] = useState(false)
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
     const [statusUpdateSuccess, setStatusUpdateSuccess] = useState(false)
     const [currentReferral, setCurrentReferral] = useState<Referral | null>(referral)
-    const [copiedField, setCopiedField] = useState<string | null>(null)
 
     // Update current referral when referral prop changes
     useEffect(() => {
@@ -37,35 +31,10 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
             notificationsService.deleteByReferral(referral.id)
         }
         // Reset share state when modal opens/closes
-        setShareSuccess(false)
         setStatusUpdateSuccess(false)
     }, [isOpen, referral?.id])
 
     if (!referral || !currentReferral) return null
-
-    const handleShareReferral = async () => {
-        if (!referral) return
-
-        try {
-            setIsSharing(true)
-            const result = await referralsService.shareReferral(referral.id)
-            setShareSuccess(true)
-
-            // If mailto link is provided, open email client
-            if (result.mailtoLink) {
-                window.location.href = result.mailtoLink
-            } else {
-                // Copy share URL to clipboard
-                await navigator.clipboard.writeText(result.shareUrl)
-                alert('Share link copied to clipboard!')
-            }
-        } catch (error: any) {
-            console.error('Failed to share referral:', error)
-            alert(error.response?.data?.message || 'Failed to share referral. Please try again.')
-        } finally {
-            setIsSharing(false)
-        }
-    }
 
     const handleStatusUpdate = async (newStatus: ReferralStatus) => {
         if (!referral || !referral.id || isUpdatingStatus) return
@@ -170,6 +139,24 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     // Use currentReferral for display (updated when status changes)
     const displayReferral = currentReferral
 
+    const STATUS_RANK: Record<ReferralStatus, number> = {
+        SUBMITTED: 0,
+        PENDING_REVIEW: 0,
+        ACCEPTED: 1,
+        SENT: 1,
+        COMPLETED: 2,
+        REJECTED: -1,
+        CANCELLED: -1,
+        DRAFT: -1,
+    }
+
+    const statusSteps = [
+        { label: 'Received', icon: Mail },
+        { label: 'Scheduled', icon: CalendarCheck },
+        { label: 'Completed', icon: CheckCircle2 },
+    ]
+    const currentStepIndex = STATUS_RANK[displayReferral.status] ?? 0
+
     // Get patient name - use new fields if available, otherwise fall back to patientName
     const patientName = displayReferral.patientFirstName && displayReferral.patientLastName
         ? `${displayReferral.patientFirstName} ${displayReferral.patientLastName}`
@@ -178,66 +165,8 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     // Get clinic name and doctor - use new fields if available
     const clinicName = displayReferral.gpClinicName || displayReferral.fromClinicName || 'Unknown Clinic'
     const doctorName = displayReferral.submittedByName || displayReferral.referringDentist
-
-    const handleCopy = async (value: string | undefined | null, field: string) => {
-        if (!value) return
-        try {
-            await navigator.clipboard.writeText(value)
-            setCopiedField(field)
-            setTimeout(() => setCopiedField((current) => (current === field ? null : current)), 1500)
-        } catch (error) {
-            console.error('Failed to copy value:', error)
-        }
-    }
-
-    const CopyButton = ({ value, field }: { value?: string | null; field: string }) => {
-        if (!value) return null
-        const isCopied = copiedField === field
-        return (
-            <button
-                type="button"
-                onClick={() => handleCopy(value, field)}
-                className="inline-flex items-center rounded-md p-1 text-gray-500 hover:text-gray-900"
-                title={isCopied ? 'Copied' : 'Copy'}
-            >
-                {isCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-            </button>
-        )
-    }
-
-    const FieldRow = ({
-        label,
-        value,
-        field,
-        icon: Icon,
-        href,
-    }: {
-        label: string
-        value?: string | null
-        field: string
-        icon?: ComponentType<{ className?: string }>
-        href?: string
-    }) => {
-        if (!value) return null
-        return (
-            <div className="flex items-start justify-between gap-3 py-3">
-                <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-500">{label}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-900">
-                        {Icon && <Icon className="h-4 w-4 text-gray-400" />}
-                        {href ? (
-                            <a href={href} className="text-brand-600 hover:text-brand-700">
-                                {value}
-                            </a>
-                        ) : (
-                            <span className="text-gray-900">{value}</span>
-                        )}
-                    </div>
-                </div>
-                <CopyButton value={value} field={field} />
-            </div>
-        )
-    }
+    const preferredDoctor = displayReferral.contact?.name || 'Any (First Available)'
+    const clinicInfo = displayReferral.clinic
 
     return (
         <Modal
@@ -247,115 +176,167 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
             size="xl"
         >
             <div className="space-y-8">
-                {/* Header */}
-                <div className="text-center space-y-6">
-                    <div className="flex justify-center gap-3">
-                        <Badge variant={getUrgencyVariant(displayReferral.urgency)} className="text-xs px-3 py-1">
-                            {displayReferral.urgency || 'ROUTINE'}
-                        </Badge>
-                        <Badge variant={getStatusVariant(displayReferral.status)} className="text-xs px-3 py-1">
-                            {displayReferral.status}
-                        </Badge>
+                {/* Sticky Status */}
+                <div className="sticky top-0 z-10 -mx-6 px-6 pt-2 pb-4 bg-white border-b border-neutral-200">
+                    <div className="flex items-center justify-center gap-3 text-sm text-neutral-400">
+                        {statusSteps.map((step, index) => {
+                            const isCompleted = currentStepIndex > index
+                            const isCurrent = currentStepIndex === index
+                            const Icon = step.icon
+                            return (
+                                <div key={step.label} className="flex items-center gap-3">
+                                    <div
+                                        className={cn(
+                                            'flex items-center gap-2 text-xs uppercase tracking-wide',
+                                            isCompleted && 'text-emerald-600',
+                                            isCurrent && 'text-neutral-700',
+                                            !isCompleted && !isCurrent && 'text-neutral-400'
+                                        )}
+                                    >
+                                        <span
+                                            className={cn(
+                                                'h-6 w-6 rounded-full flex items-center justify-center border',
+                                                isCompleted
+                                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                                                    : isCurrent
+                                                    ? 'bg-neutral-100 border-neutral-200 text-neutral-700'
+                                                    : 'bg-neutral-50 border-neutral-200 text-neutral-400'
+                                            )}
+                                        >
+                                            <Icon className="h-3.5 w-3.5" />
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                'h-2.5 w-2.5 rounded-full',
+                                                isCompleted ? 'bg-emerald-500' : isCurrent ? 'bg-neutral-700' : 'bg-neutral-300'
+                                            )}
+                                        />
+                                        {step.label}
+                                    </div>
+                                    {index < statusSteps.length - 1 && <span className="text-neutral-300">→</span>}
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Clinic Header */}
+                <div className="flex items-start justify-between gap-6">
+                    <div className="flex items-start gap-4">
+                        {clinicInfo?.logoUrl ? (
+                            <div className="h-14 w-14 rounded-xl border border-neutral-200 bg-white flex items-center justify-center overflow-hidden">
+                                <img src={clinicInfo.logoUrl} alt={`${clinicInfo.name} logo`} className="h-full w-full object-contain" />
+                            </div>
+                        ) : null}
+                        <div className="space-y-2">
+                            <div className="text-xl font-semibold text-neutral-800">{clinicInfo?.name || 'Clinic'}</div>
+                            {clinicInfo?.address && (
+                                <div className="flex items-center gap-2 text-sm text-neutral-500">
+                                    <MapPin className="h-4 w-4" />
+                                    <span>{clinicInfo.address}</span>
+                                </div>
+                            )}
+                            {clinicInfo?.phone && (
+                                <div className="flex items-center gap-2 text-sm text-neutral-500">
+                                    <Phone className="h-4 w-4" />
+                                    <span>{clinicInfo.phone}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="text-sm text-neutral-500">
+                        {formatDate(displayReferral.createdAt)}
+                    </div>
+                </div>
+
+                {/* Referred From / Preferred Doctor */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-200 pb-2">
+                            Referred From
+                        </div>
+                        <div className="pt-3 text-sm text-neutral-700 space-y-2">
+                            <div className="font-medium">{doctorName || 'Unknown Doctor'}</div>
+                            <div className="text-neutral-500">{clinicName}</div>
+                        </div>
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-neutral-700">{patientName}</h1>
-                        <div className="flex items-center justify-center gap-6 mt-4 text-sm text-neutral-400">
-                            <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                <span suppressHydrationWarning>
-                                    {formatDate(displayReferral.patientDob)}
-                                </span>
-                            </div>
-                            {displayReferral.patientPhone && (
-                                <div className="flex items-center gap-2">
-                                    <Phone className="h-4 w-4" />
-                                    <span>{displayReferral.patientPhone}</span>
-                                </div>
-                            )}
-                            {displayReferral.patientEmail && (
-                                <div className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4" />
-                                    <span>{displayReferral.patientEmail}</span>
-                                </div>
-                            )}
+                        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-200 pb-2">
+                            Preferred Doctor
                         </div>
-                        {displayReferral.insurance && (
-                            <p className="text-sm text-neutral-500 mt-3">{displayReferral.insurance}</p>
-                        )}
+                        <div className="pt-3 text-sm text-neutral-700">{preferredDoctor}</div>
                     </div>
                 </div>
 
-                {/* Patient Information Card */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-8">
-                    {/* Referrer Information Card */}
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <h3 className="text-lg font-semibold text-neutral-700">Referring Clinic</h3>
-                        </div>
-                        <div className="space-y-5">
-                            <div>
-                                <p className="text-sm font-medium text-neutral-400">Clinic Name</p>
-                                <p className="text-sm text-neutral-700 mt-2">{clinicName}</p>
-                            </div>
-                            {doctorName && (
-                                <div>
-                                    <p className="text-sm font-medium text-neutral-400">Referring Doctor</p>
-                                    <p className="text-sm text-neutral-700 mt-2">
-                                        {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
-                                    </p>
-                                </div>
-                            )}
-                            <div className="grid grid-cols-1 gap-3 pt-3">
-                                {displayReferral.fromClinicEmail && (
-                                    <a href={`mailto:${displayReferral.fromClinicEmail}`}
-                                       className="flex items-center gap-3 p-3 bg-black/5 rounded-lg hover:bg-neutral-100 transition-colors">
-                                        <Mail className="h-4 w-4 text-neutral-500" />
-                                        <span className="text-sm text-neutral-700">{displayReferral.fromClinicEmail}</span>
-                                    </a>
-                                )}
-                                {(displayReferral.submittedByPhone || displayReferral.fromClinicPhone) && (
-                                    <a href={`tel:${displayReferral.submittedByPhone || displayReferral.fromClinicPhone}`}
-                                       className="flex items-center gap-3 p-3 bg-black/5 rounded-lg hover:bg-neutral-100 transition-colors">
-                                        <Phone className="h-4 w-4 text-neutral-500" />
-                                        <span className="text-sm text-neutral-700">{displayReferral.submittedByPhone || displayReferral.fromClinicPhone}</span>
-                                    </a>
-                                )}
-                            </div>
-                        </div>
+                {/* Patient Information */}
+                <div>
+                    <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-200 pb-2">
+                        Patient Information
                     </div>
-
-                    {/* Referral Details Card */}
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <h3 className="text-lg font-semibold text-neutral-700">Referral Reason</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 text-sm">
+                        <div>
+                            <div className="text-xs text-neutral-400">Name</div>
+                            <div className="text-neutral-700 mt-1">{patientName}</div>
                         </div>
-                        <p className="text-neutral-500 text-sm whitespace-pre-wrap leading-relaxed">{displayReferral.reason}</p>
+                        <div>
+                            <div className="text-xs text-neutral-400">Phone</div>
+                            <div className="text-neutral-700 mt-1">{displayReferral.patientPhone || '—'}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-neutral-400">Email</div>
+                            <div className="text-neutral-700 mt-1">{displayReferral.patientEmail || '—'}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-neutral-400">Date of Birth</div>
+                            <div className="text-neutral-700 mt-1 flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-neutral-400" />
+                                <span suppressHydrationWarning>{formatDate(displayReferral.patientDob)}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Notes Card */}
-                {displayReferral.notes && (
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-neutral-700 mb-6">Additional Notes</h3>
-                        <p className="text-neutral-500 text-sm whitespace-pre-wrap leading-relaxed">{displayReferral.notes}</p>
-                    </div>
-                )}
-
-                {/* Selected Teeth Card */}
-                {displayReferral.selectedTeeth && displayReferral.selectedTeeth.length > 0 && (
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold text-neutral-700 mb-6">Selected Teeth</h3>
-                        <div className="bg-white rounded-lg p-5 border border-neutral-300">
-                            <div className="scale-90 origin-top">
-                                <InteractiveToothChart
-                                    selectedTeeth={displayReferral.selectedTeeth}
-                                    onTeethChange={() => { }}
-                                    readOnly={true}
-                                />
-                            </div>
+                {/* Reason / Teeth */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-200 pb-2">
+                            Reason for Referral
+                        </div>
+                        <div className="pt-3 text-sm text-neutral-600 whitespace-pre-wrap leading-relaxed">
+                            {displayReferral.reason || '—'}
                         </div>
                     </div>
-                )}
+                    <div>
+                        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-200 pb-2">
+                            Teeth
+                        </div>
+                        <div className="pt-3">
+                            {displayReferral.selectedTeeth && displayReferral.selectedTeeth.length > 0 ? (
+                                <div className="bg-white rounded-lg p-4 border border-neutral-200">
+                                    <div className="scale-90 origin-top">
+                                        <InteractiveToothChart
+                                            selectedTeeth={displayReferral.selectedTeeth}
+                                            onTeethChange={() => { }}
+                                            readOnly={true}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-sm text-neutral-400">No teeth selected</div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Comment */}
+                <div>
+                    <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide border-b border-neutral-200 pb-2">
+                        Comment
+                    </div>
+                    <div className="pt-3 text-sm text-neutral-600 whitespace-pre-wrap leading-relaxed">
+                        {displayReferral.notes || '—'}
+                    </div>
+                </div>
 
                 {/* Status Update Card */}
                 <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6">

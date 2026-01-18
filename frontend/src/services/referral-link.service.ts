@@ -72,6 +72,7 @@ export const referralLinkService = {
     clinicAddress?: string
     clinicPhone?: string
     clinicEmail?: string
+    clinicLogoUrl?: string
     specialistName: string
     specialty?: string
   }> {

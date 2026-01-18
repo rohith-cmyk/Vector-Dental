@@ -38,6 +38,7 @@ export async function getClinicBySlug(req: Request, res: Response, next: NextFun
         address: referralLink.clinic.address,
         phone: referralLink.clinic.phone,
         email: referralLink.clinic.email,
+        logoUrl: referralLink.clinic.logoUrl,
         slug: referralLink.slug,
       },
     })
@@ -197,6 +198,7 @@ export async function getReferralLinkByToken(
                 address: true,
                 phone: true,
                 email: true,
+                logoUrl: true,
               },
             },
           },
@@ -222,6 +224,7 @@ export async function getReferralLinkByToken(
         clinicAddress: referralLink.specialist.clinic.address,
         clinicPhone: referralLink.specialist.clinic.phone,
         clinicEmail: referralLink.specialist.clinic.email,
+        clinicLogoUrl: referralLink.specialist.clinic.logoUrl,
         specialistName: referralLink.specialist.name,
         specialty: referralLink.specialty,
       },

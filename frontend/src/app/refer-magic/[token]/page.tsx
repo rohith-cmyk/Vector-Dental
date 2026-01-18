@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { Card, CardContent, Input, Select, Button, LoadingState } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
 import { ReferralReasonButtons } from '@/components/referrals/ReferralReasonButtons'
-import { api } from '@/lib/api'
+import { api, API_URL } from '@/lib/api'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
 interface LinkInfo {
@@ -15,6 +15,7 @@ interface LinkInfo {
   clinicAddress?: string
   clinicPhone?: string
   clinicEmail?: string
+  clinicLogoUrl?: string
   specialistName: string
   specialty?: string
 }
@@ -48,6 +49,14 @@ export default function ReferMagicPage() {
     urgency: 'ROUTINE',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const resolveLogoUrl = (url?: string) => {
+    if (!url) return ''
+    if (url.startsWith('/')) {
+      return `${API_URL.replace('/api', '')}${url}`
+    }
+    return url
+  }
 
   // Fetch link info
   useEffect(() => {
@@ -242,6 +251,15 @@ export default function ReferMagicPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
+          {linkInfo.clinicLogoUrl && (
+            <div className="mx-auto mb-4 h-20 w-20 rounded-full border border-emerald-100 bg-white flex items-center justify-center overflow-hidden">
+              <img
+                src={resolveLogoUrl(linkInfo.clinicLogoUrl)}
+                alt={`${linkInfo.clinicName} logo`}
+                className="h-full w-full object-contain"
+              />
+            </div>
+          )}
           <h1 className="text-3xl font-bold text-gray-900">
             Refer a patient to {linkInfo.clinicName}
           </h1>

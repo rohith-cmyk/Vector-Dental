@@ -15,6 +15,7 @@ export const referralsService = {
     search?: string
     status?: ReferralStatus
     urgency?: string
+    type?: 'received' | 'sent'
   }): Promise<PaginatedResponse<Referral>> {
     const response = await api.get<PaginatedResponse<Referral>>('/referrals', { params })
     return response.data

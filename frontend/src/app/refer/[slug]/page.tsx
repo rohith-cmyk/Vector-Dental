@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, Input, Select, Button, LoadingState } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
-import { api } from '@/lib/api'
+import { api, API_URL } from '@/lib/api'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
 interface ClinicInfo {
@@ -12,6 +12,7 @@ interface ClinicInfo {
   address?: string
   phone?: string
   email?: string
+  logoUrl?: string
   slug: string
 }
 
@@ -46,6 +47,14 @@ export default function PublicReferralPage() {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const resolveLogoUrl = (url?: string) => {
+    if (!url) return ''
+    if (url.startsWith('/')) {
+      return `${API_URL.replace('/api', '')}${url}`
+    }
+    return url
+  }
 
   // Fetch clinic info by slug (only on client side)
   useEffect(() => {
@@ -244,10 +253,10 @@ export default function PublicReferralPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <img 
-            src="/logo.png" 
-            alt="Logo" 
-            className="h-16 w-16 mx-auto mb-4"
+          <img
+            src={resolveLogoUrl(targetClinic.logoUrl) || '/logo.png'}
+            alt={`${targetClinic.name} logo`}
+            className="h-16 w-16 mx-auto mb-4 object-contain"
           />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Refer a Patient to {targetClinic.name}

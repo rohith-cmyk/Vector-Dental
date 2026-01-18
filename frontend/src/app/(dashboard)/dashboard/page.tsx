@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardContent } from '@/components/ui'
+import { Card, CardContent, LoadingState } from '@/components/ui'
 import { StatsCardsV2 } from '@/components/dashboard/StatsCardsV2'
 import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
 import { BreakdownChart } from '@/components/dashboard/SpecialtyBreakdown'
@@ -11,7 +11,7 @@ import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcess
 import { OverviewMetrics } from '@/components/dashboard/OverviewMetrics'
 import { IncomingReferralsTable } from '@/components/dashboard/IncomingReferralsTable'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
-import { Search, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { dashboardService } from '@/services/dashboard.service'
 import { referralsService } from '@/services/referrals.service'
 import { USE_MOCK_DATA } from '@/constants'
@@ -208,7 +208,6 @@ const mockDashboardStats: DashboardStats = {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [searchQuery, setSearchQuery] = useState('')
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -227,15 +226,6 @@ export default function DashboardPage() {
 
     return () => clearInterval(interval)
   }, [])
-
-  // Search effect - reload data when search changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadDashboardData(true)
-    }, 300) // Debounce search
-
-    return () => clearTimeout(timer)
-  }, [searchQuery])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -256,26 +246,6 @@ export default function DashboardPage() {
       if (USE_MOCK_DATA) {
         // Use mock data for development
         let data = mockDashboardStats
-
-        // Apply search filter if present
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase()
-          data = {
-            ...data,
-            recentIncoming: data.recentIncoming.filter(referral =>
-              referral.patientName.toLowerCase().includes(query) ||
-              referral.reason.toLowerCase().includes(query) ||
-              (referral.fromClinicName && referral.fromClinicName.toLowerCase().includes(query)) ||
-              (referral.referringDentist && referral.referringDentist.toLowerCase().includes(query))
-            ),
-            recentOutgoing: data.recentOutgoing.filter(referral =>
-              referral.patientName.toLowerCase().includes(query) ||
-              referral.reason.toLowerCase().includes(query) ||
-              (referral.contact?.name && referral.contact.name.toLowerCase().includes(query)) ||
-              (referral.contact?.specialty && referral.contact.specialty.toLowerCase().includes(query))
-            ),
-          }
-        }
 
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500))
@@ -311,7 +281,7 @@ export default function DashboardPage() {
     return (
       <DashboardLayout title="Dashboard">
         <div className="flex items-center justify-center h-64">
-          <div className="text-sm text-neutral-500">Loading dashboard data...</div>
+          <LoadingState title="Loading dashboard..." />
         </div>
       </DashboardLayout>
     )
@@ -349,16 +319,6 @@ export default function DashboardPage() {
       subtitle="Monitor your activity and performance"
       actions={
         <>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" strokeWidth={1.5} />
-            <input
-              type="text"
-              placeholder="Search referrals..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm text-neutral-700 placeholder-neutral-400 transition-all w-44 md:w-56"
-            />
-          </div>
           <button
             onClick={() => handleRefresh()}
             disabled={isRefreshing}

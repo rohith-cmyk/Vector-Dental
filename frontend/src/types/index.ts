@@ -16,6 +16,7 @@ export interface Clinic {
   address?: string
   phone?: string
   email?: string
+  logoUrl?: string
   createdAt: string
   updatedAt: string
 }
