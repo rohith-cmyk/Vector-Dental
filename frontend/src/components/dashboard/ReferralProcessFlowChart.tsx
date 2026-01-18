@@ -21,7 +21,9 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
             <h3 className="text-lg font-semibold text-gray-900">Referral Process Flow</h3>
             <span className="text-sm text-neutral-500">This Month</span>
           </div>
-          <div className="text-center py-8 text-neutral-500">No data available</div>
+          <div className="flex items-center justify-center text-neutral-500" style={{ minHeight: 250 }}>
+            No data available
+          </div>
         </CardContent>
       </Card>
     )
@@ -44,7 +46,11 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
   // Calculate node positions and heights
   const nodes = data.map((step, index) => {
     const x = index * (nodeWidth + nodePadding) + 40
-    const nodeHeight = (step.count / maxCount) * 180 + 40 // Scale height based on count
+  const minNodeHeight = 80
+  const nodeHeight = Math.max(
+    minNodeHeight,
+    (step.count / maxCount) * 180 + 40 // Scale height based on count
+  )
     const y = (height - nodeHeight) / 2
     return { ...step, x, y, height: nodeHeight, color: colors[index % colors.length] }
   })
@@ -130,7 +136,7 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
                 {/* Node label */}
                 <text
                   x={node.x + nodeWidth / 2}
-                  y={node.y + node.height / 2 - 15}
+                  y={node.y + node.height / 2 - 12}
                   textAnchor="middle"
                   className="fill-white font-medium text-sm"
                 >
@@ -140,7 +146,7 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
                 {/* Node count */}
                 <text
                   x={node.x + nodeWidth / 2}
-                  y={node.y + node.height / 2 + 15}
+                  y={node.y + node.height / 2 + 16}
                   textAnchor="middle"
                   className="fill-white font-semibold text-2xl"
                 >

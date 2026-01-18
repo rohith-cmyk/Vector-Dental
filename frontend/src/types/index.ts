@@ -148,6 +148,7 @@ export interface ReferralLink {
   token: string
   isActive: boolean
   label?: string
+  specialty?: string
   referralCount?: number
   referralUrl?: string
   createdAt: string
@@ -157,6 +158,7 @@ export interface ReferralLink {
 export interface CreateReferralLinkRequest {
   label?: string
   accessCode?: string
+  specialty?: string
 }
 
 export interface CreateReferralLinkResponse {

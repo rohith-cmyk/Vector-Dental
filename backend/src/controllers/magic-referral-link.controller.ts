@@ -17,7 +17,7 @@ export async function createReferralLink(
 ) {
   try {
     const userId = req.user!.userId
-    const { label } = req.body
+    const { label, specialty } = req.body
 
     // Access codes are no longer required - set to empty string (schema requires non-null)
     // TODO: Update schema to make accessCodeHash nullable in future migration
@@ -51,6 +51,7 @@ export async function createReferralLink(
         accessCodeHash,
         isActive: true,
         label: label || null,
+        specialty: specialty || null,
       },
       include: {
         specialist: {
@@ -81,6 +82,7 @@ export async function createReferralLink(
           token: referralLink.token,
           isActive: referralLink.isActive,
           label: referralLink.label,
+          specialty: referralLink.specialty,
           createdAt: referralLink.createdAt,
           updatedAt: referralLink.updatedAt,
           specialist: referralLink.specialist,
@@ -141,6 +143,7 @@ export async function listReferralLinks(
       token: link.token,
       isActive: link.isActive,
       label: link.label,
+      specialty: link.specialty,
       createdAt: link.createdAt,
       updatedAt: link.updatedAt,
       referralUrl: `${frontendUrl}/refer-magic/${link.token}`,
@@ -210,6 +213,7 @@ export async function getReferralLink(
         token: referralLink.token,
         isActive: referralLink.isActive,
         label: referralLink.label,
+        specialty: referralLink.specialty,
         createdAt: referralLink.createdAt,
         updatedAt: referralLink.updatedAt,
         referralUrl: `${frontendUrl}/refer-magic/${referralLink.token}`,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState, Modal } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState, Modal, Select } from '@/components/ui'
 import {
   Copy,
   ExternalLink,
@@ -18,6 +18,7 @@ import {
 import { referralLinkService } from '@/services/referral-link.service'
 import type { ReferralLink } from '@/types'
 import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
+import { SPECIALIST_OPTIONS } from '@/constants'
 
 interface CreateLinkModalProps {
   isOpen: boolean
@@ -27,6 +28,8 @@ interface CreateLinkModalProps {
 
 function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   const [label, setLabel] = useState('')
+  const [specialty, setSpecialty] = useState('')
+  const [specialtyError, setSpecialtyError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [createdLink, setCreatedLink] = useState<{
     referralUrl: string
@@ -34,11 +37,16 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!specialty.trim()) {
+      setSpecialtyError('Please select your specialty')
+      return
+    }
     setIsSubmitting(true)
 
     try {
       const data = await referralLinkService.create({
         label: label.trim() || undefined,
+        specialty: specialty.trim(),
       })
 
       setCreatedLink({
@@ -61,6 +69,8 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   const handleClose = () => {
     const hadCreatedLink = !!createdLink
     setLabel('')
+    setSpecialty('')
+    setSpecialtyError('')
     setCreatedLink(null)
     onClose()
     if (hadCreatedLink) {
@@ -124,6 +134,21 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
             maxLength={100}
           />
         </div>
+        <Select
+          label="Specialty"
+          value={specialty}
+          onChange={(e) => {
+            setSpecialty(e.target.value)
+            if (specialtyError) {
+              setSpecialtyError('')
+            }
+          }}
+          options={[
+            { value: '', label: 'Select specialist type' },
+            ...SPECIALIST_OPTIONS,
+          ]}
+          error={specialtyError}
+        />
 
         <div className="flex items-center justify-end gap-3 pt-4">
           <Button

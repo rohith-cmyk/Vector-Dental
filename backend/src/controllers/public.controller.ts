@@ -211,6 +211,7 @@ export async function getReferralLinkByToken(
         clinicPhone: referralLink.specialist.clinic.phone,
         clinicEmail: referralLink.specialist.clinic.email,
         specialistName: referralLink.specialist.name,
+        specialty: referralLink.specialty,
       },
     })
   } catch (error) {

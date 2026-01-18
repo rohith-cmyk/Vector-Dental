@@ -17,7 +17,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
       <div className="pl-64">
         <Header title={title} />
         
-        <main className="p-8">
+        <main className="px-8 pb-8 pt-2">
           {children}
         </main>
       </div>

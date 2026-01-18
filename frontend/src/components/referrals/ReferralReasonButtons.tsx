@@ -2,36 +2,34 @@
 
 import { useState } from 'react'
 import { Info } from 'lucide-react'
+import { DEFAULT_REFERRAL_REASONS, SPECIALIST_REASON_OPTIONS } from '@/constants'
 
 interface ReferralReasonButtonsProps {
-  selectedReason: string
+  selectedReasons: string[]
   customReason: string
-  onReasonSelect: (reason: string) => void
+  onReasonToggle: (reason: string) => void
   onCustomReasonChange: (value: string) => void
   error?: string
   specialty?: string
+  reasons?: string[]
+  showPreferredDoctor?: boolean
 }
 
-const COMMON_REASONS = [
-  'Pain Evaluation',
-  'Extraction',
-  'Implant Evaluation',
-  'Sinus Lift',
-  'Evaluation of Lesion',
-  'Panoramic X-Ray',
-  'Third Molar Evaluation',
-  'Third Molar Extraction',
-]
-
 export function ReferralReasonButtons({
-  selectedReason,
+  selectedReasons,
   customReason,
-  onReasonSelect,
+  onReasonToggle,
   onCustomReasonChange,
   error,
   specialty,
+  reasons,
+  showPreferredDoctor = true,
 }: ReferralReasonButtonsProps) {
-  const [showPreferredDoctor, setShowPreferredDoctor] = useState(false)
+  const [isPreferredDoctorOpen, setIsPreferredDoctorOpen] = useState(false)
+  const resolvedReasons =
+    reasons ||
+    (specialty && SPECIALIST_REASON_OPTIONS[specialty]) ||
+    DEFAULT_REFERRAL_REASONS
 
   return (
     <div className="space-y-4">
@@ -56,13 +54,13 @@ export function ReferralReasonButtons({
 
       {/* Common Reason Buttons */}
       <div className="flex flex-wrap gap-2">
-        {COMMON_REASONS.map((reason) => (
+        {resolvedReasons.map((reason) => (
           <button
             key={reason}
             type="button"
-            onClick={() => onReasonSelect(reason)}
+            onClick={() => onReasonToggle(reason)}
             className={`px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 transition-colors ${
-              selectedReason === reason
+              selectedReasons.includes(reason)
                 ? 'bg-emerald-600 border-emerald-600 text-white'
                 : 'bg-white border-neutral-200 text-gray-600 hover:border-emerald-500 hover:bg-emerald-50'
             }`}
@@ -79,12 +77,7 @@ export function ReferralReasonButtons({
         </label>
         <textarea
           value={customReason}
-          onChange={(e) => {
-            onCustomReasonChange(e.target.value)
-            if (selectedReason) {
-              onReasonSelect('')
-            }
-          }}
+          onChange={(e) => onCustomReasonChange(e.target.value)}
           rows={3}
           placeholder="Enter custom reason for referral..."
           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
@@ -96,20 +89,23 @@ export function ReferralReasonButtons({
         )}
       </div>
 
-      {/* Preferred Doctor (Optional) */}
-      <button
-        type="button"
-        onClick={() => setShowPreferredDoctor(!showPreferredDoctor)}
-        className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-      >
-        {showPreferredDoctor ? '−' : '+'} Choose preferred doctor
-      </button>
       {showPreferredDoctor && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">
-            Preferred doctor selection will be available when contact selection is implemented.
-          </p>
-        </div>
+        <>
+          <button
+            type="button"
+            onClick={() => setIsPreferredDoctorOpen(!isPreferredDoctorOpen)}
+            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+          >
+            {isPreferredDoctorOpen ? '−' : '+'} Choose preferred doctor
+          </button>
+          {isPreferredDoctorOpen && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-600">
+                Preferred doctor selection will be available when contact selection is implemented.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

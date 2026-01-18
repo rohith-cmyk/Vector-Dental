@@ -37,12 +37,19 @@ export const dashboardService = {
    * - Falls back to cache if API fails
    */
   async getStats(
-    periods: { trendsPeriod: 'monthly' | 'weekly' | 'yearly'; specialtyPeriod: 'monthly' | 'weekly' | 'yearly' },
+    periodsOrForceRefresh?:
+      | { trendsPeriod: 'monthly' | 'weekly' | 'yearly'; specialtyPeriod: 'monthly' | 'weekly' | 'yearly' }
+      | boolean,
     forceRefresh: boolean = false
   ): Promise<DashboardStats> {
+    const periods =
+      typeof periodsOrForceRefresh === 'object' && periodsOrForceRefresh
+        ? periodsOrForceRefresh
+        : { trendsPeriod: 'monthly', specialtyPeriod: 'monthly' }
+    const isForceRefresh = typeof periodsOrForceRefresh === 'boolean' ? periodsOrForceRefresh : forceRefresh
     const cacheKey = `${CACHE_KEY_BASE}_${periods.trendsPeriod}_${periods.specialtyPeriod}`
     // Check cache first (unless forcing refresh)
-    if (!forceRefresh) {
+    if (!isForceRefresh) {
       const cached = getCachedData<DashboardStats>(cacheKey)
       if (cached) {
         const cacheAge = getCacheAge(cacheKey) || 0

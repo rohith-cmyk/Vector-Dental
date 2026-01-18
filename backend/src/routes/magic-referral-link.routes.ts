@@ -22,6 +22,12 @@ router.post(
   '/',
   validateRequest([
     body('label').optional().isString().trim().isLength({ max: 100 }).withMessage('Label must be less than 100 characters'),
+    body('specialty')
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ min: 2, max: 100 })
+      .withMessage('Specialty must be between 2 and 100 characters'),
   ]),
   magicReferralLinkController.createReferralLink
 )

@@ -15,7 +15,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Referrals', href: '/referrals', icon: FileText },
   { name: 'Referral Links', href: '/settings/referral-links', icon: Link2 },
-  { name: 'Contacts', href: '/contacts', icon: Users },
+  { name: 'Doctors Network', href: '/contacts', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { dashboardService } from '@/services/dashboard.service'
 import type { Referral, PaginatedResponse, ReferralStatus } from '@/types'
 
 /**
@@ -59,6 +60,7 @@ export const referralsService = {
   async updateStatus(id: string, status: ReferralStatus): Promise<Referral> {
     const response = await api.patch<{ success: boolean; data: Referral }>(`/referrals/${id}/status`, { status })
     if (response.data.success && response.data.data) {
+      dashboardService.clearCache()
       return response.data.data
     }
     throw new Error('Failed to update referral status')

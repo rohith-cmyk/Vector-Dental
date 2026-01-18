@@ -34,7 +34,7 @@ interface FormData {
 
   // Referral details
   toContactId: string
-  reason: string
+  reasons: string[]
   customReason: string
   urgency: ReferralUrgency
   notes: string
@@ -67,7 +67,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
     patientAddress: '',
     textPatientCopy: false,
     toContactId: '',
-    reason: '',
+    reasons: [],
     customReason: '',
     urgency: 'ROUTINE',
     notes: '',
@@ -109,9 +109,16 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
     handleChange('files', files)
   }
 
-  const handleReasonSelect = (reason: string) => {
-    handleChange('reason', reason)
-    handleChange('customReason', '')
+  const handleReasonToggle = (reason: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      reasons: prev.reasons.includes(reason)
+        ? prev.reasons.filter(item => item !== reason)
+        : [...prev.reasons, reason],
+    }))
+    if (errors.reason) {
+      setErrors(prev => ({ ...prev, reason: '' }))
+    }
   }
 
   const validate = (): boolean => {
@@ -135,7 +142,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
     if (!formData.toContactId) {
       newErrors.toContactId = 'Please select a clinic/contact to refer to'
     }
-    if (!formData.reason && !formData.customReason.trim()) {
+    if (formData.reasons.length === 0 && !formData.customReason.trim()) {
       newErrors.reason = 'Please select or enter a reason for referral'
     }
 
@@ -165,7 +172,9 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
         patientDob: formData.patientDob || new Date().toISOString(),
         patientPhone: formData.patientPhone || undefined,
         patientEmail: formData.patientEmail || undefined,
-        reason: formData.customReason.trim() || formData.reason,
+        reason: [formData.reasons.join('; '), formData.customReason.trim()]
+          .filter(Boolean)
+          .join(' | '),
         urgency: formData.urgency,
         status: (saveAsDraft ? 'DRAFT' : 'SENT') as import('@/types').ReferralStatus,
         notes: formData.notes || undefined,
@@ -188,7 +197,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
         patientAddress: '',
         textPatientCopy: false,
         toContactId: '',
-        reason: '',
+        reasons: [],
         customReason: '',
         urgency: 'ROUTINE',
         notes: '',
@@ -541,9 +550,9 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
 
         {/* Reason for Referral */}
         <ReferralReasonButtons
-          selectedReason={formData.reason}
+          selectedReasons={formData.reasons}
           customReason={formData.customReason}
-          onReasonSelect={handleReasonSelect}
+          onReasonToggle={handleReasonToggle}
           onCustomReasonChange={(value) => handleChange('customReason', value)}
           error={errors.reason}
           specialty={contacts.find(c => c.id === formData.toContactId)?.specialty}

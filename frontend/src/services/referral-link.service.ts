@@ -73,6 +73,7 @@ export const referralLinkService = {
     clinicPhone?: string
     clinicEmail?: string
     specialistName: string
+    specialty?: string
   }> {
     const response = await api.get<ApiResponse<any>>(`/public/referral-link/${token}`)
     return response.data.data

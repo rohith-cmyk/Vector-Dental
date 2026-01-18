@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, Input, Select, Button, LoadingState } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
+import { ReferralReasonButtons } from '@/components/referrals/ReferralReasonButtons'
 import { api } from '@/lib/api'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
@@ -15,6 +16,7 @@ interface LinkInfo {
   clinicPhone?: string
   clinicEmail?: string
   specialistName: string
+  specialty?: string
 }
 
 export default function ReferMagicPage() {
@@ -40,7 +42,8 @@ export default function ReferMagicPage() {
     patientPhone: '',
     insurance: '',
     // Referral details
-    reasonForReferral: '',
+    reasonForReferral: [] as string[],
+    customReason: '',
     notes: '',
     urgency: 'ROUTINE',
   })
@@ -91,7 +94,9 @@ export default function ReferMagicPage() {
     }
     if (!formData.patientFirstName.trim()) newErrors.patientFirstName = 'Patient first name is required'
     if (!formData.patientLastName.trim()) newErrors.patientLastName = 'Patient last name is required'
-    if (!formData.reasonForReferral.trim()) newErrors.reasonForReferral = 'Reason for referral is required'
+    if (formData.reasonForReferral.length === 0 && !formData.customReason.trim()) {
+      newErrors.reasonForReferral = 'Reason for referral is required'
+    }
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -118,7 +123,11 @@ export default function ReferMagicPage() {
       formDataToSend.append('gpClinicName', formData.gpClinicName.trim())
       formDataToSend.append('submittedByName', formData.submittedByName.trim())
       formDataToSend.append('submittedByEmail', formData.submittedByEmail.trim())
-      formDataToSend.append('reasonForReferral', formData.reasonForReferral.trim())
+      const reasonSelection = formData.reasonForReferral.join('; ')
+      const reasonValue = [reasonSelection, formData.customReason.trim()]
+        .filter(Boolean)
+        .join(' | ')
+      formDataToSend.append('reasonForReferral', reasonValue)
       formDataToSend.append('urgency', formData.urgency)
       
       if (formData.patientDob) {
@@ -170,9 +179,9 @@ export default function ReferMagicPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Card className="w-full max-w-md border border-gray-200">
+          <CardContent className="p-6 text-center">
             <LoadingState
               title="Loading referral form..."
               subtitle="Getting the link details"
@@ -186,9 +195,9 @@ export default function ReferMagicPage() {
   // Error state
   if (error || !linkInfo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Card className="w-full max-w-md border border-gray-200">
+          <CardContent className="p-6 text-center">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-4">
               <AlertCircle className="h-10 w-10 text-red-600" />
             </div>
@@ -208,9 +217,9 @@ export default function ReferMagicPage() {
   // Success state
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Card className="w-full max-w-md border border-gray-200">
+          <CardContent className="p-6 text-center">
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-4">
               <CheckCircle className="h-10 w-10 text-green-600" />
             </div>
@@ -229,32 +238,32 @@ export default function ReferMagicPage() {
 
   // Referral form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-emerald-50/40 py-8 px-4">
+      <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Refer a Patient to {linkInfo.clinicName}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Refer a patient to {linkInfo.clinicName}
           </h1>
-          {linkInfo.clinicAddress && (
-            <p className="text-gray-600">
-              {linkInfo.clinicAddress}
-              {linkInfo.clinicPhone && ` • ${linkInfo.clinicPhone}`}
-            </p>
-          )}
-          {linkInfo.specialistName && (
-            <p className="text-sm text-gray-500 mt-2">
-              Specialist: {linkInfo.specialistName}
-            </p>
-          )}
-          <p className="text-sm text-gray-500 mt-2">
-            Fill out this form to refer a patient. No account required.
-          </p>
+          <div className="text-sm text-neutral-500 mt-3 space-y-1">
+            {linkInfo.clinicAddress && (
+              <div>
+                {linkInfo.clinicAddress}
+                {linkInfo.clinicPhone && ` • ${linkInfo.clinicPhone}`}
+              </div>
+            )}
+            {linkInfo.specialistName && (
+              <div>Specialist: {linkInfo.specialistName}</div>
+            )}
+            {linkInfo.specialty && (
+              <div>Specialty: {linkInfo.specialty}</div>
+            )}
+          </div>
         </div>
 
         {/* Form */}
-        <Card>
-          <CardContent className="p-8">
+        <Card className="border border-gray-200">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Your Information */}
               <div>
@@ -348,22 +357,25 @@ export default function ReferMagicPage() {
               {/* Referral Details */}
               <div className="border-t border-gray-200 pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Referral Details</h3>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Reason for Referral <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={formData.reasonForReferral}
-                    onChange={(e) => handleChange('reasonForReferral', e.target.value)}
-                    rows={3}
-                    required
-                    placeholder="Please describe the reason for this referral..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-                  />
-                  {errors.reasonForReferral && (
-                    <p className="mt-1 text-sm text-red-600">{errors.reasonForReferral}</p>
-                  )}
-                </div>
+                <ReferralReasonButtons
+                  selectedReasons={formData.reasonForReferral}
+                  customReason={formData.customReason}
+                  onReasonToggle={(reason) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      reasonForReferral: prev.reasonForReferral.includes(reason)
+                        ? prev.reasonForReferral.filter(item => item !== reason)
+                        : [...prev.reasonForReferral, reason]
+                    }))
+                    if (errors.reasonForReferral) {
+                      setErrors(prev => ({ ...prev, reasonForReferral: '' }))
+                    }
+                  }}
+                  onCustomReasonChange={(value) => handleChange('customReason', value)}
+                  error={errors.reasonForReferral}
+                  specialty={linkInfo.specialty}
+                  showPreferredDoctor={false}
+                />
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -434,7 +446,7 @@ export default function ReferMagicPage() {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-sm text-neutral-400">
           This is a secure referral submission form. Your information will only be shared with {linkInfo.clinicName}.
         </p>
       </div>

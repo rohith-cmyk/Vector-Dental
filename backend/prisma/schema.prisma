@@ -220,6 +220,7 @@ model ReferralLink {
   accessCodeHash String   // Hashed access code (bcrypt)
   isActive       Boolean  @default(true)
   label          String?  // Optional label like "Standing GP Link"
+  specialty      String?  // Specialist type (e.g., Endodontist)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
