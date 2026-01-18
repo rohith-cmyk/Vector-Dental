@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState, Modal } from '@/components/ui'
 import {
   Copy,
   ExternalLink,
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { referralLinkService } from '@/services/referral-link.service'
 import type { ReferralLink } from '@/types'
-import { Modal } from '@/components/ui'
+import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
 
 interface CreateLinkModalProps {
   isOpen: boolean
@@ -162,23 +162,40 @@ export default function ReferralLinksPage() {
   const [error, setError] = useState<string | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ReferralLink | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const cacheKey = 'referral_links'
+  const cacheTtl = 2 * 60 * 1000
 
-  const fetchLinks = async () => {
+  const fetchLinks = async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       setError(null)
       const data = await referralLinkService.list()
       setLinks(data)
+      setCachedData(cacheKey, data, cacheTtl)
     } catch (error: any) {
       console.error('Failed to load referral links:', error)
       setError(error.response?.data?.message || 'Failed to load referral links')
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    fetchLinks()
+    const cached = getCachedData<ReferralLink[]>(cacheKey)
+    if (cached) {
+      setLinks(cached)
+      setLoading(false)
+      fetchLinks(false)
+      return
+    }
+
+    fetchLinks(true)
   }, [])
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -186,22 +203,24 @@ export default function ReferralLinksPage() {
       const data = await referralLinkService.update(id, {
         isActive: !currentStatus,
       })
-      await fetchLinks()
+      clearCache(cacheKey)
+      await fetchLinks(false)
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to update link')
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this referral link? This cannot be undone.')) {
-      return
-    }
-
     try {
+      setDeleting(true)
       await referralLinkService.delete(id)
-      await fetchLinks()
+      clearCache(cacheKey)
+      await fetchLinks(false)
+      setDeleteTarget(null)
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to delete link')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -357,8 +376,45 @@ export default function ReferralLinksPage() {
       <CreateLinkModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={fetchLinks}
+        onSuccess={() => {
+          clearCache(cacheKey)
+          fetchLinks(false)
+        }}
       />
+
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteTarget(null)
+          }
+        }}
+        title="Delete Referral Link"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete{' '}
+            <span className="font-medium text-gray-900">{deleteTarget?.label || 'this link'}</span>?
+            This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => deleteTarget && handleDelete(deleteTarget.id)}
+              isLoading={deleting}
+            >
+              Delete Link
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </DashboardLayout>
   )
 }

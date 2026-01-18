@@ -294,9 +294,11 @@ export async function submitReferral(
       submittedByName,
       submittedByEmail,
       submittedByPhone,
+      patientPhone,
       // Referral details
       reasonForReferral,
       notes,
+      urgency,
     } = req.body
 
     // Validate required fields (access code no longer required)
@@ -352,6 +354,7 @@ export async function submitReferral(
         patientLastName,
         patientName: `${patientFirstName} ${patientLastName}`, // Keep for backward compatibility
         patientDob: patientDob ? new Date(patientDob) : new Date(), // Default to today if not provided
+        patientPhone: patientPhone || null,
         insurance: insurance || null,
         gpClinicName,
         submittedByName,
@@ -360,7 +363,7 @@ export async function submitReferral(
         reason: reasonForReferral,
         notes: notes || null,
         status: 'SUBMITTED', // New status for magic link submissions
-        urgency: 'ROUTINE', // Default urgency
+        urgency: (urgency || 'ROUTINE').toUpperCase() as 'ROUTINE' | 'URGENT' | 'EMERGENCY',
         statusToken, // Store the status token for status tracking page
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,
@@ -501,13 +504,14 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
     const timeline = TIMELINE_STAGES.map((stage) => {
       const stageIndex = TIMELINE_STAGES.findIndex((s) => s.key === stage.key)
       const currentIndex = TIMELINE_STAGES.findIndex((s) => s.key === currentStage)
+      const isCompletedStage = currentStage === 'completed'
       
       return {
         key: stage.key,
         label: stage.label,
         status: stage.status,
-        isCompleted: stageIndex < currentIndex,
-        isCurrent: stageIndex === currentIndex,
+        isCompleted: stageIndex < currentIndex || (isCompletedStage && stageIndex === currentIndex),
+        isCurrent: stageIndex === currentIndex && !isCompletedStage,
         isPending: stageIndex > currentIndex,
       }
     })

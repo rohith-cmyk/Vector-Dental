@@ -44,13 +44,14 @@ export function getCachedData<T>(key: string): T | null {
 export function setCachedData<T>(key: string, data: T, ttl: number = DEFAULT_TTL): void {
   if (typeof window === 'undefined') return // Server-side: no cache
 
+  const now = Date.now()
+  const entry: CacheEntry<T> = {
+    data,
+    timestamp: now,
+    expiresAt: now + ttl,
+  }
+
   try {
-    const now = Date.now()
-    const entry: CacheEntry<T> = {
-      data,
-      timestamp: now,
-      expiresAt: now + ttl,
-    }
 
     localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(entry))
   } catch (error) {

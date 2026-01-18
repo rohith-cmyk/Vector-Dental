@@ -89,8 +89,8 @@ export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingI
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
                         variant={
-                          referral.urgency === 'emergency' ? 'danger' :
-                          referral.urgency === 'urgent' ? 'warning' : 'default'
+                          referral.urgency === 'EMERGENCY' ? 'danger' :
+                            referral.urgency === 'URGENT' ? 'warning' : 'default'
                         }
                       >
                         {referral.urgency.toUpperCase()}

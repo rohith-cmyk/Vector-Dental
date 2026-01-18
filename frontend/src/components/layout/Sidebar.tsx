@@ -6,22 +6,18 @@ import { cn } from '@/lib/utils'
 import { 
   LayoutDashboard, 
   Bell, 
-  FolderOpen, 
-  Building2, 
+  Link2, 
   FileText, 
   Users, 
-  Calendar, 
   Settings 
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Referrals', href: '/referrals', icon: FileText },
+  { name: 'Referral Links', href: '/settings/referral-links', icon: Link2 },
   { name: 'Contacts', href: '/contacts', icon: Users },
   { name: 'Notifications', href: '/notifications', icon: Bell },
-  { name: 'Projects', href: '/projects', icon: FolderOpen },
-  { name: 'Companies', href: '/companies', icon: Building2 },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

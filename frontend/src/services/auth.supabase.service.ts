@@ -82,6 +82,39 @@ export const authService = {
   },
 
   /**
+   * Login with Google OAuth
+   */
+  async loginWithGoogle(redirectTo?: string): Promise<void> {
+    const redirectUrl = redirectTo || `${window.location.origin}/oauth/callback`
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+      },
+    })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+  },
+
+  /**
+   * Complete OAuth signup by creating clinic + profile
+   */
+  async completeOAuthSignup(data: { clinicName: string; name?: string }): Promise<User> {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      throw new Error('No active session. Please sign in again.')
+    }
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+    localStorage.setItem('auth_token', session.access_token)
+
+    const response = await api.post<{ success: boolean; data: User }>('/auth/oauth/complete', data)
+    return response.data.data
+  },
+
+  /**
    * Logout user
    */
   async logout(): Promise<void> {
@@ -110,6 +143,14 @@ export const authService = {
     } catch (error) {
       return null
     }
+  },
+
+  /**
+   * Update clinic profile
+   */
+  async updateProfile(data: { clinicName?: string; clinicEmail?: string }): Promise<User> {
+    const response = await api.put<{ success: boolean; data: User }>('/auth/profile', data)
+    return response.data.data
   },
 
   /**

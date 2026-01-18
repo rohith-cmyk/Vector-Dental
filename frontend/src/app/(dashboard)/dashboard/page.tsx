@@ -227,7 +227,7 @@ export default function DashboardPage() {
     }, 120000) // 2 minutes (cache TTL)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [trendsPeriod, specialtyPeriod])
 
   // Search effect - reload data when search changes
   useEffect(() => {

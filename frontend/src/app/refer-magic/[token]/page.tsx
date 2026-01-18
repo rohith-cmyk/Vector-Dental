@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardContent, Input, Select, Button } from '@/components/ui'
+import { Card, CardContent, Input, Select, Button, LoadingState } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
 import { api } from '@/lib/api'
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, AlertCircle } from 'lucide-react'
 
 interface LinkInfo {
   token: string
@@ -37,10 +37,12 @@ export default function ReferMagicPage() {
     patientFirstName: '',
     patientLastName: '',
     patientDob: '',
+    patientPhone: '',
     insurance: '',
     // Referral details
     reasonForReferral: '',
     notes: '',
+    urgency: 'ROUTINE',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -117,9 +119,13 @@ export default function ReferMagicPage() {
       formDataToSend.append('submittedByName', formData.submittedByName.trim())
       formDataToSend.append('submittedByEmail', formData.submittedByEmail.trim())
       formDataToSend.append('reasonForReferral', formData.reasonForReferral.trim())
+      formDataToSend.append('urgency', formData.urgency)
       
       if (formData.patientDob) {
         formDataToSend.append('patientDob', formData.patientDob)
+      }
+      if (formData.patientPhone?.trim()) {
+        formDataToSend.append('patientPhone', formData.patientPhone.trim())
       }
       if (formData.insurance?.trim()) {
         formDataToSend.append('insurance', formData.insurance.trim())
@@ -167,8 +173,10 @@ export default function ReferMagicPage() {
       <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-brand-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading referral form...</p>
+            <LoadingState
+              title="Loading referral form..."
+              subtitle="Getting the link details"
+            />
           </CardContent>
         </Card>
       </div>
@@ -326,6 +334,15 @@ export default function ReferMagicPage() {
                     placeholder="Insurance provider"
                   />
                 </div>
+                <div className="mt-4">
+                  <Input
+                    label="Patient Phone (Optional)"
+                    type="tel"
+                    value={formData.patientPhone}
+                    onChange={(e) => handleChange('patientPhone', e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
               </div>
 
               {/* Referral Details */}
@@ -364,6 +381,21 @@ export default function ReferMagicPage() {
                     {formData.notes?.length || 0}/500 characters
                   </p>
                 </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Urgency
+                  </label>
+                  <Select
+                    value={formData.urgency}
+                    onChange={(e) => handleChange('urgency', e.target.value)}
+                    options={[
+                      { value: 'ROUTINE', label: 'Routine' },
+                      { value: 'URGENT', label: 'Urgent' },
+                      { value: 'EMERGENCY', label: 'Emergency' },
+                    ]}
+                  />
+                </div>
               </div>
 
               {/* File Upload */}
@@ -384,7 +416,7 @@ export default function ReferMagicPage() {
                 )}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <p className="text-sm text-blue-800">
-                    📧 You will receive an email confirmation once {linkInfo.clinicName} reviews your referral.
+                    Once you submit the referral, you will get an email from {linkInfo.clinicName} for patient status.
                   </p>
                 </div>
                 <Button

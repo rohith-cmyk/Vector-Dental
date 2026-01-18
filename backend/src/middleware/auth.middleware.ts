@@ -20,7 +20,7 @@ declare global {
  * Authentication middleware
  * Verifies JWT token and attaches user info to request
  */
-export function authenticate(req: Request, res: Response, next: NextFunction) {
+export function authenticate(req: Request, _res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization
 
@@ -43,7 +43,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
  * Role-based authorization middleware
  */
 export function authorize(...roles: string[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(errors.unauthorized())
     }

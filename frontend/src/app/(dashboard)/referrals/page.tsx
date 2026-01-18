@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Button, Card, CardContent, Badge, Select, Tabs } from '@/components/ui'
+import { Button, Card, CardContent, Badge, Select, Tabs, LoadingState } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
 import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle, CheckIcon, CrossIcon, X, ClipboardList } from 'lucide-react'
@@ -10,6 +10,7 @@ import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES, USE_MOCK_DATA } from '@/constants'
 import type { Referral, ReferralStatus, Contact } from '@/types'
 import { api } from '@/lib/api'
+import { getCachedData, setCachedData } from '@/lib/cache'
 import { referralsService } from '@/services/referrals.service'
 
 // Mock data for development
@@ -244,9 +245,11 @@ export default function ReferralsPage() {
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
+  const cacheKey = `referrals_${activeTab}_${statusFilter}_${searchQuery.trim().toLowerCase()}`
+  const cacheTtl = 2 * 60 * 1000
 
   // Fetch referrals
-  const fetchReferrals = useCallback(async () => {
+  const fetchReferrals = useCallback(async (showLoading: boolean = true) => {
     try {
       setLoading(true)
 
@@ -311,19 +314,28 @@ export default function ReferralsPage() {
     } catch (error) {
       console.error('Failed to fetch referrals:', error)
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
-  }, [activeTab, statusFilter, searchQuery])
+  }, [activeTab, statusFilter, searchQuery, cacheKey])
 
   // Initial fetch and refetch on filters change
   useEffect(() => {
+    const cached = getCachedData<{ referrals: Referral[]; total: number }>(cacheKey)
+    if (cached) {
+      setReferrals(cached.referrals)
+      setTotal(cached.total)
+      setLoading(false)
+    }
+
     // Debounce search
     const timer = setTimeout(() => {
-      fetchReferrals()
+      fetchReferrals(!cached)
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [fetchReferrals])
+  }, [fetchReferrals, cacheKey])
 
   // Handle status update
   const handleStatusUpdate = async (id: string, newStatus: ReferralStatus) => {

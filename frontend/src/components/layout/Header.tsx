@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, LogOut, User, Settings, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
@@ -15,6 +15,8 @@ export function Header({ title }: HeaderProps) {
   const [user, setUser] = useState<UserType | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const previousUnread = useRef<number | null>(null)
+  const soundPrefKey = 'notification_sound_enabled'
   
   // Load user data on mount
   useEffect(() => {
@@ -56,9 +58,43 @@ export function Header({ title }: HeaderProps) {
   const loadUnreadCount = async () => {
     try {
       const count = await notificationsService.getUnreadCount()
+      const soundEnabled = localStorage.getItem(soundPrefKey)
+      const shouldPlaySound =
+        previousUnread.current !== null &&
+        count > previousUnread.current &&
+        (soundEnabled === null || soundEnabled === 'true')
+
+      if (shouldPlaySound) {
+        playNotificationSound()
+      }
+
+      previousUnread.current = count
       setUnreadCount(count)
     } catch (error) {
       console.error('Failed to load unread count:', error)
+    }
+  }
+
+  const playNotificationSound = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioContextClass) return
+      const audioContext = new AudioContextClass()
+      const oscillator = audioContext.createOscillator()
+      const gainNode = audioContext.createGain()
+
+      oscillator.type = 'sine'
+      oscillator.frequency.value = 880
+      gainNode.gain.value = 0.05
+
+      oscillator.connect(gainNode)
+      gainNode.connect(audioContext.destination)
+
+      oscillator.start()
+      oscillator.stop(audioContext.currentTime + 0.15)
+      oscillator.onended = () => audioContext.close()
+    } catch {
+      // Ignore sound errors (autoplay restrictions, etc.)
     }
   }
   

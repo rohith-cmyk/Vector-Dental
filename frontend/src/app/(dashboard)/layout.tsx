@@ -42,9 +42,11 @@ export default function DashboardLayout({
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
-      </div>
+      <LoadingState
+        className="min-h-screen"
+        title="Preparing your dashboard..."
+        subtitle="Checking your session"
+      />
     )
   }
 

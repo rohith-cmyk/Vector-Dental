@@ -8,7 +8,7 @@ export function errorHandler(
   err: Error | ApiError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) {
   // Handle Multer errors (file upload errors)
   if (err.name === 'MulterError' || (err as any).code === 'LIMIT_FILE_SIZE') {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardContent, Input, Select, Button } from '@/components/ui'
+import { Card, CardContent, Input, Select, Button, LoadingState } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
 import { api } from '@/lib/api'
 import { CheckCircle, AlertCircle } from 'lucide-react'
@@ -164,8 +164,10 @@ export default function PublicReferralPage() {
       <div className="min-h-screen bg-gradient-to-br from-brand-50 to-gray-100 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading referral form...</p>
+            <LoadingState
+              title="Loading referral form..."
+              subtitle="Preparing the clinic details"
+            />
           </CardContent>
         </Card>
       </div>

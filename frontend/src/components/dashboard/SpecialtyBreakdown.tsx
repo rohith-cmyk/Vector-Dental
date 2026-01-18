@@ -48,10 +48,14 @@ export function BreakdownChart({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
-        <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
-          <option>Monthly</option>
-          <option>Weekly</option>
-          <option>Yearly</option>
+        <select
+          className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+          value={period}
+          onChange={(event) => onPeriodChange(event.target.value as 'monthly' | 'weekly' | 'yearly')}
+        >
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
         </select>
       </CardHeader>
       <CardContent>

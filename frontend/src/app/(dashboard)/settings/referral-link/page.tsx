@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState } from '@/components/ui'
 import { Copy, ExternalLink, QrCode, Mail, Check, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
 

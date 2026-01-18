@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
+import type { ComponentType } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatDate, cn } from '@/lib/utils'
 import { Modal, Badge, Button, Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
-import { FileText, Download, Phone, Mail, Calendar, User, Building2, Share2, Loader2, ExternalLink, CheckCircle, Check } from 'lucide-react'
+import { FileText, Download, Phone, Mail, Calendar, User, Building2, Share2, Loader2, ExternalLink, CheckCircle, Check, Copy } from 'lucide-react'
 import type { Referral, ReferralFile, ReferralStatus } from '@/types'
 import { API_URL } from '@/lib/api'
 import { InteractiveToothChart } from './InteractiveToothChart'
@@ -23,16 +24,17 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
     const [statusUpdateSuccess, setStatusUpdateSuccess] = useState(false)
     const [currentReferral, setCurrentReferral] = useState<Referral | null>(referral)
+    const [copiedField, setCopiedField] = useState<string | null>(null)
 
     // Update current referral when referral prop changes
     useEffect(() => {
         setCurrentReferral(referral)
     }, [referral])
 
-    // Mark associated notifications as read when viewing referral
+    // Clear associated notifications when viewing referral
     useEffect(() => {
         if (isOpen && referral?.id) {
-            notificationsService.markAsReadByReferral(referral.id)
+            notificationsService.deleteByReferral(referral.id)
         }
         // Reset share state when modal opens/closes
         setShareSuccess(false)
@@ -109,6 +111,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     const STATUS_ORDER: ReferralStatus[] = ['SUBMITTED', 'ACCEPTED', 'SENT', 'COMPLETED']
     const STATUS_LABELS: Record<ReferralStatus, string> = {
         SUBMITTED: 'Reviewed',
+        REJECTED: 'Rejected',
         ACCEPTED: 'Appointment Scheduled',
         SENT: 'Patient Attended',
         COMPLETED: 'Completed',
@@ -121,18 +124,21 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         const currentStatus = displayReferral.status
         const currentIndex = STATUS_ORDER.indexOf(currentStatus)
         const statusIndex = STATUS_ORDER.indexOf(status)
-        
+
         if (statusIndex === -1) {
             // Status not in progression (like CANCELLED)
             return { isCompleted: false, isCurrent: false, isPending: true }
         }
-        
+
         // If current status is SUBMITTED, "Reviewed" (SUBMITTED) is current
         // If current status is ACCEPTED, "Reviewed" (SUBMITTED) is completed, "Appointment Scheduled" (ACCEPTED) is current
         // And so on...
         if (statusIndex < currentIndex) {
             return { isCompleted: true, isCurrent: false, isPending: false }
         } else if (statusIndex === currentIndex) {
+            if (currentStatus === 'COMPLETED') {
+                return { isCompleted: true, isCurrent: false, isPending: false }
+            }
             return { isCompleted: false, isCurrent: true, isPending: false }
         } else {
             return { isCompleted: false, isCurrent: false, isPending: true }
@@ -148,6 +154,19 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         return STATUS_ORDER[currentIndex + 1]
     }
 
+    const getAppointmentDisplay = () => {
+        const appointmentDate = new Date()
+        appointmentDate.setDate(appointmentDate.getDate() + 1)
+        appointmentDate.setHours(10, 0, 0, 0)
+        return appointmentDate.toLocaleString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        })
+    }
+
     // Use currentReferral for display (updated when status changes)
     const displayReferral = currentReferral
 
@@ -159,6 +178,66 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     // Get clinic name and doctor - use new fields if available
     const clinicName = displayReferral.gpClinicName || displayReferral.fromClinicName || 'Unknown Clinic'
     const doctorName = displayReferral.submittedByName || displayReferral.referringDentist
+
+    const handleCopy = async (value: string | undefined | null, field: string) => {
+        if (!value) return
+        try {
+            await navigator.clipboard.writeText(value)
+            setCopiedField(field)
+            setTimeout(() => setCopiedField((current) => (current === field ? null : current)), 1500)
+        } catch (error) {
+            console.error('Failed to copy value:', error)
+        }
+    }
+
+    const CopyButton = ({ value, field }: { value?: string | null; field: string }) => {
+        if (!value) return null
+        const isCopied = copiedField === field
+        return (
+            <button
+                type="button"
+                onClick={() => handleCopy(value, field)}
+                className="inline-flex items-center rounded-md p-1 text-gray-500 hover:text-gray-900"
+                title={isCopied ? 'Copied' : 'Copy'}
+            >
+                {isCopied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+            </button>
+        )
+    }
+
+    const FieldRow = ({
+        label,
+        value,
+        field,
+        icon: Icon,
+        href,
+    }: {
+        label: string
+        value?: string | null
+        field: string
+        icon?: ComponentType<{ className?: string }>
+        href?: string
+    }) => {
+        if (!value) return null
+        return (
+            <div className="flex items-start justify-between gap-3 py-3">
+                <div className="space-y-1">
+                    <p className="text-xs font-medium text-gray-500">{label}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-900">
+                        {Icon && <Icon className="h-4 w-4 text-gray-400" />}
+                        {href ? (
+                            <a href={href} className="text-brand-600 hover:text-brand-700">
+                                {value}
+                            </a>
+                        ) : (
+                            <span className="text-gray-900">{value}</span>
+                        )}
+                    </div>
+                </div>
+                <CopyButton value={value} field={field} />
+            </div>
+        )
+    }
 
     return (
         <Modal

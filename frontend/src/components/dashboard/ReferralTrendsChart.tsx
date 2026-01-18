@@ -9,9 +9,11 @@ interface ReferralTrendsChartProps {
     outgoing: number
     incoming: number
   }>
+  period: 'monthly' | 'weekly' | 'yearly'
+  onPeriodChange: (period: 'monthly' | 'weekly' | 'yearly') => void
 }
 
-export function ReferralTrendsChart({ data }: ReferralTrendsChartProps) {
+export function ReferralTrendsChart({ data, period, onPeriodChange }: ReferralTrendsChartProps) {
   // Handle undefined or empty data
   const safeData = data || []
 

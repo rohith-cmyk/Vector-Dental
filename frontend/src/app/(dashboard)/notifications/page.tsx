@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardContent, Badge, Button } from '@/components/ui'
+import { Card, CardContent, Badge, Button, LoadingState } from '@/components/ui'
 import { Bell, CheckCheck, Trash2, ArrowDownLeft, CheckCircle, XCircle } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
+import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
 import type { Notification } from '@/types'
 
 export default function NotificationsPage() {
@@ -13,28 +14,43 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const cacheKey = `notifications_${filter}`
+  const cacheTtl = 2 * 60 * 1000
 
   // Load notifications
   useEffect(() => {
-    loadNotifications()
+    const cached = getCachedData<Notification[]>(cacheKey)
+    if (cached) {
+      setNotifications(cached)
+      setLoading(false)
+      loadNotifications(false)
+      return
+    }
+
+    loadNotifications(true)
   }, [filter])
 
-  const loadNotifications = async () => {
+  const loadNotifications = async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       setError(null)
       const data = await notificationsService.getAll(filter)
       setNotifications(data)
+      setCachedData(cacheKey, data, cacheTtl)
     } catch (err) {
       console.error('Failed to load notifications:', err)
       setError(err instanceof Error ? err.message : 'Failed to load notifications')
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
   const unreadCount = notifications.filter(n => !n.isRead).length
-  const filteredNotifications = filter === 'unread' 
+  const filteredNotifications = filter === 'unread'
     ? notifications.filter(n => !n.isRead)
     : notifications
 
@@ -43,6 +59,8 @@ export default function NotificationsPage() {
       await notificationsService.markAsRead(id)
       // Update local state optimistically
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+      clearCache('notifications_all')
+      clearCache('notifications_unread')
     } catch (err) {
       console.error('Failed to mark as read:', err)
       // Reload to sync with server
@@ -55,6 +73,8 @@ export default function NotificationsPage() {
       await notificationsService.markAllAsRead()
       // Update local state optimistically
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+      clearCache('notifications_all')
+      clearCache('notifications_unread')
     } catch (err) {
       console.error('Failed to mark all as read:', err)
       // Reload to sync with server
@@ -67,11 +87,32 @@ export default function NotificationsPage() {
       await notificationsService.delete(id)
       // Update local state optimistically
       setNotifications(prev => prev.filter(n => n.id !== id))
+      clearCache('notifications_all')
+      clearCache('notifications_unread')
     } catch (err) {
       console.error('Failed to delete notification:', err)
       // Reload to sync with server
       loadNotifications()
     }
+  }
+
+  const extractClinicName = (message: string): string | null => {
+    const match = message.match(/from\s+(.+?)(?:\s+for\b|$)/i)
+    return match?.[1]?.trim() || null
+  }
+
+  const getDisplayTitle = (notification: Notification): string => {
+    if (notification.type === 'new_incoming_referral') {
+      return extractClinicName(notification.message) || notification.title
+    }
+    return notification.title
+  }
+
+  const getDisplayMessage = (notification: Notification): string => {
+    if (notification.type === 'new_incoming_referral') {
+      return notification.message.replace(/from\s+(.+?)(?:\s+for\b|$)/i, '').trim()
+    }
+    return notification.message
   }
 
   const getNotificationIcon = (type: string) => {
@@ -97,26 +138,24 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'all'
-                  ? 'bg-brand-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'all'
+                ? 'bg-brand-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               All ({notifications.length})
             </button>
             <button
               onClick={() => setFilter('unread')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === 'unread'
-                  ? 'bg-brand-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filter === 'unread'
+                ? 'bg-brand-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               Unread ({unreadCount})
             </button>
           </div>
-          
+
           {unreadCount > 0 && (
             <Button
               variant="outline"
@@ -134,14 +173,15 @@ export default function NotificationsPage() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mb-3"></div>
-                <p className="text-gray-500">Loading notifications...</p>
-              </div>
+              <LoadingState
+                className="py-12"
+                title="Loading notifications..."
+                subtitle="Checking for new updates"
+              />
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <p className="text-red-500 mb-2">{error}</p>
-                <Button variant="outline" size="sm" onClick={loadNotifications}>
+                <Button variant="outline" size="sm" onClick={() => loadNotifications(true)}>
                   Try Again
                 </Button>
               </div>
@@ -149,41 +189,40 @@ export default function NotificationsPage() {
               <div className="flex flex-col items-center justify-center py-12">
                 <Bell className="h-12 w-12 text-gray-300 mb-3" />
                 <p className="text-gray-500">No notifications</p>
-                <p className="text-sm text-gray-400">You're all caught up!</p>
+                <p className="text-sm text-gray-400">You&apos;re all caught up!</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
-                      !notification.isRead ? 'bg-blue-50' : ''
-                    }`}
+                    className={`p-4 hover:bg-gray-50 transition-colors ${!notification.isRead ? 'bg-blue-50' : ''
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Icon */}
                       <div className="flex-shrink-0 mt-1">
                         {getNotificationIcon(notification.type)}
                       </div>
-                      
+
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <h3 className="text-sm font-semibold text-gray-900">
-                              {notification.title}
+                              {getDisplayTitle(notification)}
                               {!notification.isRead && (
                                 <span className="ml-2 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
                               )}
                             </h3>
                             <p className="text-sm text-gray-600 mt-1">
-                              {notification.message}
+                              {getDisplayMessage(notification)}
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
                               {formatRelativeTime(notification.createdAt)}
                             </p>
                           </div>
-                          
+
                           {/* Actions */}
                           <div className="flex items-center gap-2">
                             {!notification.isRead && (
@@ -204,16 +243,18 @@ export default function NotificationsPage() {
                             </button>
                           </div>
                         </div>
-                        
+
                         {/* View Referral Link */}
                         {notification.referralId && (
                           <button
                             onClick={async () => {
-                              // Mark notification as read first
-                              if (!notification.isRead) {
-                                await handleMarkAsRead(notification.id)
+                              const referralId = notification.referralId
+                              if (referralId) {
+                                setNotifications((prev) => prev.filter((n) => n.referralId !== referralId))
+                                await notificationsService.deleteByReferral(referralId)
+                                clearCache('notifications_all')
+                                clearCache('notifications_unread')
                               }
-                              // Navigate to referrals page
                               window.location.href = `/referrals?id=${notification.referralId}`
                             }}
                             className="mt-2 text-sm text-brand-600 hover:text-brand-700 font-medium"

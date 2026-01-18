@@ -4,7 +4,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios'
 const getApiUrl = () => {
   // Check both NEXT_PUBLIC_API_URL and API_URL (for Next.js env)
   const envUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL
-  const url = envUrl || 'http://localhost:3001'
+  const url = envUrl || 'http://localhost:4000'
 
   // Ensure URL ends with /api
   if (url.endsWith('/api')) {
