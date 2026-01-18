@@ -31,16 +31,20 @@ export default function ReferralStatusPage() {
   const [statusData, setStatusData] = useState<ReferralStatusData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [accessCode, setAccessCode] = useState('')
+  const [requiresAccessCode, setRequiresAccessCode] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const fetchStatus = async () => {
+    const fetchStatus = async (code?: string) => {
       try {
         setLoading(true)
         setError(null)
+        setRequiresAccessCode(false)
         const response = await api.get<{ success: boolean; data: ReferralStatusData }>(
-          `/public/referral-status/${statusToken}`
+          `/public/referral-status/${statusToken}`,
+          code ? { params: { accessCode: code } } : undefined
         )
         if (response.data.success && response.data.data) {
           setStatusData(response.data.data)
@@ -49,7 +53,11 @@ export default function ReferralStatusPage() {
         }
       } catch (error: any) {
         console.error('Failed to load referral status:', error)
-        setError(error.response?.data?.message || 'Failed to load referral status')
+        const message = error.response?.data?.message || 'Failed to load referral status'
+        setError(message)
+        if (message.toLowerCase().includes('access code')) {
+          setRequiresAccessCode(true)
+        }
       } finally {
         setLoading(false)
       }
@@ -67,6 +75,64 @@ export default function ReferralStatusPage() {
         title="Loading referral status..."
         subtitle="Fetching the latest timeline"
       />
+    )
+  }
+
+  if ((error || !statusData) && requiresAccessCode) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center space-y-4">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 mb-2">
+              <AlertCircle className="h-10 w-10 text-amber-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Access Code Required</h1>
+            <p className="text-gray-600">
+              Enter the access code from your email to view the referral status.
+            </p>
+            <input
+              type="text"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              placeholder="Access code"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <button
+              onClick={() => {
+                if (!accessCode.trim()) return
+                setStatusData(null)
+                setError(null)
+                setLoading(true)
+                api
+                  .get<{ success: boolean; data: ReferralStatusData }>(
+                    `/public/referral-status/${statusToken}`,
+                    { params: { accessCode: accessCode.trim() } }
+                  )
+                  .then((response) => {
+                    if (response.data.success && response.data.data) {
+                      setStatusData(response.data.data)
+                    } else {
+                      setError('Status not found')
+                    }
+                  })
+                  .catch((error: any) => {
+                    const message = error.response?.data?.message || 'Failed to load referral status'
+                    setError(message)
+                  })
+                  .finally(() => {
+                    setLoading(false)
+                  })
+              }}
+              className="w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              Continue
+            </button>
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 

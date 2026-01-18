@@ -41,6 +41,11 @@ export const config = {
 
   // Email (Resend)
   resendApiKey: process.env.RESEND_API_KEY || 're_QtQLnWri_PgAptPNvfoo7cpVczGjpjkJp',
+
+  // SMS (Twilio)
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+  twilioMessagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
 }
 
 // Validate required environment variables

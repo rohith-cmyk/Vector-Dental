@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout'
 import { Button, Card, CardContent, Badge, Select, Tabs, LoadingState } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
@@ -236,11 +237,14 @@ const mockReferrals: Referral[] = [
 ]
 
 export default function ReferralsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ReferralStatus | 'all'>('all')
   const [isNewReferralModalOpen, setIsNewReferralModalOpen] = useState(false)
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
   const [activeTab, setActiveTab] = useState('received')
+  const [autoOpenHandled, setAutoOpenHandled] = useState(false)
 
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
@@ -336,6 +340,35 @@ export default function ReferralsPage() {
 
     return () => clearTimeout(timer)
   }, [fetchReferrals, cacheKey])
+
+  useEffect(() => {
+    if (autoOpenHandled) return
+    const referralId = searchParams.get('referralId')
+    if (!referralId) return
+
+    setAutoOpenHandled(true)
+    referralsService.getById(referralId)
+      .then(async (referral) => {
+        const action = searchParams.get('action')
+        if (action === 'accept' && (referral.status === 'SUBMITTED' || referral.status === 'SENT')) {
+          try {
+            const updated = await referralsService.updateStatus(referralId, 'ACCEPTED')
+            setSelectedReferral(updated)
+          } catch {
+            setSelectedReferral(referral)
+          }
+        } else {
+          setSelectedReferral(referral)
+        }
+        fetchReferrals(false)
+      })
+      .catch(() => {
+        // ignore - handled by UI
+      })
+      .finally(() => {
+        router.replace('/referrals', { scroll: false })
+      })
+  }, [autoOpenHandled, searchParams, fetchReferrals, router])
 
   // Handle status update
   const handleStatusUpdate = async (id: string, newStatus: ReferralStatus) => {

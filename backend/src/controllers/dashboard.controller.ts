@@ -18,6 +18,8 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     const now = new Date()
     const currentMonth = now.getMonth()
     const currentYear = now.getFullYear()
+    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1
+    const previousMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
     const monthStart = new Date(currentYear, currentMonth, 1)
     const monthEnd = new Date(currentYear, currentMonth + 1, 1)
     const daysElapsedInMonth = Math.max(
@@ -33,146 +35,211 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     const trendsPeriod = normalizePeriod(req.query.trendsPeriod)
     const specialtyPeriod = normalizePeriod(req.query.specialtyPeriod)
 
-    // Total referrals (all)
-    const totalReferrals = await prisma.referral.count({
-      where: { fromClinicId: clinicId },
-    })
-
-    // Total outgoing referrals (sent by you)
-    const totalOutgoing = await prisma.referral.count({
-      where: {
-        fromClinicId: clinicId,
-        referralType: 'OUTGOING',
-      },
-    })
-
-    // Total incoming referrals (received by you)
-    const totalIncoming = await prisma.referral.count({
-      where: {
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ]
-      },
-    })
-
-    const totalIncomingThisMonth = await prisma.referral.count({
-      where: {
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ],
-        createdAt: {
-          gte: monthStart,
-          lt: monthEnd,
-        },
-      },
-    })
-
-    // Pending incoming (need your action to accept/reject)
     const pendingStatuses: Array<'SUBMITTED' | 'SENT'> = ['SUBMITTED', 'SENT']
-    const pendingIncoming = await prisma.referral.count({
-      where: {
-        status: { in: pendingStatuses },
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ]
-      },
-    })
-
-    // Pending outgoing (waiting for specialist response)
-    const pendingOutgoing = await prisma.referral.count({
-      where: {
-        fromClinicId: clinicId,
-        referralType: 'OUTGOING',
-        status: { in: ['SENT', 'ACCEPTED'] }, // Sent or in progress
-      },
-    })
-
-    // Completed this month
-    const completedThisMonth = await prisma.referral.count({
-      where: {
-        status: 'COMPLETED',
-        OR: [
-          { fromClinicId: clinicId },
-          { toClinicId: clinicId },
-        ],
-        updatedAt: {
-          gte: monthStart,
-          lt: monthEnd,
+    const specialtyRange = (() => {
+      if (specialtyPeriod === 'weekly') {
+        const start = new Date(now)
+        start.setDate(now.getDate() - 7)
+        return { start, end: now }
+      }
+      if (specialtyPeriod === 'yearly') {
+        return { start: new Date(currentYear, 0, 1), end: new Date(currentYear + 1, 0, 1) }
+      }
+      // monthly (default)
+      return { start: new Date(currentYear, currentMonth, 1), end: new Date(currentYear, currentMonth + 1, 1) }
+    })()
+    const [
+      totalReferrals,
+      totalOutgoing,
+      totalIncoming,
+      pendingIncoming,
+      pendingOutgoing,
+      completedThisMonth,
+      previousOutgoing,
+      currentMonthOutgoing,
+      previousIncoming,
+      currentMonthIncoming,
+      previousCompleted,
+      totalIncomingThisMonth,
+      scheduledThisMonth,
+      outgoingBySpecialty,
+      incomingBySpecialty,
+      recentIncoming,
+      recentOutgoing,
+    ] = await Promise.all([
+      prisma.referral.count({ where: { fromClinicId: clinicId } }),
+      prisma.referral.count({
+        where: { fromClinicId: clinicId, referralType: 'OUTGOING' },
+      }),
+      prisma.referral.count({
+        where: {
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ]
         },
-      },
-    })
+      }),
+      prisma.referral.count({
+        where: {
+          status: { in: pendingStatuses },
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ]
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          fromClinicId: clinicId,
+          referralType: 'OUTGOING',
+          status: { in: ['SENT', 'ACCEPTED'] },
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          status: 'COMPLETED',
+          OR: [
+            { fromClinicId: clinicId },
+            { toClinicId: clinicId },
+          ],
+          updatedAt: {
+            gte: monthStart,
+            lt: monthEnd,
+          },
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          fromClinicId: clinicId,
+          referralType: 'OUTGOING',
+          createdAt: {
+            gte: new Date(previousMonthYear, previousMonth, 1),
+            lt: new Date(previousMonthYear, previousMonth + 1, 1),
+          },
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          fromClinicId: clinicId,
+          referralType: 'OUTGOING',
+          createdAt: {
+            gte: new Date(currentYear, currentMonth, 1),
+            lt: new Date(currentYear, currentMonth + 1, 1),
+          },
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          createdAt: {
+            gte: new Date(previousMonthYear, previousMonth, 1),
+            lt: new Date(previousMonthYear, previousMonth + 1, 1),
+          },
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId },
+          ],
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          createdAt: {
+            gte: new Date(currentYear, currentMonth, 1),
+            lt: new Date(currentYear, currentMonth + 1, 1),
+          },
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ]
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          fromClinicId: clinicId,
+          status: 'COMPLETED',
+          updatedAt: {
+            gte: new Date(previousMonthYear, previousMonth, 1),
+            lt: new Date(previousMonthYear, previousMonth + 1, 1),
+          },
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ],
+          createdAt: {
+            gte: monthStart,
+            lt: monthEnd,
+          },
+        },
+      }),
+      prisma.referral.count({
+        where: {
+          status: 'ACCEPTED',
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ],
+          createdAt: {
+            gte: monthStart,
+            lt: monthEnd,
+          },
+        },
+      }),
+      prisma.referral.groupBy({
+        by: ['toContactId'],
+        where: {
+          fromClinicId: clinicId,
+          referralType: 'OUTGOING',
+          toContactId: { not: null },
+        },
+        _count: true,
+      }),
+      prisma.referral.groupBy({
+        by: ['specialty'],
+        where: {
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ],
+          specialty: { not: null },
+          createdAt: {
+            gte: specialtyRange.start,
+            lt: specialtyRange.end,
+          },
+        },
+        _count: true,
+      }),
+      prisma.referral.findMany({
+        where: {
+          status: { in: pendingStatuses },
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ]
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          contact: true,
+          clinic: true,
+        },
+      }),
+      prisma.referral.findMany({
+        where: {
+          fromClinicId: clinicId,
+          referralType: 'OUTGOING',
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          contact: true,
+        },
+      }),
+    ])
 
     // Calculate percentage changes (current month vs previous month)
-    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1
-    const previousMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
-
-    // Previous month outgoing count
-    const previousOutgoing = await prisma.referral.count({
-      where: {
-        fromClinicId: clinicId,
-        referralType: 'OUTGOING',
-        createdAt: {
-          gte: new Date(previousMonthYear, previousMonth, 1),
-          lt: new Date(previousMonthYear, previousMonth + 1, 1),
-        },
-      },
-    })
-
-    // Current month outgoing count (for comparison)
-    const currentMonthOutgoing = await prisma.referral.count({
-      where: {
-        fromClinicId: clinicId,
-        referralType: 'OUTGOING',
-        createdAt: {
-          gte: new Date(currentYear, currentMonth, 1),
-          lt: new Date(currentYear, currentMonth + 1, 1),
-        },
-      },
-    })
-
-    // Previous month incoming count
-    const previousIncoming = await prisma.referral.count({
-      where: {
-        createdAt: {
-          gte: new Date(previousMonthYear, previousMonth, 1),
-          lt: new Date(previousMonthYear, previousMonth + 1, 1),
-        },
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId },
-        ],
-      },
-    })
-
-    // Current month incoming count
-    const currentMonthIncoming = await prisma.referral.count({
-      where: {
-        createdAt: {
-          gte: new Date(currentYear, currentMonth, 1),
-          lt: new Date(currentYear, currentMonth + 1, 1),
-        },
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ]
-      },
-    })
-
-    // Previous month completed count
-    const previousCompleted = await prisma.referral.count({
-      where: {
-        fromClinicId: clinicId,
-        status: 'COMPLETED',
-        updatedAt: {
-          gte: new Date(previousMonthYear, previousMonth, 1),
-          lt: new Date(previousMonthYear, previousMonth + 1, 1),
-        },
-      },
-    })
-
     // Calculate percentage changes
     const calculateChange = (current: number, previous: number): number => {
       if (previous === 0) return current > 0 ? 100 : 0
@@ -182,17 +249,6 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     const outgoingChange = calculateChange(currentMonthOutgoing, previousOutgoing)
     const incomingChange = calculateChange(currentMonthIncoming, previousIncoming)
     const completedChange = calculateChange(completedThisMonth, previousCompleted)
-
-    // Referrals by specialty (Outgoing)
-    const outgoingBySpecialty = await prisma.referral.groupBy({
-      by: ['toContactId'],
-      where: {
-        fromClinicId: clinicId,
-        referralType: 'OUTGOING',
-        toContactId: { not: null },
-      },
-      _count: true,
-    })
 
     // Get contact details for outgoing specialties
     const contactIds = outgoingBySpecialty
@@ -226,36 +282,6 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       .slice(0, 5)
 
     // Referrals by specialty (Incoming - from Magic Links etc)
-    // @ts-ignore - Prisma client update might lag in editor
-    const specialtyRange = (() => {
-      if (specialtyPeriod === 'weekly') {
-        const start = new Date(now)
-        start.setDate(now.getDate() - 7)
-        return { start, end: now }
-      }
-      if (specialtyPeriod === 'yearly') {
-        return { start: new Date(currentYear, 0, 1), end: new Date(currentYear + 1, 0, 1) }
-      }
-      // monthly (default)
-      return { start: new Date(currentYear, currentMonth, 1), end: new Date(currentYear, currentMonth + 1, 1) }
-    })()
-
-    const incomingBySpecialty = await prisma.referral.groupBy({
-      by: ['specialty'],
-      where: {
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ],
-        specialty: { not: null }, // Only count those with specialty set
-        createdAt: {
-          gte: specialtyRange.start,
-          lt: specialtyRange.end,
-        },
-      },
-      _count: true,
-    })
-
     const totalIncomingForSpecialty = incomingBySpecialty.reduce((sum: number, item: any) => sum + item._count, 0)
 
     const incomingReferralsBySpecialtyData = incomingBySpecialty
@@ -267,158 +293,85 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       .sort((a: any, b: any) => b.count - a.count)
       .slice(0, 5)
 
-    // Referral trends (last 12 months) - split by incoming/outgoing
-    const referralTrends: Array<{ month: string; outgoing: number; incoming: number }> = []
+    const buildReferralTrends = async () => {
+      const countOutgoing = (start: Date, end: Date) => prisma.referral.count({
+        where: {
+          fromClinicId: clinicId,
+          referralType: 'OUTGOING',
+          createdAt: { gte: start, lt: end },
+        },
+      })
+      const countIncoming = (start: Date, end: Date) => prisma.referral.count({
+        where: {
+          createdAt: { gte: start, lt: end },
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId },
+          ],
+        },
+      })
 
-    if (trendsPeriod === 'yearly') {
-      for (let i = 4; i >= 0; i--) {
-        const year = currentYear - i
-        const date = new Date(year, 0, 1)
-        const nextDate = new Date(year + 1, 0, 1)
-
-        const outgoingCount = await prisma.referral.count({
-          where: {
-            fromClinicId: clinicId,
-            referralType: 'OUTGOING',
-            createdAt: {
-              gte: date,
-              lt: nextDate,
-            },
-          },
+      if (trendsPeriod === 'yearly') {
+        const ranges = Array.from({ length: 5 }, (_, idx) => {
+          const year = currentYear - (4 - idx)
+          const start = new Date(year, 0, 1)
+          const end = new Date(year + 1, 0, 1)
+          return { label: `${year}`, start, end }
         })
-
-        const incomingCount = await prisma.referral.count({
-          where: {
-            createdAt: {
-              gte: date,
-              lt: nextDate,
-            },
-            OR: [
-              { fromClinicId: clinicId, referralType: 'INCOMING' },
-              { toClinicId: clinicId },
-            ],
-          },
-        })
-
-        referralTrends.push({
-          month: `${year}`,
-          outgoing: outgoingCount,
-          incoming: incomingCount,
-        })
-      }
-    } else if (trendsPeriod === 'weekly') {
-      const startOfWeek = (date: Date) => {
-        const d = new Date(date)
-        const day = d.getDay()
-        const diff = (day === 0 ? -6 : 1) - day // Monday as first day of week
-        d.setDate(d.getDate() + diff)
-        d.setHours(0, 0, 0, 0)
-        return d
+        const rows = await Promise.all(ranges.map(async (range) => {
+          const [outgoing, incoming] = await Promise.all([
+            countOutgoing(range.start, range.end),
+            countIncoming(range.start, range.end),
+          ])
+          return { month: range.label, outgoing, incoming }
+        }))
+        return rows
       }
 
-      for (let i = 11; i >= 0; i--) {
-        const offset = new Date(now)
-        offset.setDate(now.getDate() - i * 7)
-        const date = startOfWeek(offset)
-        const nextDate = new Date(date)
-        nextDate.setDate(date.getDate() + 7)
+      if (trendsPeriod === 'weekly') {
+        const startOfWeek = (date: Date) => {
+          const d = new Date(date)
+          const day = d.getDay()
+          const diff = (day === 0 ? -6 : 1) - day
+          d.setDate(d.getDate() + diff)
+          d.setHours(0, 0, 0, 0)
+          return d
+        }
 
-        const outgoingCount = await prisma.referral.count({
-          where: {
-            fromClinicId: clinicId,
-            referralType: 'OUTGOING',
-            createdAt: {
-              gte: date,
-              lt: nextDate,
-            },
-          },
+        const ranges = Array.from({ length: 12 }, (_, idx) => {
+          const offset = new Date(now)
+          offset.setDate(now.getDate() - (11 - idx) * 7)
+          const start = startOfWeek(offset)
+          const end = new Date(start)
+          end.setDate(start.getDate() + 7)
+          return { label: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), start, end }
         })
-
-        const incomingCount = await prisma.referral.count({
-          where: {
-            createdAt: {
-              gte: date,
-              lt: nextDate,
-            },
-            OR: [
-              { fromClinicId: clinicId, referralType: 'INCOMING' },
-              { toClinicId: clinicId },
-            ],
-          },
-        })
-
-        referralTrends.push({
-          month: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          outgoing: outgoingCount,
-          incoming: incomingCount,
-        })
+        const rows = await Promise.all(ranges.map(async (range) => {
+          const [outgoing, incoming] = await Promise.all([
+            countOutgoing(range.start, range.end),
+            countIncoming(range.start, range.end),
+          ])
+          return { month: range.label, outgoing, incoming }
+        }))
+        return rows
       }
-    } else {
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date(currentYear, currentMonth - i, 1)
-        const nextDate = new Date(currentYear, currentMonth - i + 1, 1)
 
-        const outgoingCount = await prisma.referral.count({
-          where: {
-            fromClinicId: clinicId,
-            referralType: 'OUTGOING',
-            createdAt: {
-              gte: date,
-              lt: nextDate,
-            },
-          },
-        })
-
-        const incomingCount = await prisma.referral.count({
-          where: {
-            createdAt: {
-              gte: date,
-              lt: nextDate,
-            },
-            OR: [
-              { fromClinicId: clinicId, referralType: 'INCOMING' },
-              { toClinicId: clinicId },
-            ],
-          },
-        })
-
-        referralTrends.push({
-          month: date.toLocaleDateString('en-US', { month: 'short' }),
-          outgoing: outgoingCount,
-          incoming: incomingCount,
-        })
-      }
+      const ranges = Array.from({ length: 12 }, (_, idx) => {
+        const date = new Date(currentYear, currentMonth - (11 - idx), 1)
+        const end = new Date(currentYear, currentMonth - (11 - idx) + 1, 1)
+        return { label: date.toLocaleDateString('en-US', { month: 'short' }), start: date, end }
+      })
+      const rows = await Promise.all(ranges.map(async (range) => {
+        const [outgoing, incoming] = await Promise.all([
+          countOutgoing(range.start, range.end),
+          countIncoming(range.start, range.end),
+        ])
+        return { month: range.label, outgoing, incoming }
+      }))
+      return rows
     }
 
-    // Get recent incoming referrals (last 5) - only pending (SUBMITTED or SENT status)
-    const recentIncoming = await prisma.referral.findMany({
-      where: {
-        status: { in: pendingStatuses },
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ]
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: {
-        contact: true,
-        clinic: true, // Show sender info
-      },
-    })
-
-    // Get recent outgoing referrals (last 5)
-    const recentOutgoing = await prisma.referral.findMany({
-      where: {
-        fromClinicId: clinicId,
-        referralType: 'OUTGOING',
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: {
-        contact: true,
-      },
-    })
+    const referralTrends = await buildReferralTrends()
 
     // Overview metrics (computed from current month incoming data)
     const formatDuration = (ms: number): string => {
@@ -456,27 +409,18 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       return formatDuration(totalMs / rows.length)
     }
 
+    const [avgSchedule, avgAppointment, avgTimeToTreatment] = await Promise.all([
+      computeAverageDuration('ACCEPTED'),
+      computeAverageDuration('SENT'),
+      computeAverageDuration('COMPLETED'),
+    ])
+
     const overviewMetrics = {
       dailyAverage: parseFloat((totalIncomingThisMonth / daysElapsedInMonth).toFixed(2)),
-      avgSchedule: await computeAverageDuration('ACCEPTED'),
-      avgAppointment: await computeAverageDuration('SENT'),
-      avgTimeToTreatment: await computeAverageDuration('COMPLETED'),
+      avgSchedule,
+      avgAppointment,
+      avgTimeToTreatment,
     }
-
-    // Referral process flow (this month, incoming)
-    const scheduledThisMonth = await prisma.referral.count({
-      where: {
-        status: 'ACCEPTED',
-        OR: [
-          { fromClinicId: clinicId, referralType: 'INCOMING' },
-          { toClinicId: clinicId }
-        ],
-        createdAt: {
-          gte: monthStart,
-          lt: monthEnd,
-        },
-      },
-    })
 
     const referralProcessFlow = totalIncomingThisMonth > 0 ? [
       {

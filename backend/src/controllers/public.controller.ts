@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { config } from '../config/env'
 import { errors } from '../utils/errors'
-import { verifyAccessCode, generateStatusToken } from '../utils/tokens'
+import { verifyAccessCode, generateStatusToken, generateAccessCode, hashAccessCode } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
 import { sendEmail } from '../utils/email'
 
@@ -95,6 +95,9 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
     // Generate status token for status tracking page
     const statusToken = generateStatusToken()
 
+    const statusAccessCode = generateAccessCode()
+    const statusAccessCodeHash = await hashAccessCode(statusAccessCode)
+
     // Create INCOMING referral
     const referral = await prisma.referral.create({
       data: {
@@ -113,6 +116,7 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
         status: 'SENT', // Ready for clinic to review
         notes,
         statusToken,
+        statusAccessCodeHash,
       },
       include: {
         files: true,
@@ -136,11 +140,19 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
       await sendEmail({
         to: fromClinicEmail,
         replyTo: fromClinicEmail,
-        subject: 'Referral Received - Track Status',
+        subject: `Action Required: Patient Tracking Access for ${referralLink.clinic.name}`,
         body:
-          `Your referral has been received by ${referralLink.clinic.name}.\n\n` +
-          `Track the status here:\n${statusUrl}\n\n` +
-          `Thank you,\n${referralLink.clinic.name}`,
+          `Dear Practice Manager / Clinical Team,\n\n` +
+          `Please find the requested tracking information for your records below. This data is provided to assist with ongoing patient monitoring and care coordination.\n\n` +
+          `To view the tracking dashboard, please use the secure link and your unique access code provided:\n\n` +
+          `Tracking Link: ${statusUrl}\n\n` +
+          `Your Access Code: ${statusAccessCode}\n\n` +
+          `Next Steps:\n\n` +
+          `Click the link above.\n\n` +
+          `Enter your unique code when prompted.\n\n` +
+          `If you encounter any technical issues or have questions regarding the data, please reply to this email.\n\n` +
+          `Best regards,\n` +
+          `${referralLink.clinic.name}`,
       })
     }
 
@@ -342,6 +354,8 @@ export async function submitReferral(
 
     // Generate status token for status tracking page
     const statusToken = generateStatusToken()
+    const statusAccessCode = generateAccessCode()
+    const statusAccessCodeHash = await hashAccessCode(statusAccessCode)
 
     // Create referral with new fields
     // Use the specialist's clinic as the receiving clinic
@@ -366,6 +380,7 @@ export async function submitReferral(
         status: 'SUBMITTED', // New status for magic link submissions
         urgency: (urgency || 'ROUTINE').toUpperCase() as 'ROUTINE' | 'URGENT' | 'EMERGENCY',
         statusToken, // Store the status token for status tracking page
+        statusAccessCodeHash,
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,
         referringDentist: submittedByName,
@@ -426,11 +441,19 @@ export async function submitReferral(
       await sendEmail({
         to: submittedByEmail,
         replyTo: submittedByEmail,
-        subject: 'Referral Received - Track Status',
+        subject: `Action Required: Patient Tracking Access for ${referralLink.specialist.clinic.name}`,
         body:
-          `Your referral has been received by ${referralLink.specialist.clinic.name}.\n\n` +
-          `Track the status here:\n${statusUrl}\n\n` +
-          `Thank you,\n${referralLink.specialist.clinic.name}`,
+          `Dear Practice Manager / Clinical Team,\n\n` +
+          `Please find the requested tracking information for your records below. This data is provided to assist with ongoing patient monitoring and care coordination.\n\n` +
+          `To view the tracking dashboard, please use the secure link and your unique access code provided:\n\n` +
+          `Tracking Link: ${statusUrl}\n\n` +
+          `Your Access Code: ${statusAccessCode}\n\n` +
+          `Next Steps:\n\n` +
+          `Click the link above.\n\n` +
+          `Enter your unique code when prompted.\n\n` +
+          `If you encounter any technical issues or have questions regarding the data, please reply to this email.\n\n` +
+          `Best regards,\n` +
+          `${referralLink.specialist.clinic.name}`,
       })
     }
 

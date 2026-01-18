@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
-import { generateShareToken } from '../utils/tokens'
+import { generateShareToken, verifyAccessCode } from '../utils/tokens'
 import { sendEmail } from '../utils/email'
+import { sendSms } from '../utils/sms'
 import { config } from '../config/env'
 
 /**
@@ -288,8 +289,24 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
       data: { status },
       include: {
         contact: true,
+        clinic: true,
       },
     })
+
+    if (status === 'ACCEPTED' && referral.patientPhone) {
+      const patientName = referral.patientFirstName && referral.patientLastName
+        ? `${referral.patientFirstName} ${referral.patientLastName}`
+        : referral.patientName
+      const clinicName = referral.clinic?.name || 'your clinic'
+      const message =
+        `Hi ${patientName}, your appointment has been scheduled with ${clinicName}. ` +
+        `We will contact you soon with the appointment details.`
+      try {
+        await sendSms(referral.patientPhone, message)
+      } catch (smsError) {
+        console.warn('Failed to send appointment SMS')
+      }
+    }
 
     res.json({
       success: true,
@@ -336,6 +353,7 @@ export async function deleteReferral(req: Request, res: Response, next: NextFunc
 export async function getReferralStatusByToken(req: Request, res: Response, next: NextFunction) {
   try {
     const { statusToken } = req.params
+    const { accessCode } = req.query
 
     if (!statusToken) {
       throw errors.badRequest('Status token is required')
@@ -359,6 +377,16 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
 
     if (!referral) {
       throw errors.notFound('Referral status not found')
+    }
+
+    if (referral.statusAccessCodeHash) {
+      if (!accessCode || typeof accessCode !== 'string') {
+        throw errors.unauthorized('Access code required')
+      }
+      const isValid = await verifyAccessCode(accessCode, referral.statusAccessCodeHash)
+      if (!isValid) {
+        throw errors.unauthorized('Invalid access code')
+      }
     }
 
     // Determine current timeline stage based on status

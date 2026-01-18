@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout'
 import { Card, CardContent } from '@/components/ui'
 import { StatsCardsV2 } from '@/components/dashboard/StatsCardsV2'
@@ -9,7 +10,6 @@ import { BreakdownChart } from '@/components/dashboard/SpecialtyBreakdown'
 import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcessFlowChart'
 import { OverviewMetrics } from '@/components/dashboard/OverviewMetrics'
 import { IncomingReferralsTable } from '@/components/dashboard/IncomingReferralsTable'
-import { OutgoingReferralsTable } from '@/components/dashboard/OutgoingReferralsTable'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
 import { Search, RefreshCw } from 'lucide-react'
 import { dashboardService } from '@/services/dashboard.service'
@@ -207,11 +207,11 @@ const mockDashboardStats: DashboardStats = {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [acceptingIds, setAcceptingIds] = useState<string[]>([])
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -299,65 +299,12 @@ export default function DashboardPage() {
     }
   }
 
-  const handleAcceptReferral = async (id: string) => {
-    if (acceptingIds.includes(id)) return // Prevent duplicate request for same row
-
-    try {
-      setAcceptingIds((prev) => [...new Set([...prev, id])])
-      // Optimistically remove from pending list for instant UI feedback
-      setStats((prev) => {
-        if (!prev) return prev
-        const exists = prev.recentIncoming.some((referral) => referral.id === id)
-        if (!exists) return prev
-        return {
-          ...prev,
-          recentIncoming: prev.recentIncoming.filter((referral) => referral.id !== id),
-          pendingIncoming: Math.max(0, prev.pendingIncoming - 1),
-        }
-      })
-
-      // Update status to ACCEPTED (which shows as "Appointment Scheduled" in the timeline)
-      // This removes it from pending list (which only shows SUBMITTED status)
-      await referralsService.updateStatus(id, 'ACCEPTED')
-      
-      // Clear dashboard cache and refresh data
-      dashboardService.clearCache()
-      await loadDashboardData(false, true) // Force refresh without showing loading
-    } catch (error: any) {
-      console.error('Failed to accept referral:', error)
-      // Revert optimistic update on failure
-      loadDashboardData(false, true)
-      alert(error.response?.data?.message || 'Failed to accept referral. Please try again.')
-    } finally {
-      setAcceptingIds((prev) => prev.filter((existingId) => existingId !== id))
-    }
+  const handleAcceptReferral = (id: string) => {
+    router.push(`/referrals?referralId=${id}&action=accept`)
   }
 
-  const handleViewReferral = async (id: string) => {
-    try {
-      // Fetch the referral details
-      const referral = await referralsService.getById(id)
-      
-      // If status is SUBMITTED, update it to ACCEPTED (which removes it from pending list)
-      if (referral.status === 'SUBMITTED') {
-        try {
-          const updatedReferral = await referralsService.updateStatus(id, 'ACCEPTED')
-          setSelectedReferral(updatedReferral)
-          // Refresh dashboard data
-          dashboardService.clearCache()
-          await loadDashboardData(false, true)
-        } catch (error: any) {
-          console.error('Failed to auto-update status:', error)
-          // Still show the modal even if status update fails
-          setSelectedReferral(referral)
-        }
-      } else {
-        setSelectedReferral(referral)
-      }
-    } catch (error: any) {
-      console.error('Failed to load referral:', error)
-      alert(error.response?.data?.message || 'Failed to load referral. Please try again.')
-    }
+  const handleViewReferral = (id: string) => {
+    router.push(`/referrals?referralId=${id}`)
   }
 
   if (loading) {
@@ -488,15 +435,10 @@ export default function DashboardPage() {
                 referrals={stats.recentIncoming}
                 onAccept={handleAcceptReferral}
                 onView={handleViewReferral}
-                acceptingIds={acceptingIds}
               />
             </div>
 
-            {/* Outgoing Referrals - Track Status */}
-            <OutgoingReferralsTable
-              referrals={stats.recentOutgoing}
-              onView={handleViewReferral}
-            />
+            {/* Outgoing Referrals removed */}
           </div>
         </div>
       </div>

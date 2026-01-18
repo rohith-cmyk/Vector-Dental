@@ -127,6 +127,7 @@ model Referral {
   referralLinkId String?  // FK to ReferralLink
   shareToken   String?   @unique // Token for sharing referral (view-only access)
   statusToken  String?   @unique // Token for status tracking page
+  statusAccessCodeHash String? // Hashed access code for status tracking
   
   // Clinical Data
   selectedTeeth String[]  @default([]) // Array of tooth IDs (e.g. ["1", "3", "32"])

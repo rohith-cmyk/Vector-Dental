@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
-  Link2,
   FileText,
   Users,
   Settings
@@ -14,7 +13,6 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Referrals', href: '/referrals', icon: FileText },
-  { name: 'Referral Links', href: '/settings/referral-links', icon: Link2 },
   { name: 'Doctors Network', href: '/contacts', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
