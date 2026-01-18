@@ -344,36 +344,33 @@ export default function DashboardPage() {
   }
 
   return (
-    <DashboardLayout title="">
+    <DashboardLayout
+      title="Dashboard"
+      subtitle="Monitor your activity and performance"
+      actions={
+        <>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" strokeWidth={1.5} />
+            <input
+              type="text"
+              placeholder="Search referrals..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm text-neutral-700 placeholder-neutral-400 transition-all w-44 md:w-56"
+            />
+          </div>
+          <button
+            onClick={() => handleRefresh()}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-sm text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
+            Refresh
+          </button>
+        </>
+      }
+    >
       <div className="space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-neutral-400 mt-1">Monitor your activity and performance</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" strokeWidth={1.5} />
-              <input
-                type="text"
-                placeholder="Search referrals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm text-neutral-700 placeholder-neutral-400 transition-all w-64"
-              />
-            </div>
-            <button
-              onClick={() => handleRefresh()}
-              disabled={isRefreshing}
-              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-sm text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} strokeWidth={1.5} />
-              Refresh
-            </button>
-          </div>
-        </div>
-
         {/* Stats Cards - Updated for Two-Way System */}
         <StatsCardsV2
           stats={{

@@ -221,7 +221,13 @@ export async function updateReferral(req: Request, res: Response, next: NextFunc
 
     // Check if referral exists and belongs to clinic
     const existingReferral = await prisma.referral.findFirst({
-      where: { id, fromClinicId: clinicId },
+      where: {
+        id,
+        OR: [
+          { fromClinicId: clinicId },
+          { toClinicId: clinicId },
+        ],
+      },
     })
 
     if (!existingReferral) {
@@ -304,7 +310,7 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
       try {
         await sendSms(referral.patientPhone, message)
       } catch (smsError) {
-        console.warn('Failed to send appointment SMS')
+        console.warn('Failed to send appointment SMS:', smsError)
       }
     }
 

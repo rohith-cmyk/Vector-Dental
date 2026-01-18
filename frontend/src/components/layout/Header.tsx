@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { ChevronDown, LogOut, User, Settings, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
@@ -9,9 +9,11 @@ import type { User as UserType } from '@/types'
 
 interface HeaderProps {
   title: string
+  subtitle?: string
+  actions?: ReactNode
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, subtitle, actions }: HeaderProps) {
   const [user, setUser] = useState<UserType | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -104,10 +106,16 @@ export function Header({ title }: HeaderProps) {
   }
 
   return (
-    <header className="top-0 z-30 flex h-16 items-center justify-between px-8">
-      <h1 className="text-2xl font-bold text-neutral-700">{title}</h1>
+    <header className="top-0 z-30 flex min-h-16 items-center justify-between gap-4 px-8 pt-4">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold text-neutral-700 truncate">{title}</h1>
+        {subtitle && (
+          <p className="text-sm text-neutral-400 mt-1 truncate">{subtitle}</p>
+        )}
+      </div>
 
       <div className="flex items-center gap-3">
+        {actions && <div className="flex items-center gap-3">{actions}</div>}
         {/* Notifications Bell */}
         <button
           onClick={() => window.location.href = '/notifications'}
