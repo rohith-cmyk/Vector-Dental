@@ -46,11 +46,11 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-neutral-200 text-neutral-800'
-                    : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-800'
+                    ? 'bg-neutral-200 text-neutral-900'
+                    : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
                 )}
               >
-                <Icon className="h-4 w-4 text-neutral-400" strokeWidth={1.5}  />
+                <Icon className="h-4 w-4 text-neutral-500" strokeWidth={1.5}  />
                 <span>{item.name}</span>
               </Link>
             )

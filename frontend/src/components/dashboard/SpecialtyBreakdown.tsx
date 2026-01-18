@@ -17,7 +17,15 @@ interface BreakdownChartProps {
   displayKey?: keyof BreakdownData
 }
 
-const COLORS = ['#10b981', '#059669', '#047857', '#fbbf24']
+const COLORS = [
+  '#10b981', // emerald
+  '#60a5fa', // blue (lighter)
+  '#f87171', // red (lighter)
+  '#f59e0b', // amber
+  '#8b5cf6', // violet
+  '#14b8a6', // teal
+  '#22c55e', // green
+]
 
 // Legacy export for backward compatibility
 export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty' }: { data: Array<{ specialty: string, count: number, percentage: number }>, title?: string }) {
@@ -37,7 +45,7 @@ export function BreakdownChart({
 }: BreakdownChartProps) {
   const [period, setPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly')
   // Handle undefined or empty data
-  const safeData = data || []
+  const safeData = (data || []).slice(0, 5)
 
   const chartData = safeData.map((item) => ({
     name: item[displayKey] || item.category,

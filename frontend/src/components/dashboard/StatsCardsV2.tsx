@@ -16,21 +16,8 @@ interface StatsCardsV2Props {
 }
 
 export function StatsCardsV2({ stats }: StatsCardsV2Props) {
-  // Calculate total referrals for context
-  const totalReferrals = stats.totalOutgoing + stats.totalIncoming
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Overview</h2>
-          <p className="text-sm text-neutral-400 mt-1">
-            {totalReferrals} total referrals • {stats.pendingIncoming} pending
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Sent Out"
           value={stats.totalOutgoing}
@@ -60,7 +47,6 @@ export function StatsCardsV2({ stats }: StatsCardsV2Props) {
           icon={<CheckCircle className="h-5 w-5" />}
           className="hover:shadow-lg transition-all duration-200 border-gray-200/60"
         />
-      </div>
     </div>
   )
 }

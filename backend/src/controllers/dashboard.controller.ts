@@ -64,6 +64,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       scheduledThisMonth,
       outgoingBySpecialty,
       incomingBySpecialty,
+      incomingForOffice,
       recentIncoming,
       recentOutgoing,
     ] = await Promise.all([
@@ -213,6 +214,22 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       }),
       prisma.referral.findMany({
         where: {
+          OR: [
+            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { toClinicId: clinicId }
+          ],
+          createdAt: {
+            gte: specialtyRange.start,
+            lt: specialtyRange.end,
+          },
+        },
+        select: {
+          fromClinicName: true,
+          gpClinicName: true,
+        },
+      }),
+      prisma.referral.findMany({
+        where: {
           status: { in: pendingStatuses },
           OR: [
             { fromClinicId: clinicId, referralType: 'INCOMING' },
@@ -291,6 +308,23 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         percentage: totalIncomingForSpecialty > 0 ? Math.round((r._count / totalIncomingForSpecialty) * 100) : 0,
       }))
       .sort((a: any, b: any) => b.count - a.count)
+      .slice(0, 5)
+
+    const officeCounts = new Map<string, number>()
+    incomingForOffice.forEach((referral) => {
+      const name = referral.gpClinicName || referral.fromClinicName
+      if (!name) return
+      officeCounts.set(name, (officeCounts.get(name) || 0) + 1)
+    })
+
+    const totalIncomingForOffice = Array.from(officeCounts.values()).reduce((sum, count) => sum + count, 0)
+    const referralsByOffice = Array.from(officeCounts.entries())
+      .map(([office, count]) => ({
+        office,
+        count,
+        percentage: totalIncomingForOffice > 0 ? Math.round((count / totalIncomingForOffice) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
       .slice(0, 5)
 
     const buildReferralTrends = async () => {
@@ -455,6 +489,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         referralsBySpecialty: outgoingReferralsBySpecialtyData, // Keep backward compat
         outgoingReferralsBySpecialty: outgoingReferralsBySpecialtyData,
         incomingReferralsBySpecialty: incomingReferralsBySpecialtyData,
+        referralsByOffice,
         referralTrends,
         referralProcessFlow,
         overviewMetrics,
