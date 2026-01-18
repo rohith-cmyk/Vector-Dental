@@ -203,11 +203,29 @@ export interface DashboardStats {
     count: number
     percentage: number
   }>
+  referralsByOffice: Array<{
+    office: string
+    count: number
+    percentage: number
+  }>
   referralTrends: Array<{
     month: string
     outgoing: number
     incoming: number
   }>
+  referralProcessFlow?: Array<{
+    label: string
+    count: number
+    percentage: number
+  }>
+  
+  // Overview metrics
+  overviewMetrics?: {
+    dailyAverage: number
+    avgSchedule: string
+    avgAppointment: string
+    avgTimeToTreatment: string
+  }
   
   // Recent referrals
   recentIncoming: Referral[]

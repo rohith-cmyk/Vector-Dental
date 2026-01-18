@@ -9,6 +9,7 @@ interface ReferralReasonButtonsProps {
   onReasonSelect: (reason: string) => void
   onCustomReasonChange: (value: string) => void
   error?: string
+  specialty?: string
 }
 
 const COMMON_REASONS = [
@@ -28,21 +29,29 @@ export function ReferralReasonButtons({
   onReasonSelect,
   onCustomReasonChange,
   error,
+  specialty,
 }: ReferralReasonButtonsProps) {
   const [showPreferredDoctor, setShowPreferredDoctor] = useState(false)
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <h4 className="text-lg font-semibold text-gray-900">
-          Reason for Referral (Oral Surgeon)
-        </h4>
-        <div className="group relative">
-          <Info className="w-4 h-4 text-gray-400 cursor-help" />
-          <div className="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
-            Select a common reason or enter a custom reason for this referral
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h4 className="text-xl font-semibold text-gray-900">
+            Referral Reason
+          </h4>
+          <div className="group relative">
+            <Info className="w-4 h-4 text-gray-400 cursor-help" />
+            <div className="hidden group-hover:block absolute left-0 top-full mt-1 w-64 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+              Select a common reason or enter a custom reason for this referral
+            </div>
           </div>
         </div>
+        {specialty && (
+          <span className="text-xs text-neutral-400">
+            showing reasons for {specialty}
+          </span>
+        )}
       </div>
 
       {/* Common Reason Buttons */}
@@ -52,10 +61,10 @@ export function ReferralReasonButtons({
             key={reason}
             type="button"
             onClick={() => onReasonSelect(reason)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${
+            className={`px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 transition-colors ${
               selectedReason === reason
                 ? 'bg-emerald-600 border-emerald-600 text-white'
-                : 'bg-white border-gray-300 text-gray-700 hover:border-emerald-400 hover:bg-emerald-50'
+                : 'bg-white border-neutral-200 text-gray-600 hover:border-emerald-500 hover:bg-emerald-50'
             }`}
           >
             {reason}
@@ -66,7 +75,7 @@ export function ReferralReasonButtons({
       {/* Custom Reason */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
-          Comment
+          Additional Comments
         </label>
         <textarea
           value={customReason}

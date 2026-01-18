@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout'
 import { Button, Card, CardContent, Badge, Select, Tabs } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
-import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle, CheckIcon, CrossIcon, X } from 'lucide-react'
+import { Plus, Search, Eye, Edit, Trash2, ArrowDownLeft, ArrowUpRight, CheckCircle, XCircle, CheckIcon, CrossIcon, X, ClipboardList } from 'lucide-react'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { REFERRAL_STATUSES, USE_MOCK_DATA } from '@/constants'
 import type { Referral, ReferralStatus, Contact } from '@/types'
@@ -254,11 +254,13 @@ export default function ReferralsPage() {
         // Use mock data for development
         let filteredReferrals = mockReferrals
 
-        // Filter by type (received = INCOMING, sent = OUTGOING)
+        // Filter by type (received = INCOMING, sent = OUTGOING, ops-report = OUTGOING with SENT status)
         if (activeTab === 'received') {
           filteredReferrals = filteredReferrals.filter(r => r.referralType === 'INCOMING')
         } else if (activeTab === 'sent') {
           filteredReferrals = filteredReferrals.filter(r => r.referralType === 'OUTGOING')
+        } else if (activeTab === 'ops-report') {
+          filteredReferrals = filteredReferrals.filter(r => r.referralType === 'OUTGOING' && r.status === 'SENT')
         }
 
         // Filter by status
@@ -379,7 +381,7 @@ export default function ReferralsPage() {
     <DashboardLayout title="Referrals">
       <div className="space-y-6">
         
-        {/* Tabs for Received vs Sent */}
+        {/* Tabs for Received vs Sent vs Ops Report */}
         <Tabs
           tabs={[
             {
@@ -392,6 +394,11 @@ export default function ReferralsPage() {
               id: 'sent',
               label: 'Sent',
               icon: <ArrowUpRight className="h-4 w-4" />
+            },
+            {
+              id: 'ops-report',
+              label: 'Ops Report',
+              icon: <ClipboardList className="h-4 w-4" />
             },
           ]}
           defaultTab="received"
@@ -430,10 +437,10 @@ export default function ReferralsPage() {
                     />
                   </div>
                 </div>
-                {activeTab === 'sent' && (
+                {(activeTab === 'sent' || activeTab === 'ops-report') && (
                   <button
                     onClick={() => setIsNewReferralModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-100 text-sm text-neutral-800 rounded-lg hover:bg-neutral-200 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-sm text-white rounded-full hover:bg-emerald-700 transition-colors"
                   >
                     <Plus className="h-4 w-4" strokeWidth={1.5} />
                     New Referral
@@ -453,8 +460,73 @@ export default function ReferralsPage() {
                       <p>No referrals found</p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto rounded-lg border border-black/10">
-                      {activeTab === 'received' ? (
+                    <div className="overflow-x-auto rounded-lg">
+                      {activeTab === 'ops-report' ? (
+                        // OPS REPORT TABLE
+                        <table className="w-full">
+                          <thead className="bg-neutral-50">
+                            <tr>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                                Patient
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                                Date
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                                Doctor
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                                Refer From/To
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                                Status
+                              </th>
+                              <th className="w-16 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
+                                
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-black/5">
+                            {referrals.map((referral) => (
+                              <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="text-sm font-medium text-neutral-800">
+                                    {referral.patientName}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-neutral-700" suppressHydrationWarning>
+                                    {referral.createdAt && formatDate(referral.createdAt)}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-neutral-700">
+                                    {referral.contact ? referral.contact.name : 'N/A'}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="text-sm text-neutral-700">
+                                    {referral.contact ? referral.contact.specialty : 'N/A'}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <Badge variant={getStatusBadgeVariant(referral.status)}>
+                                    {(referral.status || '').toUpperCase()}
+                                  </Badge>
+                                </td>
+                                <td className="w-16 px-6 py-4 text-right">
+                                  <button
+                                    onClick={() => setSelectedReferral(referral)}
+                                    className="text-neutral-400 hover:text-neutral-800"
+                                  >
+                                    <Eye className="h-4 w-4" strokeWidth={1.5} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : activeTab === 'received' ? (
                         // RECEIVED REFERRALS TABLE
                         <table className="w-full">
                           <thead className="bg-neutral-50">

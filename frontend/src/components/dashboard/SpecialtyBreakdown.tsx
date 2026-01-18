@@ -3,27 +3,46 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 
-interface SpecialtyBreakdownProps {
-  title?: string
-  data: Array<{
-    specialty: string
-    count: number
-    percentage: number
-  }>
+interface BreakdownData {
+  category: string
+  count: number
+  percentage: number
 }
 
-const COLORS = ['#84cc16', '#65a30d', '#4d7c0f', '#fbbf24']
+interface BreakdownChartProps {
+  title?: string
+  data: BreakdownData[]
+  categoryKey?: keyof BreakdownData
+  displayKey?: keyof BreakdownData
+}
 
-export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty' }: SpecialtyBreakdownProps) {
+const COLORS = ['#10b981', '#059669', '#047857', '#fbbf24']
+
+// Legacy export for backward compatibility
+export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty' }: { data: Array<{ specialty: string, count: number, percentage: number }>, title?: string }) {
+  const chartData = data.map(item => ({
+    category: item.specialty,
+    count: item.count,
+    percentage: item.percentage
+  }))
+  return BreakdownChart({ data: chartData, title })
+}
+
+export function BreakdownChart({
+  data,
+  title = 'Referrals Breakdown',
+  categoryKey = 'category',
+  displayKey = 'category'
+}: BreakdownChartProps) {
   // Handle undefined or empty data
   const safeData = data || []
 
   const chartData = safeData.map((item) => ({
-    name: item.specialty,
+    name: item[displayKey] || item.category,
     value: item.count,
   }))
 
-  const totalSales = safeData.reduce((sum, item) => sum + item.count, 0)
+  const totalCount = safeData.reduce((sum, item) => sum + item.count, 0)
 
   return (
     <Card>
@@ -57,28 +76,28 @@ export function SpecialtyBreakdown({ data, title = 'Referrals by Specialty' }: S
 
           <div className="relative -mt-32 mb-20">
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">{totalSales}</div>
-              <div className="text-sm text-gray-600">Referrals</div>
+              <div className="text-3xl font-bold text-neutral-700">{totalCount}</div>
+              <div className="text-sm text-neutral-500">Referrals</div>
             </div>
           </div>
 
           <div className="w-full space-y-2 mt-4">
             {safeData.length > 0 ? (
               safeData.map((item, index) => (
-                <div key={item.specialty} className="flex items-center justify-between">
+                <div key={item[categoryKey] || item.category} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="text-sm text-gray-700">{item.specialty}</span>
+                    <span className="text-sm text-neutral-700">{item[displayKey] || item.category}</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">{item.percentage}%</span>
+                  <span className="text-sm font-medium text-neutral-700">{item.percentage}%</span>
                 </div>
               ))
             ) : (
-              <div className="text-center text-gray-500 py-4">
-                No specialty data available
+              <div className="text-center text-sm text-neutral-500 py-4">
+                No data available
               </div>
             )}
           </div>

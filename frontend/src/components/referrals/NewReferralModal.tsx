@@ -217,7 +217,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
       title="" 
       size="xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-10">
         {/* Clinic Information Header */}
         {clinic && (
           <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
@@ -304,7 +304,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
                           handleChange('toContactId', '')
                           setShowContactSelector(true)
                         }}
-                        className="text-sm text-emerald-600 hover:text-emerald-700 font-medium px-3 py-1 border border-emerald-300 rounded hover:bg-emerald-100"
+                        className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
                       >
                         Change
                       </button>
@@ -364,10 +364,10 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
                           setErrors(prev => ({ ...prev, toContactId: '' }))
                         }
                       }}
-                      className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
+                      className={`w-full text-left p-3 rounded-lg border border-neutral-200 transition-colors ${
                         formData.toContactId === contact.id
                           ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                          : 'border-neutral-200 hover:border-emerald-500 hover:bg-emerald-50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -412,7 +412,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
                     setShowContactSelector(false)
                     setContactSearchQuery('')
                   }}
-                  className="w-full text-sm text-gray-600 hover:text-gray-700 font-medium py-2"
+                  className="w-full px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
                 >
                   Cancel
                 </button>
@@ -542,13 +542,11 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
           onReasonSelect={handleReasonSelect}
           onCustomReasonChange={(value) => handleChange('customReason', value)}
           error={errors.reason}
+          specialty={contacts.find(c => c.id === formData.toContactId)?.specialty}
         />
 
         {/* Teeth Diagram */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Teeth (Optional)
-          </label>
           <TeethDiagram
             selectedTeeth={formData.selectedTeeth}
             onTeethChange={handleTeethSelection}
@@ -603,6 +601,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
             variant="secondary"
             onClick={onClose}
             disabled={isSubmitting}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
           >
             Cancel
           </Button>
@@ -610,6 +609,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
             variant="secondary"
             onClick={() => handleSubmit(true)}
             disabled={isSubmitting}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
           >
             Save as Draft
           </Button>
@@ -617,6 +617,7 @@ export function NewReferralModal({ isOpen, onClose, onSuccess }: NewReferralModa
             variant="primary"
             onClick={() => handleSubmit(false)}
             disabled={isSubmitting}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-600"
           >
             {isSubmitting ? 'Sending...' : 'Send Referral'}
           </Button>
