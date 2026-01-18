@@ -39,7 +39,7 @@ export function IncomingReferralsTable({ referrals, onAccept, onView, acceptingI
         {safeReferrals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <p className="text-sm text-neutral-500">No pending incoming referrals</p>
-            <p className="text-sm text-neutral-400 mt-1">You're all caught up! 🎉</p>
+            <p className="text-sm text-neutral-400 mt-1">You are all caught up! 🎉</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-b-lg">

@@ -141,7 +141,6 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
 
     const STATUS_RANK: Record<ReferralStatus, number> = {
         SUBMITTED: 0,
-        PENDING_REVIEW: 0,
         ACCEPTED: 1,
         SENT: 1,
         COMPLETED: 2,

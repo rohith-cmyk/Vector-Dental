@@ -102,7 +102,6 @@ export const REFERRAL_STATUSES = {
   REJECTED: { label: 'Rejected', color: 'red' },
   COMPLETED: { label: 'Completed', color: 'green' },
   CANCELLED: { label: 'Cancelled', color: 'red' },
-  REJECTED: { label: 'Rejected', color: 'red' },
 } as const
 
 // Referral Urgency Levels

@@ -9,11 +9,15 @@ interface ReferralTrendsChartProps {
     outgoing: number
     incoming: number
   }>
-  period: 'monthly' | 'weekly' | 'yearly'
-  onPeriodChange: (period: 'monthly' | 'weekly' | 'yearly') => void
+  period?: 'monthly' | 'weekly' | 'yearly'
+  onPeriodChange?: (period: 'monthly' | 'weekly' | 'yearly') => void
 }
 
-export function ReferralTrendsChart({ data, period, onPeriodChange }: ReferralTrendsChartProps) {
+export function ReferralTrendsChart({
+  data,
+  period = 'monthly',
+  onPeriodChange = () => {},
+}: ReferralTrendsChartProps) {
   // Handle undefined or empty data
   const safeData = data || []
 
@@ -24,10 +28,14 @@ export function ReferralTrendsChart({ data, period, onPeriodChange }: ReferralTr
           <CardTitle className="text-lg font-semibold text-gray-900">Referral Trends</CardTitle>
           <p className="text-sm text-neutral-400 mt-1">Sent vs Received over time</p>
         </div>
-        <select className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors">
-          <option>Monthly</option>
-          <option>Weekly</option>
-          <option>Yearly</option>
+        <select
+          value={period}
+          onChange={(event) => onPeriodChange(event.target.value as 'monthly' | 'weekly' | 'yearly')}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+        >
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
         </select>
       </CardHeader>
       <CardContent className="pt-0">

@@ -111,7 +111,6 @@ export function scheduleDemoStatusProgression(referralId: string) {
         if (!existing) return
         if (!shouldAdvanceStatus(existing.status, status)) return
 
-        const now = new Date()
         await prisma.referral.update({
           where: { id: referralId },
           data: {

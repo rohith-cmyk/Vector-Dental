@@ -118,7 +118,7 @@ export default function ContactsPage() {
         </div>
 
         {loading ? (
-          <LoadingState message="Loading referrals..." />
+          <LoadingState title="Loading referrals..." />
         ) : filteredClinics.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-neutral-500">

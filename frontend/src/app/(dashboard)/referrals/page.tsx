@@ -421,7 +421,6 @@ export default function ReferralsPage() {
       case 'SENT':
         return 'SCHEDULED'
       case 'SUBMITTED':
-      case 'PENDING_REVIEW':
         return 'ACCEPTED'
       case 'REJECTED':
         return 'REJECTED'
