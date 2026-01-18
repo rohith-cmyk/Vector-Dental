@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { authService } from '@/services/auth.supabase.service'
 import { api } from '@/lib/api'
 import { USE_MOCK_DATA } from '@/constants'
+import { LoadingState } from '@/components/ui/LoadingState'
 
 export default function DashboardLayout({
   children,

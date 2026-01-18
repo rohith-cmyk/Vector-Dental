@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout'
-import { Link as LinkIcon, User, Bell, Lock, Palette, Key } from 'lucide-react'
+import { User, Lock, Palette, Key } from 'lucide-react'
 
 export default function SettingsPage() {
   const settingsSections = [
@@ -25,12 +25,6 @@ export default function SettingsPage() {
       description: 'Update your personal information and preferences',
       icon: <User className="h-6 w-6 text-neutral-500" />,
       href: '/settings/profile',
-    },
-    {
-      title: 'Notifications',
-      description: 'Configure email and in-app notification preferences',
-      icon: <Bell className="h-6 w-6 text-neutral-500" />,
-      href: '/settings/notifications',
     },
     {
       title: 'Security',

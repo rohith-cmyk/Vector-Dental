@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { 
-  LayoutDashboard, 
-  Bell, 
-  Link2, 
-  FileText, 
-  Users, 
-  Settings 
+import {
+  LayoutDashboard,
+  Link2,
+  FileText,
+  Users,
+  Settings
 } from 'lucide-react'
 
 const navigation = [
@@ -17,7 +16,6 @@ const navigation = [
   { name: 'Referrals', href: '/referrals', icon: FileText },
   { name: 'Referral Links', href: '/settings/referral-links', icon: Link2 },
   { name: 'Contacts', href: '/contacts', icon: Users },
-  { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

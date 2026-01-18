@@ -76,9 +76,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    // Auth disabled for development - just log errors
     if (error.response?.status === 401) {
-      console.warn('API authentication required (disabled in dev mode)')
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token')
+      }
+      delete api.defaults.headers.common['Authorization']
+      console.warn('API authentication required - clearing session')
+
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

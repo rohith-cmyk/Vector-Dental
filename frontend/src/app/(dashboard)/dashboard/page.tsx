@@ -214,7 +214,6 @@ export default function DashboardPage() {
   const [acceptingIds, setAcceptingIds] = useState<string[]>([])
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
-  const [breakdownView, setBreakdownView] = useState<'specialty' | 'office'>('specialty')
 
   useEffect(() => {
     // Initial load - show loading
@@ -227,7 +226,7 @@ export default function DashboardPage() {
     }, 120000) // 2 minutes (cache TTL)
 
     return () => clearInterval(interval)
-  }, [trendsPeriod, specialtyPeriod])
+  }, [])
 
   // Search effect - reload data when search changes
   useEffect(() => {
@@ -465,49 +464,14 @@ export default function DashboardPage() {
                 <ReferralTrendsChart data={stats.referralTrends} />
               </div>
               <div className="lg:col-span-1">
-                <div className="relative">
-                  <BreakdownChart
-                    data={
-                      breakdownView === 'specialty'
-                        ? (stats.referralsBySpecialty || []).map(item => ({
-                            category: item.specialty,
-                            count: item.count,
-                            percentage: item.percentage
-                          }))
-                        : (stats.referralsByOffice || []).map(item => ({
-                            category: item.office,
-                            count: item.count,
-                            percentage: item.percentage
-                          }))
-                    }
-                    title={`By ${breakdownView === 'specialty' ? 'Specialty' : 'Office'}`}
-                  />
-                  {/* View Toggle */}
-                  <div className="absolute top-3 right-3">
-                    <div className="flex bg-white border border-gray-200 rounded-lg p-1">
-                      <button
-                        onClick={() => setBreakdownView('specialty')}
-                        className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                          breakdownView === 'specialty'
-                            ? 'bg-emerald-600 text-white'
-                            : 'text-neutral-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        Specialty
-                      </button>
-                      <button
-                        onClick={() => setBreakdownView('office')}
-                        className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                          breakdownView === 'office'
-                            ? 'bg-emerald-600 text-white'
-                            : 'text-neutral-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        Office
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <BreakdownChart
+                  data={(stats.referralsByOffice || []).map(item => ({
+                    category: item.office,
+                    count: item.count,
+                    percentage: item.percentage
+                  }))}
+                  title="By Office"
+                />
               </div>
             </div>
           </div>

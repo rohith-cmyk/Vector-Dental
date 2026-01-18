@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 
@@ -34,6 +35,7 @@ export function BreakdownChart({
   categoryKey = 'category',
   displayKey = 'category'
 }: BreakdownChartProps) {
+  const [period, setPeriod] = useState<'monthly' | 'weekly' | 'yearly'>('monthly')
   // Handle undefined or empty data
   const safeData = data || []
 
@@ -51,7 +53,7 @@ export function BreakdownChart({
         <select
           className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
           value={period}
-          onChange={(event) => onPeriodChange(event.target.value as 'monthly' | 'weekly' | 'yearly')}
+          onChange={(event) => setPeriod(event.target.value as 'monthly' | 'weekly' | 'yearly')}
         >
           <option value="monthly">Monthly</option>
           <option value="weekly">Weekly</option>
