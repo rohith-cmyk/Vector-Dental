@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui'
 import { Link as LinkIcon, User, Bell, Lock, Palette, Key } from 'lucide-react'
 
 export default function SettingsPage() {
@@ -10,7 +9,7 @@ export default function SettingsPage() {
     {
       title: 'Referral Links',
       description: 'Create secure token-based referral links with access codes',
-      icon: <Key className="h-6 w-6 text-purple-500" />,
+      icon: <Key className="h-6 w-6 text-neutral-500" />,
       href: '/settings/referral-links',
       badge: 'New',
     },
@@ -24,70 +23,70 @@ export default function SettingsPage() {
     {
       title: 'Profile Settings',
       description: 'Update your personal information and preferences',
-      icon: <User className="h-6 w-6 text-blue-500" />,
+      icon: <User className="h-6 w-6 text-neutral-500" />,
       href: '/settings/profile',
     },
     {
       title: 'Notifications',
       description: 'Configure email and in-app notification preferences',
-      icon: <Bell className="h-6 w-6 text-purple-500" />,
+      icon: <Bell className="h-6 w-6 text-neutral-500" />,
       href: '/settings/notifications',
     },
     {
       title: 'Security',
       description: 'Change password and manage security settings',
-      icon: <Lock className="h-6 w-6 text-red-500" />,
+      icon: <Lock className="h-6 w-6 text-neutral-500" />,
       href: '/settings/security',
     },
     {
       title: 'Appearance',
       description: 'Customize theme and display preferences',
-      icon: <Palette className="h-6 w-6 text-pink-500" />,
+      icon: <Palette className="h-6 w-6 text-neutral-500" />,
       href: '/settings/appearance',
     },
   ]
 
   return (
-    <DashboardLayout title="Settings">
-      <div className="max-w-4xl space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {settingsSections.map((section) => (
-                <Link
-                  key={section.href}
-                  href={section.href}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-brand-500 hover:bg-brand-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0">
-                      {section.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                        {section.title}
-                        {section.badge && (
-                          <span className="px-2 py-0.5 text-xs bg-brand-100 text-brand-700 rounded-full">
-                            {section.badge}
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-0.5">
-                        {section.description}
-                      </p>
-                    </div>
-                  </div>
-                  <svg className="h-5 w-5 text-gray-400 group-hover:text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+    <DashboardLayout title="">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-sm text-neutral-400 mt-2">Manage your account preferences and configurations</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {settingsSections.map((section) => (
+            <Link
+              key={section.href}
+              href={section.href}
+              className="group flex items-center gap-4 p-6 bg-white border border-gray-200 rounded-xl hover:border-emerald-200 hover:bg-emerald-50/50 transition-all duration-200 hover:shadow-sm"
+            >
+              <div className="flex-shrink-0 p-2 bg-gray-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
+                {section.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-emerald-900 transition-colors">
+                    {section.title}
+                  </h3>
+                  {section.badge && (
+                    <span className="px-2 py-0.5 text-xs bg-emerald-100 text-emerald-700 rounded-full font-medium">
+                      {section.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-neutral-400 leading-relaxed">
+                  {section.description}
+                </p>
+              </div>
+              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </DashboardLayout>
   )

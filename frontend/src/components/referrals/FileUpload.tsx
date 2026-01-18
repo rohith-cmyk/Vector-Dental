@@ -102,7 +102,7 @@ export function FileUpload({ files, onFilesChange, accept = '.jpg,.jpeg,.png,.pd
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Drop Zone */}
       <div
         onDragOver={handleDragOver}
@@ -110,10 +110,10 @@ export function FileUpload({ files, onFilesChange, accept = '.jpg,.jpeg,.png,.pd
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={cn(
-          'relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+          'border border-gray-200 rounded-lg p-6 text-center cursor-pointer transition-colors',
           isDragging
-            ? 'border-emerald-500 bg-emerald-50'
-            : 'border-gray-300 bg-gray-50 hover:border-emerald-400 hover:bg-emerald-50/50'
+            ? 'border-emerald-400 bg-emerald-50'
+            : 'bg-gray-50 hover:border-emerald-300 hover:bg-emerald-50/50'
         )}
       >
         <input
@@ -125,13 +125,8 @@ export function FileUpload({ files, onFilesChange, accept = '.jpg,.jpeg,.png,.pd
           className="hidden"
         />
         <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-              <FileIcon className="w-8 h-8 text-gray-400" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-12 h-12 bg-gray-300 rounded-lg flex items-center justify-center opacity-75">
-              <FileIcon className="w-6 h-6 text-gray-500" />
-            </div>
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+            <FileIcon className="w-6 h-6 text-gray-400" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-700">
@@ -159,7 +154,7 @@ export function FileUpload({ files, onFilesChange, accept = '.jpg,.jpeg,.png,.pd
               className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <FileIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <FileIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {file.name}

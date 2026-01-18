@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authService } from '@/services/auth.supabase.service'
 import { api } from '@/lib/api'
-import { LoadingState } from '@/components/ui'
+import { USE_MOCK_DATA } from '@/constants'
 
 export default function DashboardLayout({
   children,
@@ -15,6 +15,12 @@ export default function DashboardLayout({
   const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
+    // Skip auth check when using mock data in development
+    if (USE_MOCK_DATA) {
+      setCheckingAuth(false)
+      return
+    }
+
     const checkAuth = async () => {
       try {
         const session = await authService.getSession()

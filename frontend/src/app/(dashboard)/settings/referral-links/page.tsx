@@ -93,8 +93,14 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
             </p>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button onClick={handleClose}>Done</Button>
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
+              onClick={handleClose}
+              variant="primary"
+              className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-600"
+            >
+              Done
+            </Button>
           </div>
         </div>
       </Modal>
@@ -102,28 +108,39 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create Referral Link">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Create Referral Link" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Label (Optional)
+            Referral Name
           </label>
+          <p className="text-xs text-neutral-400 mb-2">
+            Helpful name to identify this link (only visible to you)
+          </p>
           <Input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="e.g., Standing GP Link, Emergency Referrals"
             maxLength={100}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Helpful name to identify this link (only visible to you)
-          </p>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={handleClose}>
+        <div className="flex items-center justify-end gap-3 pt-4">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-600"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -217,11 +234,9 @@ export default function ReferralLinksPage() {
   if (loading) {
     return (
       <DashboardLayout title="Referral Links">
-        <LoadingState
-          className="h-64"
-          title="Loading referral links..."
-          subtitle="Preparing your shareable links"
-        />
+        <div className="flex items-center justify-center h-64">
+          <div className="text-sm text-neutral-500">Loading referral links...</div>
+        </div>
       </DashboardLayout>
     )
   }
@@ -232,12 +247,11 @@ export default function ReferralLinksPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Referral Links</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm text-neutral-400 mt-1">
               Create secure token-based referral links for GPs to submit referrals directly
             </p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-600">
             <Plus className="h-4 w-4 mr-2" />
             Create New Link
           </Button>
@@ -256,10 +270,10 @@ export default function ReferralLinksPage() {
             <CardContent className="py-12 text-center">
               <Link2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No referral links yet</h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-sm text-neutral-400 mb-4">
                 Create your first referral link to start accepting referrals from GPs
               </p>
-              <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Button onClick={() => setIsCreateModalOpen(true)} className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-600">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First Link
               </Button>
@@ -297,7 +311,7 @@ export default function ReferralLinksPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          <span>
+                          <span className="text-sm text-neutral-400">
                             Created {new Date(link.createdAt).toLocaleDateString()} •{' '}
                             {link.referralCount || 0} referral{link.referralCount !== 1 ? 's' : ''}
                           </span>
@@ -310,6 +324,7 @@ export default function ReferralLinksPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleCopyUrl(link.referralUrl || '', link.id)}
+                        className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
                       >
                         {copiedId === link.id ? (
                           <>
@@ -327,6 +342,7 @@ export default function ReferralLinksPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleToggleActive(link.id, link.isActive)}
+                        className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
                       >
                         {link.isActive ? (
                           <>
@@ -343,8 +359,8 @@ export default function ReferralLinksPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setDeleteTarget(link)}
-                        className="text-red-600 hover:text-red-700"
+                        onClick={() => handleDelete(link.id)}
+                        className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-red-600 hover:border-red-600 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

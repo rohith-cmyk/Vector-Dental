@@ -25,16 +25,16 @@ export function Sidebar() {
   const pathname = usePathname()
   
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar-bg">
-      <div className="flex h-full flex-col">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar-white p-4">
+      <div className="flex h-full flex-col border border-black/10 rounded-2xl bg-white">
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-hover">
+        <div className="flex flex-col gap-3 px-6 py-12">
           <img 
             src="/logo.png" 
             alt="Logo" 
-            className="h-10 w-10 object-contain"
+            className="h-14 w-14 object-contain"
           />
-          <span className="text-xl font-semibold text-white">Dental Referral</span>
+          <span className="text-md font-bold text-neutral-700 leading-normal">Dental Referral</span>
         </div>
         
         {/* Navigation */}
@@ -50,11 +50,11 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-sidebar-active text-white'
-                    : 'text-gray-300 hover:bg-sidebar-hover hover:text-white'
+                    ? 'bg-neutral-200 text-neutral-800'
+                    : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-800'
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4 text-neutral-400" strokeWidth={1.5}  />
                 <span>{item.name}</span>
               </Link>
             )

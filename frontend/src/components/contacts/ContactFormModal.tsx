@@ -141,12 +141,12 @@ export function ContactFormModal({
       isOpen={isOpen} 
       onClose={handleClose} 
       title={initialData ? 'Edit Contact' : 'Add New Contact'}
-      size="xl"
+      size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Personal Information */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Personal Information</h3>
+          <h4 className="text-lg font-semibold text-neutral-700 mb-4">Personal Information</h4>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="First Name"
@@ -183,7 +183,7 @@ export function ContactFormModal({
 
         {/* Contact Details */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Contact Details</h3>
+          <h4 className="text-lg font-semibold text-neutral-700 mb-4">Contact Details</h4>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Email"
@@ -225,7 +225,7 @@ export function ContactFormModal({
 
         {/* Practice Information */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Practice Information</h3>
+          <h4 className="text-lg font-semibold text-neutral-700 mb-4">Practice Information</h4>
           <Input
             label="Clinic/Practice Name (Optional)"
             value={formData.clinicName}
@@ -268,9 +268,9 @@ export function ContactFormModal({
 
         {/* Additional Information */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Additional Information</h3>
+          <h4 className="text-lg font-semibold text-neutral-700 mb-4">Additional Information</h4>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-[10pt] text-neutral-400 mb-2">
               Notes (Optional)
             </label>
             <textarea
@@ -279,28 +279,29 @@ export function ContactFormModal({
               rows={3}
               maxLength={500}
               placeholder="Add any additional notes about this contact..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
+              className="cursor-pointer w-full px-3 py-2 border border-neutral-200 text-[10pt] rounded-lg shadow-sm focus:ring-0 focus:outline-none focus:border-neutral-500 resize-none"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-neutral-500 mt-1">
               {formData.notes?.length || 0}/500 characters
             </p>
           </div>
         </div>
 
-        {/* Form Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4">
           <Button
-            type="button"
-            variant="ghost"
+            variant="secondary"
             onClick={handleClose}
             disabled={isLoading}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
           >
             Cancel
           </Button>
           <Button
-            type="submit"
             variant="primary"
-            isLoading={isLoading}
+            type="submit"
+            disabled={isLoading}
+            className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-emerald-600 text-white hover:border-emerald-600 hover:bg-emerald-600"
           >
             {initialData ? 'Update Contact' : 'Add Contact'}
           </Button>

@@ -14,17 +14,14 @@ interface TeethDiagramProps {
 // Primary teeth: A-T (FDI numbering system)
 // A-E: Upper Right, F-J: Upper Left, K-O: Lower Left, P-T: Lower Right
 
-const ADULT_TEETH_UPPER_RIGHT = [1, 2, 3, 4, 5, 6, 7, 8]
-const ADULT_TEETH_UPPER_LEFT = [9, 10, 11, 12, 13, 14, 15, 16]
-const ADULT_TEETH_LOWER_LEFT = [17, 18, 19, 20, 21, 22, 23, 24]
-const ADULT_TEETH_LOWER_RIGHT = [25, 26, 27, 28, 29, 30, 31, 32]
+// Upper and Lower arches
+const ADULT_TEETH_UPPER = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+const ADULT_TEETH_LOWER = [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
 
-const PRIMARY_TEETH_UPPER_RIGHT = ['A', 'B', 'C', 'D', 'E']
-const PRIMARY_TEETH_UPPER_LEFT = ['F', 'G', 'H', 'I', 'J']
-const PRIMARY_TEETH_LOWER_LEFT = ['K', 'L', 'M', 'N', 'O']
-const PRIMARY_TEETH_LOWER_RIGHT = ['P', 'Q', 'R', 'S', 'T']
+const PRIMARY_TEETH_UPPER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+const PRIMARY_TEETH_LOWER = ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']
 
-type Section = 'upper-right' | 'upper-left' | 'lower-left' | 'lower-right'
+type Section = 'upper' | 'lower'
 
 export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps) {
   const [showPrimary, setShowPrimary] = useState(false)
@@ -40,41 +37,15 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
 
   const selectSection = (section: Section) => {
     let sectionTeeth: Array<string | number> = []
-    
+
     if (showPrimary) {
-      switch (section) {
-        case 'upper-right':
-          sectionTeeth = PRIMARY_TEETH_UPPER_RIGHT
-          break
-        case 'upper-left':
-          sectionTeeth = PRIMARY_TEETH_UPPER_LEFT
-          break
-        case 'lower-left':
-          sectionTeeth = PRIMARY_TEETH_LOWER_LEFT
-          break
-        case 'lower-right':
-          sectionTeeth = PRIMARY_TEETH_LOWER_RIGHT
-          break
-      }
+      sectionTeeth = section === 'upper' ? PRIMARY_TEETH_UPPER : PRIMARY_TEETH_LOWER
     } else {
-      switch (section) {
-        case 'upper-right':
-          sectionTeeth = ADULT_TEETH_UPPER_RIGHT
-          break
-        case 'upper-left':
-          sectionTeeth = ADULT_TEETH_UPPER_LEFT
-          break
-        case 'lower-left':
-          sectionTeeth = ADULT_TEETH_LOWER_LEFT
-          break
-        case 'lower-right':
-          sectionTeeth = ADULT_TEETH_LOWER_RIGHT
-          break
-      }
+      sectionTeeth = section === 'upper' ? ADULT_TEETH_UPPER : ADULT_TEETH_LOWER
     }
 
     const allSelected = sectionTeeth.every(tooth => selectedTeeth.includes(tooth))
-    
+
     if (allSelected) {
       onTeethChange(selectedTeeth.filter(t => !sectionTeeth.includes(t)))
     } else {
@@ -85,9 +56,9 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
 
   const selectFullMouth = () => {
     const allTeeth = showPrimary
-      ? [...PRIMARY_TEETH_UPPER_RIGHT, ...PRIMARY_TEETH_UPPER_LEFT, ...PRIMARY_TEETH_LOWER_LEFT, ...PRIMARY_TEETH_LOWER_RIGHT]
-      : [...ADULT_TEETH_UPPER_RIGHT, ...ADULT_TEETH_UPPER_LEFT, ...ADULT_TEETH_LOWER_LEFT, ...ADULT_TEETH_LOWER_RIGHT]
-    
+      ? [...PRIMARY_TEETH_UPPER, ...PRIMARY_TEETH_LOWER]
+      : [...ADULT_TEETH_UPPER, ...ADULT_TEETH_LOWER]
+
     const allSelected = allTeeth.every(tooth => selectedTeeth.includes(tooth))
     onTeethChange(allSelected ? [] : allTeeth)
   }
@@ -98,33 +69,23 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
 
   const isSectionSelected = (section: Section): boolean => {
     let sectionTeeth: Array<string | number> = []
-    
+
     if (showPrimary) {
-      switch (section) {
-        case 'upper-right': sectionTeeth = PRIMARY_TEETH_UPPER_RIGHT; break
-        case 'upper-left': sectionTeeth = PRIMARY_TEETH_UPPER_LEFT; break
-        case 'lower-left': sectionTeeth = PRIMARY_TEETH_LOWER_LEFT; break
-        case 'lower-right': sectionTeeth = PRIMARY_TEETH_LOWER_RIGHT; break
-      }
+      sectionTeeth = section === 'upper' ? PRIMARY_TEETH_UPPER : PRIMARY_TEETH_LOWER
     } else {
-      switch (section) {
-        case 'upper-right': sectionTeeth = ADULT_TEETH_UPPER_RIGHT; break
-        case 'upper-left': sectionTeeth = ADULT_TEETH_UPPER_LEFT; break
-        case 'lower-left': sectionTeeth = ADULT_TEETH_LOWER_LEFT; break
-        case 'lower-right': sectionTeeth = ADULT_TEETH_LOWER_RIGHT; break
-      }
+      sectionTeeth = section === 'upper' ? ADULT_TEETH_UPPER : ADULT_TEETH_LOWER
     }
-    
+
     return sectionTeeth.length > 0 && sectionTeeth.every(tooth => selectedTeeth.includes(tooth))
   }
 
   const renderTooth = (tooth: string | number, index: number, total: number, isUpper: boolean, isLeft: boolean) => {
     const isSelected = selectedTeeth.includes(tooth)
-    // Create curved arch effect using transform
+    // Create curved arch effect using transform - reduced curve for better containment
     const position = (index / (total - 1)) * 100 // 0 to 100%
-    const angle = isUpper ? (position - 50) * 0.3 : (50 - position) * 0.3 // Curve angle
-    const offsetY = isUpper ? -(Math.abs(position - 50) ** 2) / 25 : (Math.abs(position - 50) ** 2) / 25
-    
+    const angle = isUpper ? (50 - position) * 0.2 : (position - 50) * 0.2 // Reduced curve angle
+    const offsetY = isUpper ? (Math.abs(position - 50) ** 2) / 40 : -(Math.abs(position - 50) ** 2) / 40 // Reduced offset
+
     return (
       <button
         key={tooth}
@@ -134,11 +95,11 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
           toggleTooth(tooth)
         }}
         className={cn(
-          'relative w-11 h-16 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all',
-          'hover:scale-110 hover:shadow-lg focus:outline-none z-10',
+          'relative w-8 h-12 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all',
+          'hover:scale-105 focus:outline-none z-10',
           isSelected
-            ? 'bg-emerald-400 border-emerald-300 text-white shadow-lg'
-            : 'bg-gray-800 border-gray-600 text-white hover:border-gray-500'
+            ? 'bg-neutral-800 border-neutral-700 text-white'
+            : 'bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50'
         )}
         style={{
           transform: `rotate(${angle}deg) translateY(${offsetY}px)`,
@@ -156,54 +117,51 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
     adultTeeth: Array<number>,
     primaryTeeth: Array<string>,
     label: string,
-    isUpper: boolean,
-    isLeft: boolean
+    isUpper: boolean
   ) => {
     const sectionSelected = isSectionSelected(section)
-    const teethToShow = showPrimary ? primaryTeeth : adultTeeth
-    
+    const teeth = showPrimary ? primaryTeeth : adultTeeth
+
     return (
       <div
         className={cn(
-          'relative p-4 rounded-lg border-2 transition-all cursor-pointer min-h-[120px]',
+          'relative p-4 rounded-lg border transition-all cursor-pointer min-h-[140px]',
           sectionSelected
-            ? 'border-emerald-400 bg-emerald-900/20'
-            : 'border-gray-700 bg-gray-900/50 hover:border-gray-600'
+            ? 'border-neutral-800 bg-neutral-100'
+            : 'border-black/10 bg-white hover:border-neutral-300 hover:bg-neutral-50',
+          isUpper ? 'pb-24' : 'pt-24'
         )}
         onClick={() => selectSection(section)}
         title={`Click to select/deselect ${label} section`}
       >
-        <div className="absolute top-2 left-3 text-xs font-medium text-gray-400 uppercase z-20">
+        <div className="absolute top-2 left-3 text-xs font-medium text-neutral-500 uppercase z-20">
           {label}
         </div>
-        
+
         {/* Teeth arranged in an arch */}
-        <div className={cn(
-          'flex items-center gap-1 mt-8 justify-center',
-          isLeft ? 'flex-row-reverse' : 'flex-row'
-        )}>
-          {teethToShow.map((tooth, index) => renderTooth(tooth, index, teethToShow.length, isUpper, isLeft))}
+        <div className="flex items-center gap-1 mt-8 justify-center">
+          {teeth.map((tooth, index) => renderTooth(tooth, index, teeth.length, isUpper, false))}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header with controls */}
       <div className="flex items-center justify-between">
-        <h4 className="text-lg font-semibold text-gray-300">Teeth</h4>
+        <h4 className="text-xl font-semibold text-neutral-800">Teeth</h4>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={selectFullMouth}
-            className="px-4 py-2 text-sm font-medium text-emerald-400 hover:text-emerald-300 bg-gray-800 rounded-lg border border-gray-700 hover:border-emerald-400 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-800 bg-neutral-100 rounded-lg hover:border-neutral-300 transition-colors"
           >
             Select full mouth
           </button>
           <button
             type="button"
-            className="p-2 text-gray-400 hover:text-gray-300 bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
+            className="p-2 text-neutral-400 hover:text-neutral-600 bg-neutral-100 rounded-lg border border-black/10 hover:border-neutral-300 transition-colors"
             title="Settings"
           >
             <Settings className="w-4 h-4" />
@@ -219,8 +177,8 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
           className={cn(
             'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
             !showPrimary
-              ? 'bg-emerald-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-neutral-800 text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
           )}
         >
           Adult
@@ -231,8 +189,8 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
           className={cn(
             'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
             showPrimary
-              ? 'bg-emerald-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              ? 'bg-neutral-800 text-white'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
           )}
         >
           Primary
@@ -240,28 +198,22 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
       </div>
 
       {/* Mouth-shaped Teeth Diagram - Curved arches */}
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
+      <div className="bg-white rounded-lg">
         {/* Upper Arch - Curved down */}
-        <div className="mb-8">
-          <div className="grid grid-cols-2 gap-4">
-            {renderArch('upper-left', ADULT_TEETH_UPPER_LEFT, PRIMARY_TEETH_UPPER_LEFT, 'Upper Left', true, true)}
-            {renderArch('upper-right', ADULT_TEETH_UPPER_RIGHT, PRIMARY_TEETH_UPPER_RIGHT, 'Upper Right', true, false)}
-          </div>
+        <div className="mb-8 mt-4">
+          {renderArch('lower', ADULT_TEETH_UPPER, PRIMARY_TEETH_UPPER, 'Upper', true)}
         </div>
 
         {/* Lower Arch - Curved up */}
-        <div>
-          <div className="grid grid-cols-2 gap-4">
-            {renderArch('lower-left', ADULT_TEETH_LOWER_LEFT, PRIMARY_TEETH_LOWER_LEFT, 'Lower Left', false, true)}
-            {renderArch('lower-right', ADULT_TEETH_LOWER_RIGHT, PRIMARY_TEETH_LOWER_RIGHT, 'Lower Right', false, false)}
-          </div>
+        <div className="mb-4">
+          {renderArch('lower', ADULT_TEETH_LOWER, PRIMARY_TEETH_LOWER, 'Lower', false)}
         </div>
       </div>
 
       {/* Selected Teeth Display - Chips at bottom */}
       {selectedTeeth.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 p-4 bg-emerald-900/20 rounded-lg border border-emerald-700/50">
-          <span className="text-sm font-medium text-gray-300">Selected:</span>
+        <div className="flex flex-wrap items-center gap-2 p-4 bg-neutral-50 rounded-lg border border-black/10">
+          <span className="text-sm font-medium text-neutral-700">Selected:</span>
           {selectedTeeth
             .sort((a, b) => {
               if (typeof a === 'number' && typeof b === 'number') return a - b
@@ -273,7 +225,7 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
                 key={tooth}
                 type="button"
                 onClick={() => toggleTooth(tooth)}
-                className="px-3 py-1 text-sm font-medium bg-emerald-600 text-white rounded-full hover:bg-emerald-700 flex items-center gap-1 transition-colors"
+                className="px-3 py-1 text-sm font-medium bg-neutral-800 text-white rounded-full hover:bg-neutral-700 flex items-center gap-1 transition-colors"
               >
                 {tooth}
                 <X className="w-3 h-3" />
@@ -282,7 +234,7 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
           <button
             type="button"
             onClick={clearSelection}
-            className="ml-auto px-3 py-1 text-xs text-gray-400 hover:text-gray-300 font-medium"
+            className="ml-auto px-3 py-1 text-xs text-neutral-500 hover:text-neutral-700 font-medium"
           >
             Clear all
           </button>

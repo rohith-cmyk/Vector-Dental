@@ -95,11 +95,9 @@ ${referralLink.clinicName}
   if (loading) {
     return (
       <DashboardLayout title="Referral Link">
-        <LoadingState
-          className="h-64"
-          title="Loading referral link..."
-          subtitle="Preparing your shareable link"
-        />
+        <div className="flex items-center justify-center h-64">
+          <div className="text-sm text-neutral-500">Loading referral link...</div>
+        </div>
       </DashboardLayout>
     )
   }
@@ -107,18 +105,15 @@ ${referralLink.clinicName}
   if (error || !referralLink) {
     return (
       <DashboardLayout title="Referral Link">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-red-600">{error || 'Failed to load referral link'}</p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+          <div className="text-sm text-neutral-500">{error || 'Failed to load referral link'}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+          >
+            Try Again
+          </button>
+        </div>
       </DashboardLayout>
     )
   }
@@ -132,8 +127,8 @@ ${referralLink.clinicName}
             <CardTitle>Your Public Referral Link</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-600">
-              Share this link with other dental clinics to make it easy for them to refer patients to you. 
+            <p className="text-sm text-neutral-400">
+              Share this link with other dental clinics to make it easy for them to refer patients to you.
               No account or login required!
             </p>
 
@@ -148,7 +143,7 @@ ${referralLink.clinicName}
                     type="text"
                     value={referralLink.referralUrl}
                     readOnly
-                    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-mono text-sm"
+                    className="cursor-pointer w-full pl-10 pr-4 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-100 bg-white text-sm text-neutral-700 placeholder-neutral-400 transition-colors"
                   />
                   <button
                     onClick={handleCopy}
@@ -161,7 +156,7 @@ ${referralLink.clinicName}
                 <Button
                   variant="outline"
                   onClick={() => window.open(referralLink.referralUrl, '_blank')}
-                  className="gap-2"
+                  className="gap-2 px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Preview
@@ -190,6 +185,7 @@ ${referralLink.clinicName}
                 size="sm"
                 onClick={handleToggleLink}
                 disabled={updating}
+                className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
               >
                 {updating ? 'Updating...' : referralLink.isActive ? 'Deactivate Link' : 'Activate Link'}
               </Button>
@@ -203,7 +199,7 @@ ${referralLink.clinicName}
             <CardTitle>Share Your Link</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-gray-600">
+            <p className="text-sm text-neutral-400">
               Make it easy for other clinics to refer patients to you:
             </p>
 
@@ -211,11 +207,11 @@ ${referralLink.clinicName}
               {/* Email Template */}
               <button
                 onClick={handleEmailTemplate}
-                className="p-4 border-2 border-gray-200 rounded-lg hover:border-brand-500 hover:bg-brand-50 transition-colors text-left"
+                className="p-4 border-2 border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-colors text-left"
               >
-                <Mail className="h-8 w-8 text-brand-500 mb-2" />
+                <Mail className="h-8 w-8 text-emerald-500 mb-2" />
                 <h4 className="font-semibold text-gray-900">Email Template</h4>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-neutral-400 mt-1">
                   Send a pre-written email with your referral link
                 </p>
               </button>
@@ -223,11 +219,11 @@ ${referralLink.clinicName}
               {/* QR Code */}
               <button
                 onClick={() => alert('QR Code generator coming soon!')}
-                className="p-4 border-2 border-gray-200 rounded-lg hover:border-brand-500 hover:bg-brand-50 transition-colors text-left"
+                className="p-4 border-2 border-gray-200 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-colors text-left"
               >
-                <QrCode className="h-8 w-8 text-brand-500 mb-2" />
+                <QrCode className="h-8 w-8 text-emerald-500 mb-2" />
                 <h4 className="font-semibold text-gray-900">QR Code</h4>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-neutral-400 mt-1">
                   Generate a QR code for easy mobile access
                 </p>
               </button>
@@ -241,7 +237,7 @@ ${referralLink.clinicName}
             <CardTitle>Embed on Your Website</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">
+            <p className="text-sm text-neutral-400 mb-4">
               Add this code to your website to create a referral button:
             </p>
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
@@ -254,7 +250,7 @@ ${referralLink.clinicName}
             <Button
               variant="outline"
               size="sm"
-              className="mt-4"
+              className="mt-4 px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
               onClick={() => {
                 navigator.clipboard.writeText(`<a href="${referralLink.referralUrl}" target="_blank">Refer a Patient</a>`)
                 alert('Code copied to clipboard!')

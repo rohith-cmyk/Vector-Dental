@@ -54,7 +54,7 @@ export interface Contact {
 }
 
 // Referral Types
-export type ReferralStatus = 'DRAFT' | 'SENT' | 'SUBMITTED' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED'
+export type ReferralStatus = 'DRAFT' | 'SENT' | 'SUBMITTED' | 'ACCEPTED' | 'COMPLETED' | 'CANCELLED' | 'REJECTED'
 export type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
 export type ReferralType = 'OUTGOING' | 'INCOMING'
 
@@ -213,13 +213,8 @@ export interface DashboardStats {
     count: number
     percentage: number
   }>
-  outgoingReferralsBySpecialty?: Array<{
-    specialty: string
-    count: number
-    percentage: number
-  }>
-  incomingReferralsBySpecialty?: Array<{
-    specialty: string
+  referralsByOffice: Array<{
+    office: string
     count: number
     percentage: number
   }>
@@ -228,7 +223,20 @@ export interface DashboardStats {
     outgoing: number
     incoming: number
   }>
-
+  referralProcessFlow?: Array<{
+    label: string
+    count: number
+    percentage: number
+  }>
+  
+  // Overview metrics
+  overviewMetrics?: {
+    dailyAverage: number
+    avgSchedule: string
+    avgAppointment: string
+    avgTimeToTreatment: string
+  }
+  
   // Recent referrals
   recentIncoming: Referral[]
   recentOutgoing: Referral[]
