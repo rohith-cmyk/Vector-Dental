@@ -5,6 +5,7 @@ import { errors } from '../utils/errors'
 import { verifyAccessCode, generateStatusToken, generateAccessCode, hashAccessCode } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
 import { sendEmail } from '../utils/email'
+import { scheduleDemoStatusProgression } from '../utils/demo-status'
 
 /**
  * Get clinic by slug (public - no auth required)
@@ -156,6 +157,8 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
           `${referralLink.clinic.name}`,
       })
     }
+
+    scheduleDemoStatusProgression(referral.id)
 
     res.status(201).json({
       success: true,
@@ -460,6 +463,8 @@ export async function submitReferral(
       })
     }
 
+    scheduleDemoStatusProgression(referral.id)
+
     res.status(201).json({
       success: true,
       message: 'Referral submitted successfully',
@@ -500,6 +505,15 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
             address: true,
             phone: true,
             email: true,
+            logoUrl: true,
+          },
+        },
+        files: {
+          select: {
+            id: true,
+            fileName: true,
+            fileUrl: true,
+            fileSize: true,
           },
         },
       },
@@ -511,27 +525,47 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
 
     // Status mapping for timeline display
     const STATUS_TO_TIMELINE_STAGE: Record<string, string> = {
-      SUBMITTED: 'reviewed',
+      SUBMITTED: 'referral_accepted',
       ACCEPTED: 'appointment_scheduled',
-      SENT: 'patient_attended',
-      COMPLETED: 'completed',
+      SENT: 'appointment_completed',
+      COMPLETED: 'post_op_treatment_scheduled',
     }
 
     const TIMELINE_STAGES = [
-      { key: 'reviewed', label: 'Reviewed', status: 'SUBMITTED' },
+      { key: 'referral_accepted', label: 'Referral Accepted', status: 'SUBMITTED' },
       { key: 'appointment_scheduled', label: 'Appointment Scheduled', status: 'ACCEPTED' },
-      { key: 'patient_attended', label: 'Patient Attended', status: 'SENT' },
-      { key: 'completed', label: 'Completed', status: 'COMPLETED' },
+      { key: 'appointment_completed', label: 'Appointment Completed', status: 'SENT' },
+      { key: 'post_op_treatment_scheduled', label: 'Post Op Treatment Scheduled', status: 'COMPLETED' },
     ]
 
     // Determine current timeline stage based on status
-    const currentStage = STATUS_TO_TIMELINE_STAGE[referral.status] || 'reviewed'
+    const currentStage = STATUS_TO_TIMELINE_STAGE[referral.status] || 'referral_accepted'
+
+    const formatDateTime = (value?: Date | string | null) => {
+      if (!value) return undefined
+      const date = typeof value === 'string' ? new Date(value) : value
+      if (Number.isNaN(date.getTime())) return undefined
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      }) + `, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+    }
+
+    const stageDates: Record<string, string | undefined> = {
+      referral_accepted: formatDateTime(referral.acceptedAt),
+      appointment_scheduled: formatDateTime(referral.scheduledAt),
+      appointment_completed: formatDateTime(referral.completedAt),
+      post_op_treatment_scheduled: formatDateTime(referral.postOpScheduledAt),
+    }
+
+    const firstMissingIndex = TIMELINE_STAGES.findIndex((stage) => !stageDates[stage.key])
+    const currentIndex = firstMissingIndex === -1 ? TIMELINE_STAGES.length - 1 : firstMissingIndex
+    const isCompletedStage = firstMissingIndex === -1
 
     // Build timeline stages
     const timeline = TIMELINE_STAGES.map((stage) => {
       const stageIndex = TIMELINE_STAGES.findIndex((s) => s.key === stage.key)
-      const currentIndex = TIMELINE_STAGES.findIndex((s) => s.key === currentStage)
-      const isCompletedStage = currentStage === 'completed'
       
       return {
         key: stage.key,
@@ -540,6 +574,7 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
         isCompleted: stageIndex < currentIndex || (isCompletedStage && stageIndex === currentIndex),
         isCurrent: stageIndex === currentIndex && !isCompletedStage,
         isPending: stageIndex > currentIndex,
+        dateLabel: stageDates[stage.key],
       }
     })
 
@@ -550,10 +585,19 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
         patientName: referral.patientFirstName && referral.patientLastName
           ? `${referral.patientFirstName} ${referral.patientLastName}`
           : referral.patientName,
+        patientDob: referral.patientDob,
+        reason: referral.reason,
         status: referral.status,
         currentStage,
         timeline,
         submittedAt: referral.createdAt,
+        acceptedAt: referral.acceptedAt,
+        scheduledAt: referral.scheduledAt,
+        completedAt: referral.completedAt,
+        postOpScheduledAt: referral.postOpScheduledAt,
+        opsReportComment: referral.notes,
+        opsReportUrl: referral.files?.[0]?.fileUrl || null,
+        opsReportFiles: referral.files || [],
         clinic: referral.clinic,
       },
     })

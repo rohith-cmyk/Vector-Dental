@@ -123,6 +123,10 @@ model Referral {
   urgency      ReferralUrgency  @default(ROUTINE)
   status       ReferralStatus   @default(DRAFT)
   notes        String?
+  acceptedAt   DateTime?
+  scheduledAt  DateTime?
+  completedAt  DateTime?
+  postOpScheduledAt DateTime?
   
   intendedRecipientId String? // FK to User (Specialist)
   specialty    String?          // Specialty category (e.g. Orthodontist)

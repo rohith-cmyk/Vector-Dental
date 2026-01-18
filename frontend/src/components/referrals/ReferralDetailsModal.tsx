@@ -181,7 +181,8 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                     <div className="flex items-center justify-center gap-3 text-sm text-neutral-400">
                         {statusSteps.map((step, index) => {
                             const isCompleted = currentStepIndex > index
-                            const isCurrent = currentStepIndex === index
+                              || (currentStepIndex === index && displayReferral.status === 'COMPLETED')
+                            const isCurrent = currentStepIndex === index && !isCompleted
                             const Icon = step.icon
                             return (
                                 <div key={step.label} className="flex items-center gap-3">

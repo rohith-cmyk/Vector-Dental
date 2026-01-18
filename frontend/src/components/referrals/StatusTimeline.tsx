@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +10,7 @@ export interface TimelineStage {
   isCompleted: boolean
   isCurrent: boolean
   isPending: boolean
+  dateLabel?: string
 }
 
 interface StatusTimelineProps {
@@ -18,43 +18,6 @@ interface StatusTimelineProps {
 }
 
 export function StatusTimeline({ stages }: StatusTimelineProps) {
-  const appointmentDateTime = useMemo(() => {
-    const now = new Date()
-    const daysToAdd = 1 + Math.floor(Math.random() * 7)
-    const appointment = new Date(now)
-    appointment.setDate(now.getDate() + daysToAdd)
-    const hour = 9 + Math.floor(Math.random() * 8) // 9 AM - 4 PM
-    const minute = Math.random() < 0.5 ? 0 : 30
-    appointment.setHours(hour, minute, 0, 0)
-    return appointment
-  }, [])
-
-  const appointmentLabel = useMemo(() => {
-    return appointmentDateTime.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    }) + `, ${appointmentDateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-  }, [appointmentDateTime])
-
-  const completedDateTime = useMemo(() => {
-    const completed = new Date(appointmentDateTime)
-    const daysToAdd = 1 + Math.floor(Math.random() * 5)
-    completed.setDate(completed.getDate() + daysToAdd)
-    const hour = 9 + Math.floor(Math.random() * 8)
-    const minute = Math.random() < 0.5 ? 0 : 30
-    completed.setHours(hour, minute, 0, 0)
-    return completed
-  }, [appointmentDateTime])
-
-  const completedLabel = useMemo(() => {
-    return completedDateTime.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    }) + `, ${completedDateTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-  }, [completedDateTime])
-
   return (
     <div className="relative">
       {/* Timeline line */}
@@ -95,11 +58,8 @@ export function StatusTimeline({ stages }: StatusTimelineProps) {
                 )}
               >
                 {stage.label}
-                {stage.key === 'appointment_scheduled' && (stage.isCompleted || stage.isCurrent) && (
-                  <span className="ml-2 text-sm text-gray-500">({appointmentLabel})</span>
-                )}
-                {stage.key === 'completed' && (stage.isCompleted || stage.isCurrent) && (
-                  <span className="ml-2 text-sm text-gray-500">({completedLabel})</span>
+                {stage.dateLabel && (stage.isCompleted || stage.isCurrent) && (
+                  <span className="ml-2 text-sm text-gray-500">({stage.dateLabel})</span>
                 )}
               </div>
             </div>
