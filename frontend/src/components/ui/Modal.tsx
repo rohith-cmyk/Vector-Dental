@@ -10,9 +10,10 @@ interface ModalProps {
   title?: string
   children: React.ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl'
+  hideHeader?: boolean
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'lg', hideHeader = false }: ModalProps) {
   const [isVisible, setIsVisible] = useState(false)
 
   // Handle animation when modal opens
@@ -71,16 +72,17 @@ export function Modal({ isOpen, onClose, title, children, size = 'lg' }: ModalPr
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-            <h2 className="text-md font-semibold text-neutral-500">{title}</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
+          {!hideHeader && (
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+              <h2 className="text-md font-semibold text-neutral-500">{title}</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          )}
           
           {/* Content */}
           <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">

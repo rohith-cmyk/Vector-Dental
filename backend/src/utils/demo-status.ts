@@ -7,6 +7,7 @@ import { join, extname } from 'path'
 
 const STATUS_ORDER: ReferralStatus[] = ['SUBMITTED', 'ACCEPTED', 'SENT', 'COMPLETED']
 const DEMO_STEP_MS = Number(process.env.DEMO_STATUS_STEP_MS || 3000)
+const POST_ACCEPT_STEP_MS = Number(process.env.POST_ACCEPT_STATUS_STEP_MS || 10000)
 
 const shouldRunDemoAutomation = () => {
   if (process.env.DEMO_AUTO_STATUS === 'false') return false
@@ -54,8 +55,19 @@ const getMimeType = (filePath: string) => {
 }
 
 const attachDemoOpsReport = async (referralId: string) => {
-  const existingFiles = await prisma.referralFile.count({ where: { referralId } })
-  if (existingFiles > 0) return
+  const existingFiles = await prisma.referralFile.findMany({
+    where: { referralId },
+    select: { id: true, fileName: true },
+  })
+  if (existingFiles.length > 0) {
+    const allScreenshots = existingFiles.every((file) => /screenshot/i.test(file.fileName))
+    if (!(shouldRunDemoAutomation() && config.nodeEnv !== 'production' && allScreenshots)) {
+      return
+    }
+    await prisma.referralFile.deleteMany({
+      where: { referralId },
+    })
+  }
 
   const candidates = getDemoFileCandidates()
   if (candidates.length === 0) return
@@ -133,4 +145,75 @@ export function scheduleDemoStatusProgression(referralId: string) {
       }
     }, delayMs)
   })
+}
+
+export function schedulePostAcceptStatusProgression(referralId: string) {
+  if (!shouldRunDemoAutomation()) return
+
+  const stepMs = POST_ACCEPT_STEP_MS
+  const scheduledAt = new Date(Date.now() + stepMs)
+  const completedAt = new Date(Date.now() + stepMs * 2)
+  const postOpScheduledAt = new Date(Date.now() + stepMs * 3)
+
+  setTimeout(async () => {
+    try {
+      const existing = await prisma.referral.findUnique({
+        where: { id: referralId },
+        select: { status: true, scheduledAt: true },
+      })
+      if (!existing) return
+      if (existing.status !== 'ACCEPTED' || existing.scheduledAt) return
+
+      await prisma.referral.update({
+        where: { id: referralId },
+        data: { scheduledAt },
+      })
+    } catch (error) {
+      console.error(`[demo-status] Failed to schedule appointment for ${referralId}`, error)
+    }
+  }, stepMs)
+
+  setTimeout(async () => {
+    try {
+      const existing = await prisma.referral.findUnique({
+        where: { id: referralId },
+        select: { status: true },
+      })
+      if (!existing) return
+      if (!shouldAdvanceStatus(existing.status, 'SENT')) return
+
+      await prisma.referral.update({
+        where: { id: referralId },
+        data: {
+          status: 'SENT',
+          completedAt,
+        },
+      })
+
+      await attachDemoOpsReport(referralId)
+    } catch (error) {
+      console.error(`[demo-status] Failed to complete appointment for ${referralId}`, error)
+    }
+  }, stepMs * 2)
+
+  setTimeout(async () => {
+    try {
+      const existing = await prisma.referral.findUnique({
+        where: { id: referralId },
+        select: { status: true },
+      })
+      if (!existing) return
+      if (!shouldAdvanceStatus(existing.status, 'COMPLETED')) return
+
+      await prisma.referral.update({
+        where: { id: referralId },
+        data: {
+          status: 'COMPLETED',
+          postOpScheduledAt,
+        },
+      })
+    } catch (error) {
+      console.error(`[demo-status] Failed to schedule post-op for ${referralId}`, error)
+    }
+  }, stepMs * 3)
 }

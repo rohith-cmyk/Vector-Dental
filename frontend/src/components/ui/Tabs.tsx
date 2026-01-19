@@ -36,17 +36,17 @@ export function Tabs({ tabs, defaultTab, onChange, children }: TabsProps) {
               className={cn(
                 'flex w-fit items-center gap-2 py-3 px-6 rounded-xl border font-semibold text-sm transition-all duration-200 flex-1 justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200',
                 activeTab === tab.id
-                  ? 'bg-white text-neutral-800 shadow-md border-neutral-200'
+                  ? 'bg-emerald-50 text-emerald-700 shadow-md border-emerald-200'
                   : 'text-neutral-500 bg-neutral-50/60 hover:bg-neutral-100 border-transparent hover:text-neutral-800 hover:shadow-sm'
               )}
             >
               {tab.icon}
-              <span>{tab.label}</span>
+              <span className="whitespace-nowrap">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
                 <span className={cn(
                   'ml-1 py-0.5 px-2 rounded-full text-xs font-medium',
                   activeTab === tab.id
-                    ? 'bg-neutral-100 text-neutral-600'
+                    ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-neutral-200 text-neutral-500'
                 )}>
                   {tab.badge}

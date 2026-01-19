@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatDate, cn } from '@/lib/utils'
 import { Modal, Badge } from '@/components/ui'
-import { FileText, Download, Phone, Mail, Calendar, CalendarCheck, Loader2, ExternalLink, CheckCircle, Check, CheckCircle2, MapPin } from 'lucide-react'
+import { FileText, Download, Phone, Mail, Calendar, CalendarCheck, Loader2, ExternalLink, CheckCircle, Check, CheckCircle2, MapPin, X } from 'lucide-react'
 import type { Referral, ReferralStatus } from '@/types'
 import { API_URL } from '@/lib/api'
 import { InteractiveToothChart } from './InteractiveToothChart'
@@ -173,10 +173,17 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
             onClose={onClose}
             title=""
             size="xl"
+            hideHeader
         >
             <div className="space-y-8">
                 {/* Sticky Status */}
-                <div className="sticky top-0 z-10 -mx-6 px-6 pt-2 pb-4 bg-white border-b border-neutral-200">
+                <div className="-mx-6 -mt-4 px-6 py-4 bg-white border-b border-emerald-200">
+                    <button
+                        onClick={onClose}
+                        className="absolute right-6 top-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
                     <div className="flex items-center justify-center gap-3 text-sm text-neutral-400">
                         {statusSteps.map((step, index) => {
                             const isCompleted = currentStepIndex > index
@@ -318,6 +325,8 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                             selectedTeeth={displayReferral.selectedTeeth}
                                             onTeethChange={() => { }}
                                             readOnly={true}
+                                            variant="light"
+                                            size="sm"
                                         />
                                     </div>
                                 </div>

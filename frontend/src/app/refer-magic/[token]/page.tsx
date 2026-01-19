@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { Card, CardContent, Input, Select, Button, LoadingState } from '@/components/ui'
 import { FileUpload } from '@/components/referrals/FileUpload'
 import { ReferralReasonButtons } from '@/components/referrals/ReferralReasonButtons'
+import { InteractiveToothChart } from '@/components/referrals/InteractiveToothChart'
 import { api, API_URL } from '@/lib/api'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 
@@ -47,6 +48,7 @@ export default function ReferMagicPage() {
     customReason: '',
     notes: '',
     urgency: 'ROUTINE',
+    selectedTeeth: [] as string[],
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -111,6 +113,10 @@ export default function ReferMagicPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleTeethSelection = (teeth: string[]) => {
+    setFormData(prev => ({ ...prev, selectedTeeth: teeth }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -153,6 +159,9 @@ export default function ReferMagicPage() {
       }
       if (formData.notes?.trim()) {
         formDataToSend.append('notes', formData.notes.trim())
+      }
+      if (formData.selectedTeeth.length > 0) {
+        formDataToSend.append('selectedTeeth', JSON.stringify(formData.selectedTeeth))
       }
       
       // Append files
@@ -394,6 +403,15 @@ export default function ReferMagicPage() {
                   specialty={linkInfo.specialty}
                   showPreferredDoctor={false}
                 />
+
+                <div className="mt-6">
+                  <InteractiveToothChart
+                    selectedTeeth={formData.selectedTeeth}
+                    onTeethChange={handleTeethSelection}
+                    variant="light"
+                    size="sm"
+                  />
+                </div>
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">

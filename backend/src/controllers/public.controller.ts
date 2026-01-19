@@ -5,7 +5,6 @@ import { errors } from '../utils/errors'
 import { verifyAccessCode, generateStatusToken, generateAccessCode, hashAccessCode } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
 import { sendEmail } from '../utils/email'
-import { scheduleDemoStatusProgression } from '../utils/demo-status'
 
 /**
  * Get clinic by slug (public - no auth required)
@@ -157,8 +156,6 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
           `${referralLink.clinic.name}`,
       })
     }
-
-    scheduleDemoStatusProgression(referral.id)
 
     res.status(201).json({
       success: true,
@@ -318,6 +315,7 @@ export async function submitReferral(
       reasonForReferral,
       notes,
       urgency,
+      selectedTeeth: rawSelectedTeeth,
     } = req.body
 
     // Validate required fields (access code no longer required)
@@ -358,6 +356,30 @@ export async function submitReferral(
       throw errors.badRequest('This referral link is currently inactive')
     }
 
+    const parsedSelectedTeeth = (() => {
+      if (!rawSelectedTeeth) return []
+      if (Array.isArray(rawSelectedTeeth)) {
+        return rawSelectedTeeth.map((tooth) => String(tooth)).filter(Boolean)
+      }
+      if (typeof rawSelectedTeeth === 'string') {
+        const trimmed = rawSelectedTeeth.trim()
+        if (!trimmed) return []
+        try {
+          const parsed = JSON.parse(trimmed)
+          if (Array.isArray(parsed)) {
+            return parsed.map((tooth) => String(tooth)).filter(Boolean)
+          }
+        } catch {
+          // Fall through to comma-delimited parsing
+        }
+        return trimmed
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean)
+      }
+      return []
+    })()
+
     // Generate status token for status tracking page
     const statusToken = generateStatusToken()
     const statusAccessCode = generateAccessCode()
@@ -387,6 +409,7 @@ export async function submitReferral(
         urgency: (urgency || 'ROUTINE').toUpperCase() as 'ROUTINE' | 'URGENT' | 'EMERGENCY',
         statusToken, // Store the status token for status tracking page
         statusAccessCodeHash,
+        selectedTeeth: parsedSelectedTeeth,
         // Map to existing fields for backward compatibility
         fromClinicName: gpClinicName,
         referringDentist: submittedByName,
@@ -462,8 +485,6 @@ export async function submitReferral(
           `${referralLink.specialist.clinic.name}`,
       })
     }
-
-    scheduleDemoStatusProgression(referral.id)
 
     res.status(201).json({
       success: true,

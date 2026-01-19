@@ -1,6 +1,7 @@
 'use client'
 
 import { Check } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface TimelineStage {
@@ -15,9 +16,10 @@ export interface TimelineStage {
 
 interface StatusTimelineProps {
   stages: TimelineStage[]
+  renderAfterStage?: (stage: TimelineStage) => ReactNode
 }
 
-export function StatusTimeline({ stages }: StatusTimelineProps) {
+export function StatusTimeline({ stages, renderAfterStage }: StatusTimelineProps) {
   return (
     <div className="relative">
       {/* Timeline line */}
@@ -25,7 +27,7 @@ export function StatusTimeline({ stages }: StatusTimelineProps) {
       
       {/* Timeline stages */}
       <div className="space-y-8">
-        {stages.map((stage, index) => (
+        {stages.map((stage) => (
           <div key={stage.key} className="relative flex items-start gap-4">
             {/* Timeline node */}
             <div
@@ -48,7 +50,7 @@ export function StatusTimeline({ stages }: StatusTimelineProps) {
             </div>
             
             {/* Stage label */}
-            <div className="flex-1 pt-2">
+            <div className="flex-1 pt-2 space-y-2">
               <div
                 className={cn(
                   'text-base font-medium',
@@ -62,6 +64,7 @@ export function StatusTimeline({ stages }: StatusTimelineProps) {
                   <span className="ml-2 text-sm text-gray-500">({stage.dateLabel})</span>
                 )}
               </div>
+              {renderAfterStage?.(stage)}
             </div>
           </div>
         ))}

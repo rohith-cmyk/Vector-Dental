@@ -19,6 +19,7 @@ import { referralLinkService } from '@/services/referral-link.service'
 import type { ReferralLink } from '@/types'
 import { getCachedData, setCachedData, clearCache } from '@/lib/cache'
 import { SPECIALIST_OPTIONS } from '@/constants'
+import { cn } from '@/lib/utils'
 
 interface CreateLinkModalProps {
   isOpen: boolean
@@ -31,6 +32,8 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   const [specialty, setSpecialty] = useState('')
   const [specialtyError, setSpecialtyError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
+  const [isSpecialtyOpen, setIsSpecialtyOpen] = useState(false)
   const [createdLink, setCreatedLink] = useState<{
     referralUrl: string
   } | null>(null)
@@ -62,7 +65,8 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
   const handleCopyUrl = () => {
     if (createdLink) {
       navigator.clipboard.writeText(createdLink.referralUrl)
-      alert('Referral URL copied to clipboard!')
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
     }
   }
 
@@ -72,6 +76,8 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
     setSpecialty('')
     setSpecialtyError('')
     setCreatedLink(null)
+    setIsCopied(false)
+    setIsSpecialtyOpen(false)
     onClose()
     if (hadCreatedLink) {
       onSuccess()
@@ -98,6 +104,9 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
+            {isCopied && (
+              <p className="text-xs text-emerald-600 mt-2">Copied to clipboard.</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">
               Anyone with this link can submit a referral directly - no login required!
             </p>
@@ -134,21 +143,61 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
             maxLength={100}
           />
         </div>
-        <Select
-          label="Specialty"
-          value={specialty}
-          onChange={(e) => {
-            setSpecialty(e.target.value)
-            if (specialtyError) {
-              setSpecialtyError('')
-            }
-          }}
-          options={[
-            { value: '', label: 'Select specialist type' },
-            ...SPECIALIST_OPTIONS,
-          ]}
-          error={specialtyError}
-        />
+        <div className="w-full">
+          <label className="block text-[10pt] text-neutral-400 mb-2">Specialty</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsSpecialtyOpen((prev) => !prev)}
+              className={cn(
+                'w-full px-3 py-2 border rounded-lg text-sm bg-white text-left flex items-center justify-between',
+                'border-neutral-200 text-neutral-700',
+                specialtyError && 'border-red-500'
+              )}
+            >
+              <span className={specialty ? 'text-neutral-700' : 'text-neutral-400'}>
+                {specialty ? SPECIALIST_OPTIONS.find((opt) => opt.value === specialty)?.label : 'Select specialist type'}
+              </span>
+              <span className="text-neutral-400">▾</span>
+            </button>
+            {isSpecialtyOpen && (
+              <div className="absolute z-20 mt-2 w-full rounded-lg border border-neutral-200 bg-white shadow-lg">
+                <button
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-50"
+                  onClick={() => {
+                    setSpecialty('')
+                    setIsSpecialtyOpen(false)
+                  }}
+                >
+                  Select specialist type
+                </button>
+                {SPECIALIST_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={cn(
+                      'w-full px-3 py-2 text-left text-sm hover:bg-neutral-50',
+                      specialty === option.value && 'bg-emerald-50 text-emerald-700'
+                    )}
+                    onClick={() => {
+                      setSpecialty(option.value)
+                      setIsSpecialtyOpen(false)
+                      if (specialtyError) {
+                        setSpecialtyError('')
+                      }
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {specialtyError && (
+            <p className="mt-1 text-sm text-red-600">{specialtyError}</p>
+          )}
+        </div>
 
         <div className="flex items-center justify-end gap-3 pt-4">
           <Button

@@ -15,6 +15,17 @@
   body {
     @apply bg-gray-50 text-gray-900;
   }
+
+  select {
+    background-color: white !important;
+    color: #374151 !important;
+    color-scheme: light;
+  }
+
+  select option {
+    background-color: white !important;
+    color: #374151 !important;
+  }
 }
 
 @layer components {

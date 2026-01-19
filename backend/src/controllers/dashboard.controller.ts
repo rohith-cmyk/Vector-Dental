@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
+import { errors } from '../utils/errors'
 
 /**
  * Get dashboard statistics for two-way referral system
@@ -11,7 +12,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
 
     if (!clinicId) {
       // This should be caught by auth middleware, but double check
-      throw new Error('User does not belong to a clinic')
+      throw errors.unauthorized('User does not belong to a clinic')
     }
 
     // Get current date info
@@ -272,10 +273,12 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       .map((r) => r.toContactId)
       .filter((id): id is string => id !== null)
 
-    const contacts = await prisma.contact.findMany({
-      where: { id: { in: contactIds } },
-      select: { id: true, specialty: true },
-    })
+    const contacts = contactIds.length > 0
+      ? await prisma.contact.findMany({
+          where: { id: { in: contactIds } },
+          select: { id: true, specialty: true },
+        })
+      : []
 
     // Map outgoing specialty data
     const outgoingSpecialtyMap = new Map<string, number>()

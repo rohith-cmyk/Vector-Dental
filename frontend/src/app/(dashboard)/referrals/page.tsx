@@ -261,7 +261,9 @@ export default function ReferralsPage() {
   // Fetch referrals
   const fetchReferrals = useCallback(async (showLoading: boolean = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
 
       if (USE_MOCK_DATA) {
         // Use mock data for development
@@ -519,7 +521,6 @@ export default function ReferralsPage() {
           ]}
           defaultTab="received"
           onChange={(tabId) => {
-            setLoading(true)
             setActiveTab(tabId)
           }}
         >

@@ -8,6 +8,9 @@ interface InteractiveToothChartProps {
     selectedTeeth: string[]
     onTeethChange: (teeth: string[]) => void
     readOnly?: boolean
+    variant?: 'dark' | 'light'
+    size?: 'md' | 'sm'
+    className?: string
 }
 
 type NumberingSystem = 'UNS' | 'FDI'
@@ -27,8 +30,31 @@ export function InteractiveToothChart({
     selectedTeeth,
     onTeethChange,
     readOnly = false,
+    variant = 'dark',
+    size = 'md',
+    className,
 }: InteractiveToothChartProps) {
     const [system, setSystem] = useState<NumberingSystem>('UNS')
+    const isDark = variant === 'dark'
+    const theme = {
+        container: isDark
+            ? 'bg-[#111827] border-gray-800 text-gray-100 shadow-2xl'
+            : 'bg-white border-gray-200 text-gray-900 shadow-lg',
+        subtext: isDark ? 'fill-gray-500' : 'fill-gray-400',
+        button: isDark
+            ? 'text-emerald-400 hover:text-emerald-300 border-emerald-900 bg-emerald-950/30'
+            : 'text-emerald-700 hover:text-emerald-800 border-emerald-200 bg-emerald-50',
+        toggleWrap: isDark ? 'bg-gray-800' : 'bg-gray-100',
+        toggleActive: 'bg-emerald-600 text-white',
+        toggleInactive: isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800',
+        arcDefault: isDark ? '#374151' : '#e5e7eb',
+        toothFill: isDark ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+        toothStroke: isDark ? '#4b5563' : '#d1d5db',
+        divider: isDark ? '#1f2937' : '#e5e7eb',
+        label: isDark ? '#6b7280' : '#9ca3af',
+        emptyText: isDark ? 'text-gray-600' : 'text-gray-400',
+    }
+    const sizeClass = size === 'sm' ? 'max-w-md p-4' : 'max-w-lg p-6'
 
     // Generate Teeth Data with position on an arch
     const teethData = useMemo(() => {
@@ -264,10 +290,10 @@ export function InteractiveToothChart({
 
     // Define quadrant centers for labels - moved further out/away from teeth
     const quadLabels = [
-        { id: 'UR', label: 'Upper Right', x: 60, y: 60 },
-        { id: 'UL', label: 'Upper Left', x: 340, y: 60 },
-        { id: 'LR', label: 'Lower Right', x: 60, y: 500 },
-        { id: 'LL', label: 'Lower Left', x: 340, y: 500 },
+        { id: 'UR', label: 'Upper Right', x: 48, y: 48 },
+        { id: 'UL', label: 'Upper Left', x: 352, y: 48 },
+        { id: 'LR', label: 'Lower Right', x: 62, y: 495 },
+        { id: 'LL', label: 'Lower Left', x: 352, y: 495 },
     ]
 
     // Checking selection status for quadrants
@@ -280,7 +306,14 @@ export function InteractiveToothChart({
     }
 
     return (
-        <div className="flex flex-col items-center bg-[#111827] p-6 rounded-xl shadow-2xl max-w-lg mx-auto border border-gray-800">
+        <div
+            className={cn(
+                'flex flex-col items-center rounded-xl mx-auto border',
+                theme.container,
+                sizeClass,
+                className
+            )}
+        >
             {/* Header */}
             <div className="w-full flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-100">Teeth</h3>
@@ -288,18 +321,21 @@ export function InteractiveToothChart({
                 <div className="flex items-center gap-3">
                     <button
                         onClick={selectFullMouth}
-                        className="text-xs font-medium text-emerald-400 hover:text-emerald-300 border border-emerald-900 bg-emerald-950/30 px-3 py-1.5 rounded-full transition-colors"
+                        className={cn(
+                            'text-xs font-medium border px-3 py-1.5 rounded-full transition-colors',
+                            theme.button
+                        )}
                         type="button"
                     >
                         Select full mouth
                     </button>
 
-                    <div className="flex bg-gray-800 rounded-lg p-1">
+                    <div className={cn('flex rounded-lg p-1', theme.toggleWrap)}>
                         <button
                             onClick={() => setSystem('UNS')}
                             className={cn(
                                 "text-xs px-2 py-1 rounded-md transition-colors font-medium",
-                                system === 'UNS' ? "bg-emerald-600 text-white" : "text-gray-400 hover:text-gray-200"
+                                system === 'UNS' ? theme.toggleActive : theme.toggleInactive
                             )}
                         >
                             UNS
@@ -308,7 +344,7 @@ export function InteractiveToothChart({
                             onClick={() => setSystem('FDI')}
                             className={cn(
                                 "text-xs px-2 py-1 rounded-md transition-colors font-medium",
-                                system === 'FDI' ? "bg-emerald-600 text-white" : "text-gray-400 hover:text-gray-200"
+                                system === 'FDI' ? theme.toggleActive : theme.toggleInactive
                             )}
                         >
                             FDI
@@ -336,7 +372,7 @@ export function InteractiveToothChart({
                                 key={`quad-${quad}`}
                                 d={getQuadrantPath(quad)}
                                 fill="none"
-                                stroke={status === 'all' ? '#10b981' : status === 'some' ? '#34d399' : '#374151'}
+                                stroke={status === 'all' ? '#10b981' : status === 'some' ? '#34d399' : theme.arcDefault}
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 className={cn(
@@ -369,8 +405,8 @@ export function InteractiveToothChart({
                                 <ellipse
                                     rx="14"
                                     ry="10"
-                                    fill={isSelected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(31, 41, 55, 0.8)'}
-                                    stroke={isSelected ? '#34d399' : '#4b5563'}
+                                    fill={isSelected ? 'rgba(16, 185, 129, 0.2)' : theme.toothFill}
+                                    stroke={isSelected ? '#34d399' : theme.toothStroke}
                                     strokeWidth={isSelected ? 2 : 1.5}
                                     className={cn(
                                         "transition-all duration-200 group-hover:stroke-emerald-400",
@@ -419,7 +455,7 @@ export function InteractiveToothChart({
                                 y={ly}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                fill={isSelected ? '#34d399' : '#6b7280'}
+                                fill={isSelected ? '#34d399' : theme.label}
                                 fontSize="11"
                                 fontWeight={isSelected ? 'bold' : 'normal'}
                                 className="pointer-events-none select-none transition-colors"
@@ -430,9 +466,9 @@ export function InteractiveToothChart({
                     })}
 
                     {/* Center Cross / Divider - faint lines */}
-                    <line x1="200" y1="40" x2="200" y2="240" stroke="#1f2937" strokeWidth="1" strokeDasharray="4 4" />
-                    <line x1="200" y1="280" x2="200" y2="480" stroke="#1f2937" strokeWidth="1" strokeDasharray="4 4" />
-                    <line x1="50" y1="260" x2="350" y2="260" stroke="#1f2937" strokeWidth="1" strokeDasharray="4 4" />
+                    <line x1="200" y1="40" x2="200" y2="240" stroke={theme.divider} strokeWidth="1" strokeDasharray="4 4" />
+                    <line x1="200" y1="280" x2="200" y2="480" stroke={theme.divider} strokeWidth="1" strokeDasharray="4 4" />
+                    <line x1="50" y1="260" x2="350" y2="260" stroke={theme.divider} strokeWidth="1" strokeDasharray="4 4" />
 
                     {/* Quadrant Text Labels - Positioned better */}
                     {quadLabels.map(label => (
@@ -440,7 +476,7 @@ export function InteractiveToothChart({
                             key={label.id}
                             x={label.x}
                             y={label.y}
-                            className="fill-gray-500 text-sm font-medium uppercase tracking-wider"
+                            className={cn('text-sm font-medium uppercase tracking-wider', theme.subtext)}
                             textAnchor="middle"
                         >
                             {label.label}
@@ -463,7 +499,7 @@ export function InteractiveToothChart({
                         </div>
                     ))}
                     {selectedTeeth.length === 0 && (
-                        <span className="text-gray-600 text-sm italic">No teeth selected</span>
+                        <span className={cn('text-sm italic', theme.emptyText)}>No teeth selected</span>
                     )}
                 </div>
             </div>

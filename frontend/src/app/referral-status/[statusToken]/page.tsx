@@ -50,6 +50,9 @@ export default function ReferralStatusPage() {
   const [requiresAccessCode, setRequiresAccessCode] = useState(false)
   const [isOpsModalOpen, setIsOpsModalOpen] = useState(false)
 
+  const hasOpsReport = !!statusData?.opsReportComment
+    || (statusData?.opsReportFiles && statusData.opsReportFiles.length > 0)
+
   const formatDateTime = (value?: string | null) => {
     if (!value) return ''
     const date = new Date(value)
@@ -338,7 +341,29 @@ export default function ReferralStatusPage() {
             <CardTitle>Status Timeline</CardTitle>
           </CardHeader>
           <CardContent>
-            <StatusTimeline stages={statusData.timeline} />
+            <StatusTimeline
+              stages={statusData.timeline}
+              renderAfterStage={(stage) => {
+                if (stage.key !== 'appointment_completed') return null
+                return (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (hasOpsReport) {
+                          setIsOpsModalOpen(true)
+                        } else {
+                          document.getElementById('ops-report')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                      className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                    >
+                      View Ops Report
+                    </button>
+                  </div>
+                )
+              }}
+            />
           </CardContent>
         </Card>
 

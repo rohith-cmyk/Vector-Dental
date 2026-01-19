@@ -45,6 +45,26 @@ async function main() {
     console.log('✅ Using existing user:', user.email)
   }
 
+  // Find or create demo user
+  let demoUser = await prisma.user.findUnique({
+    where: { email: 'test@demo.com' },
+  })
+
+  if (!demoUser) {
+    demoUser = await prisma.user.create({
+      data: {
+        email: 'test@demo.com',
+        password: hashSync('demo@1234', 10),
+        name: 'Demo User',
+        role: 'ADMIN',
+        clinicId: clinic.id,
+      },
+    })
+    console.log('✅ Created demo user:', demoUser.email)
+  } else {
+    console.log('✅ Using existing demo user:', demoUser.email)
+  }
+
   // Clear existing contacts for this clinic (optional - comment out to keep existing)
   const existingContactsCount = await prisma.contact.count({
     where: { clinicId: clinic.id },
@@ -336,6 +356,7 @@ async function main() {
   console.log('\n📊 Database now contains:')
   console.log(`   - 1 clinic: ${clinic.name}`)
   console.log(`   - 1 user: ${user.email} (password: dental123)`)
+  console.log(`   - 1 demo user: ${demoUser.email} (password: demo@1234)`)
   console.log(`   - ${contacts.count} contacts`)
   console.log(`   - ${outgoingReferrals.length} outgoing referrals`)
   console.log(`   - ${incomingReferrals.length} incoming referrals`)
