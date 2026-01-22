@@ -5,6 +5,7 @@ import { errors } from '../utils/errors'
 import { verifyAccessCode, generateStatusToken, generateAccessCode, hashAccessCode } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
 import { sendEmail } from '../utils/email'
+import { sendSms } from '../utils/sms'
 
 /**
  * Get clinic by slug (public - no auth required)
@@ -134,6 +135,18 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
         message: `New referral received from ${fromClinicName} for patient ${patientName}`,
       },
     })
+
+    if (patientPhone) {
+      const clinicName = referralLink.clinic.name || 'the clinic'
+      const message =
+        `Hi ${patientName}, your referral has been submitted to ${clinicName}. ` +
+        `We will contact you soon with next steps.`
+      try {
+        await sendSms(patientPhone, message)
+      } catch (smsError) {
+        console.warn('Failed to send referral submission SMS:', smsError)
+      }
+    }
 
     // Send status tracking link to referring clinic
     if (fromClinicEmail) {
@@ -463,6 +476,22 @@ export async function submitReferral(
         message: `New referral received via referral link from ${gpClinicName}`,
       },
     })
+
+    if (patientPhone) {
+      const patientDisplayName =
+        patientFirstName && patientLastName
+          ? `${patientFirstName} ${patientLastName}`
+          : patientFirstName || patientLastName || referral.patientName
+      const clinicName = referralLink.specialist.clinic.name || 'the clinic'
+      const message =
+        `Hi ${patientDisplayName}, your referral has been submitted to ${clinicName}. ` +
+        `We will contact you soon with next steps.`
+      try {
+        await sendSms(patientPhone, message)
+      } catch (smsError) {
+        console.warn('Failed to send referral submission SMS:', smsError)
+      }
+    }
 
     // Send status tracking link to submitter (if email provided)
     if (submittedByEmail) {

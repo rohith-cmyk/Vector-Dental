@@ -62,7 +62,7 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border border-gray-200 shadow-sm">
       <CardContent className="p-8">
         {/* Logo & Title */}
         <div className="text-center mb-8">
@@ -71,8 +71,8 @@ function LoginForm() {
             alt="Logo"
             className="h-16 w-16 mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your dental referral account</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Welcome Back</h1>
+          <p className="text-sm text-gray-600 mt-2">Sign in to your dental referral account</p>
         </div>
 
         {/* Success Message from Signup */}
@@ -93,21 +93,23 @@ function LoginForm() {
         )}
 
         {/* OAuth */}
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full"
-          onClick={handleGoogleLogin}
-          isLoading={oauthLoading}
-        >
-          Continue with Google
-        </Button>
+        <div className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={handleGoogleLogin}
+            isLoading={oauthLoading}
+          >
+            Continue with Google
+          </Button>
 
-        <div className="flex items-center gap-3">
-          <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-gray-500">or</span>
-          <div className="h-px flex-1 bg-gray-200" />
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-500">or</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
         </div>
 
         {/* Login Form */}
@@ -169,7 +171,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-50 to-gray-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Suspense fallback={<div>Loading...</div>}>
         <LoginForm />
       </Suspense>

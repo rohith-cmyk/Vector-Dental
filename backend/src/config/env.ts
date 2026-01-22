@@ -48,6 +48,7 @@ export const config = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
   twilioMessagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
+  twilioFromNumber: process.env.TWILIO_PHONE_NUMBER,
 }
 
 // Validate required environment variables

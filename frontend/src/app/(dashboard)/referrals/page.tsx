@@ -657,25 +657,25 @@ export default function ReferralsPage() {
                         </table>
                       ) : activeTab === 'received' ? (
                         // RECEIVED REFERRALS TABLE
-                        <table className="w-full">
+                        <table className="w-full table-fixed">
                           <thead className="bg-neutral-50">
                             <tr>
-                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                              <th className="w-52 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Patient
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                              <th className="w-56 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 From Clinic
                               </th>
                               <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Reason
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                              <th className="w-28 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Urgency
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                              <th className="w-28 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Status
                               </th>
-                              <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                              <th className="w-32 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Received
                               </th>
                               <th className="w-48 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
@@ -707,7 +707,7 @@ export default function ReferralsPage() {
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                  <div className="text-sm text-neutral-400 max-w-xs truncate">
+                                  <div className="text-sm text-neutral-400 truncate">
                                     {referral.reason}
                                   </div>
                                 </td>
@@ -728,7 +728,7 @@ export default function ReferralsPage() {
                                 <td className="w-48 px-6 py-4 text-right text-sm">
                                   <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                     {/* Always render accept/reject buttons but hide when not needed */}
-                                    <div className={`flex gap-2 ${referral.status !== 'SENT' ? 'invisible' : ''}`}>
+                                    <div className={`flex gap-2 ${!(referral.status === 'SENT' || referral.status === 'SUBMITTED') ? 'invisible' : ''}`}>
                                       <button
                                         onClick={() => handleStatusUpdate(referral.id, 'ACCEPTED')}
                                         className="flex items-center gap-2 px-2 py-2 text-sm bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition-colors"

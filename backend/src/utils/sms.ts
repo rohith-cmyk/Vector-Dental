@@ -17,14 +17,15 @@ function normalizePhoneE164(phone: string): string {
 }
 
 export async function sendSms(to: string, body: string): Promise<void> {
-  if (!config.twilioAccountSid || !config.twilioAuthToken || !config.twilioMessagingServiceSid) {
+  if (!config.twilioAccountSid || !config.twilioAuthToken || !config.twilioFromNumber) {
     throw errors.internal('Twilio configuration is missing')
   }
 
   const client = twilio(config.twilioAccountSid, config.twilioAuthToken)
-  await client.messages.create({
+  const message = await client.messages.create({
     body,
-    messagingServiceSid: config.twilioMessagingServiceSid,
     to: normalizePhoneE164(to),
+    from: config.twilioFromNumber,
   })
+  console.log('SMS sent:', message.sid)
 }
