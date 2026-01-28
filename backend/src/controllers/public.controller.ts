@@ -6,6 +6,7 @@ import { verifyAccessCode, generateStatusToken, generateAccessCode, hashAccessCo
 import { uploadFile } from '../utils/storage'
 import { sendEmail } from '../utils/email'
 import { sendSms } from '../utils/sms'
+import { sendInitialSchedulingNotice, scheduleSchedulingReminders } from '../utils/patient-scheduling'
 
 /**
  * Get clinic by slug (public - no auth required)
@@ -318,6 +319,7 @@ export async function submitReferral(
       patientLastName,
       patientDob,
       insurance,
+      patientEmail,
       // GP/Submitter information
       gpClinicName,
       submittedByName,
@@ -411,6 +413,7 @@ export async function submitReferral(
         patientName: `${patientFirstName} ${patientLastName}`, // Keep for backward compatibility
         patientDob: patientDob ? new Date(patientDob) : new Date(), // Default to today if not provided
         patientPhone: patientPhone || null,
+        patientEmail: patientEmail || null,
         insurance: insurance || null,
         gpClinicName,
         submittedByName,
@@ -477,21 +480,24 @@ export async function submitReferral(
       },
     })
 
-    if (patientPhone) {
-      const patientDisplayName =
-        patientFirstName && patientLastName
-          ? `${patientFirstName} ${patientLastName}`
-          : patientFirstName || patientLastName || referral.patientName
-      const clinicName = referralLink.specialist.clinic.name || 'the clinic'
-      const message =
-        `Hi ${patientDisplayName}, your referral has been submitted to ${clinicName}. ` +
-        `We will contact you soon with next steps.`
-      try {
-        await sendSms(patientPhone, message)
-      } catch (smsError) {
-        console.warn('Failed to send referral submission SMS:', smsError)
-      }
-    }
+    const patientDisplayName =
+      patientFirstName && patientLastName
+        ? `${patientFirstName} ${patientLastName}`
+        : patientFirstName || patientLastName || referral.patientName
+
+    await sendInitialSchedulingNotice({
+      referralId: referral.id,
+      name: patientDisplayName,
+      phone: patientPhone || undefined,
+      email: patientEmail || undefined,
+    })
+
+    scheduleSchedulingReminders({
+      referralId: referral.id,
+      name: patientDisplayName,
+      phone: patientPhone || undefined,
+      email: patientEmail || undefined,
+    })
 
     // Send status tracking link to submitter (if email provided)
     if (submittedByEmail) {
