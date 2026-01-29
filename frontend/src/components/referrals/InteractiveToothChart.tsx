@@ -24,6 +24,132 @@ interface ToothData {
     x: number
     y: number
     rotation: number
+    type: ToothType
+}
+
+type ToothType = 'incisor' | 'canine' | 'premolar' | 'molar'
+
+type ToothQuadrant = 'upper-left' | 'upper-right' | 'lower-left' | 'lower-right'
+
+const TOOTH_BASE_WIDTH = 100
+const TOOTH_BASE_HEIGHT = 120
+const TOOTH_SCALE = 0.35
+const LOWER_ARCH_Y_OFFSET = 60
+const PRIMARY_TOOTH_SCALE = 0.26
+const PRIMARY_LOWER_OFFSET = 32
+
+const TOOTH_SHAPES: Record<ToothType, string> = {
+    incisor:
+        'M32 12 C34 10 38 8 42 8 H58 C62 8 66 10 68 12 C70 14 72 18 74 24 L78 50 C78 58 78 66 76 72 L68 100 C66 104 62 108 58 110 C56 111 54 112 50 112 C46 112 44 111 42 110 C38 108 34 104 32 100 L24 72 C22 66 22 58 22 50 L26 24 C28 18 30 14 32 12 Z',
+    canine:
+        'M26 16 C32 10 38 8 44 10 L50 12 L56 10 C62 8 68 10 74 16 L82 44 C84 54 82 62 76 70 L62 102 C58 108 54 112 50 112 C46 112 42 108 38 102 L24 70 C18 62 16 54 18 44 Z',
+    premolar:
+        'M22 20 C28 12 38 10 46 12 L50 14 L54 12 C62 10 72 12 78 20 L86 46 C88 56 86 66 80 76 L66 102 C60 108 54 112 50 112 C46 112 40 108 34 102 L20 76 C14 66 12 56 14 46 Z',
+    molar:
+        'M18 30 C24 18 36 14 46 16 L50 18 L54 16 C64 14 76 18 82 30 L90 52 C94 64 92 76 86 88 L70 108 C62 114 56 116 50 116 C44 116 38 114 30 108 L14 88 C8 76 6 64 10 52 Z',
+}
+
+const TOOTH_INNER_SHADING: Record<ToothType, string> = {
+    incisor:
+        'M36 22 C38 20 42 18 46 18 H54 C58 18 62 20 64 22 C66 24 68 28 69 32 L72 50 C72 56 72 62 70 66 L64 90 C62 94 58 98 54 100 C52 101 51 102 50 102 C49 102 48 101 46 100 C42 98 38 94 36 90 L30 66 C28 62 28 56 28 50 L31 32 C32 28 34 24 36 22 Z',
+    canine:
+        'M32 26 C36 20 42 18 46 20 L50 22 L54 20 C58 18 64 20 68 26 L74 44 C76 52 74 60 70 68 L56 94 C54 98 52 100 50 100 C48 100 46 98 44 94 L30 68 C26 60 24 52 26 44 Z',
+    premolar:
+        'M30 30 C36 24 42 22 46 24 L50 26 L54 24 C58 22 64 24 70 30 L76 46 C78 54 76 62 72 70 L58 94 C56 98 52 100 50 100 C48 100 44 98 42 94 L28 70 C24 62 22 54 24 46 Z',
+    molar:
+        'M30 38 C36 30 42 28 46 30 L50 32 L54 30 C58 28 64 30 70 38 L76 54 C78 62 76 70 72 78 L60 92 C56 96 52 98 50 98 C48 98 44 96 40 92 L28 78 C24 70 22 62 24 54 Z',
+}
+
+const TOOTH_OCCLUSAL_DETAIL: Record<ToothType, string | null> = {
+    incisor: null,
+    canine: null,
+    premolar: null,
+    molar: 'M50 48 L62 60 L50 72 L38 60 Z M50 54 L56 60 L50 66 L44 60 Z',
+}
+
+const getToothType = (indexFromCenter: number): ToothType => {
+    if (indexFromCenter <= 1) return 'incisor'
+    if (indexFromCenter === 2) return 'canine'
+    if (indexFromCenter === 3 || indexFromCenter === 4) return 'premolar'
+    return 'molar'
+}
+
+const getPrimaryToothType = (label: string): ToothType => {
+    // A, J, T, K are outer molars (more circular)
+    if (['A', 'J', 'T', 'K'].includes(label)) return 'molar'
+    // B, I, S, L are canines (medium rounded)
+    if (['B', 'I', 'S', 'L'].includes(label)) return 'canine'
+    // C, D, E, F, G, H, M, N, O, P, Q, R are incisors (rectangular/oval)
+    return 'incisor'
+}
+
+const mapQuadrant = (quad: ToothData['quadrant']): ToothQuadrant => {
+    switch (quad) {
+        case 'UR':
+            return 'upper-right'
+        case 'UL':
+            return 'upper-left'
+        case 'LL':
+            return 'lower-left'
+        case 'LR':
+            return 'lower-right'
+    }
+}
+
+const ToothShape = ({
+    type,
+    selected,
+    quadrant,
+    scale = TOOTH_SCALE,
+    isPrimary = false,
+}: {
+    type: ToothType
+    selected: boolean
+    quadrant: ToothQuadrant
+    scale?: number
+    isPrimary?: boolean
+}) => {
+    const isUpper = quadrant.startsWith('upper')
+    const isLower = quadrant.startsWith('lower')
+    const isLeft = quadrant.endsWith('left')
+    const scaleX = isLeft ? -1 : 1
+    const scaleY = isUpper ? 1 : -1
+    const translateToCenter = `translate(${-TOOTH_BASE_WIDTH / 2}, ${-TOOTH_BASE_HEIGHT / 2})`
+    const occlusalFill = isLower ? 'rgba(120, 102, 84, 0.22)' : 'rgba(120, 102, 84, 0.35)'
+
+    return (
+        <g transform={`scale(${scale})`}>
+            <g transform={`scale(${scaleX}, ${scaleY})`}>
+                <g transform={translateToCenter}>
+                    {selected && (
+                        <path
+                            d={TOOTH_SHAPES[type]}
+                            fill="none"
+                            stroke="rgba(16, 185, 129, 0.8)"
+                            strokeWidth="6"
+                        />
+                    )}
+                    <path
+                        d={TOOTH_SHAPES[type]}
+                        fill={isPrimary ? "url(#primary-tooth-gradient)" : "url(#tooth-enamel)"}
+                        stroke="rgba(209, 213, 219, 0.6)"
+                        strokeWidth="1.8"
+                    />
+                    <path
+                        d={TOOTH_INNER_SHADING[type]}
+                        fill={isPrimary ? "url(#primary-tooth-shade)" : "url(#tooth-shade)"}
+                        opacity="0.55"
+                    />
+                    {TOOTH_OCCLUSAL_DETAIL[type] && (
+                        <path
+                            d={TOOTH_OCCLUSAL_DETAIL[type] as string}
+                            fill={occlusalFill}
+                        />
+                    )}
+                </g>
+            </g>
+        </g>
+    )
 }
 
 export function InteractiveToothChart({
@@ -82,7 +208,7 @@ export function InteractiveToothChart({
             // Top arch: -90 +/- (10 + index * 12) degrees
 
             const angleStep = 11 // Degrees per tooth
-            const startAngle = 10 // Offset from center line
+            const startAngle = 6 // Offset from center line
 
             let angleDeg: number
             if (isUpper) {
@@ -140,10 +266,13 @@ export function InteractiveToothChart({
             }
 
             const angleRad = (angleDeg * Math.PI) / 180
+            const frontOffset = indexFromCenter <= 1 ? -12 : 0
+            const localRx = rx + frontOffset
+            const localRy = ry + frontOffset
 
             // Calculate position
-            const x = cx + rx * Math.cos(angleRad)
-            const y = cy + ry * Math.sin(angleRad) + (isUpper ? 0 : 40) // Separate upper/lower arches slightly
+            const x = cx + localRx * Math.cos(angleRad)
+            const y = cy + localRy * Math.sin(angleRad) + (isUpper ? 0 : LOWER_ARCH_Y_OFFSET) // Separate upper/lower arches slightly
 
             teeth.push({
                 id: uns.toString(),
@@ -152,7 +281,8 @@ export function InteractiveToothChart({
                 quadrant: quad,
                 x,
                 y,
-                rotation: angleDeg + 90 // Rotation for the tooth shape to face perpendicular to arch
+                rotation: angleDeg + 90, // Rotation for the tooth shape to face perpendicular to arch
+                type: getToothType(indexFromCenter),
             })
         }
 
@@ -190,6 +320,65 @@ export function InteractiveToothChart({
             // FDI: 41 + i
             addTooth(25 + i, 41 + i, 'LR', i, false, true)
         }
+
+        return teeth
+    }, [])
+
+    const primaryTeethData = useMemo(() => {
+        const teeth: ToothData[] = []
+        const width = 400
+        const height = 500
+        const cx = width / 2
+        const cy = height / 2 - 10
+        const rx = 85
+        const ry = 95
+
+        const addPrimaryTooth = (
+            label: string,
+            quad: 'UR' | 'UL' | 'LL' | 'LR',
+            indexFromCenter: number,
+            isUpper: boolean,
+            isRight: boolean
+        ) => {
+            const angleStep = 12
+            const startAngle = 8
+
+            let angleDeg: number
+            if (isUpper) {
+                angleDeg = isRight
+                    ? -90 - (startAngle + indexFromCenter * angleStep)
+                    : -90 + (startAngle + indexFromCenter * angleStep)
+            } else {
+                angleDeg = isRight
+                    ? 90 + (startAngle + indexFromCenter * angleStep)
+                    : 90 - (startAngle + indexFromCenter * angleStep)
+            }
+
+            const angleRad = (angleDeg * Math.PI) / 180
+            const x = cx + rx * Math.cos(angleRad)
+            const y = cy + ry * Math.sin(angleRad) + (isUpper ? 0 : PRIMARY_LOWER_OFFSET)
+
+            teeth.push({
+                id: label,
+                uns: label,
+                fdi: label,
+                quadrant: quad,
+                x,
+                y,
+                rotation: angleDeg + 90,
+                type: getPrimaryToothType(label),
+            })
+        }
+
+        const upperRight = ['E', 'D', 'C', 'B', 'A']
+        const upperLeft = ['F', 'G', 'H', 'I', 'J']
+        const lowerLeft = ['O', 'N', 'M', 'L', 'K']
+        const lowerRight = ['P', 'Q', 'R', 'S', 'T']
+
+        upperRight.forEach((label, i) => addPrimaryTooth(label, 'UR', i, true, true))
+        upperLeft.forEach((label, i) => addPrimaryTooth(label, 'UL', i, true, false))
+        lowerLeft.forEach((label, i) => addPrimaryTooth(label, 'LL', i, false, false))
+        lowerRight.forEach((label, i) => addPrimaryTooth(label, 'LR', i, false, true))
 
         return teeth
     }, [])
@@ -236,7 +425,7 @@ export function InteractiveToothChart({
         const cy = 250 - 20
         const rx = 185
         const ry = 205
-        const yOffset = (quad === 'UL' || quad === 'UR') ? 0 : 40
+        const yOffset = (quad === 'UL' || quad === 'UR') ? 0 : LOWER_ARCH_Y_OFFSET
 
         // Start/End angles (radians) matching the teeth spread
         // UR (Screen Left Top): -180 to -90
@@ -358,6 +547,31 @@ export function InteractiveToothChart({
                 <svg viewBox="0 0 400 560" className="w-full h-full drop-shadow-2xl">
                     {/* Defs for glow effects */}
                     <defs>
+                        <linearGradient id="tooth-enamel" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#FFFFFF" />
+                            <stop offset="45%" stopColor="#FAFAFA" />
+                            <stop offset="78%" stopColor="#F5F5F5" />
+                            <stop offset="100%" stopColor="#F0F0F0" />
+                        </linearGradient>
+                        <linearGradient id="primary-tooth-gradient" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor="#F3F4F6" />
+                            <stop offset="45%" stopColor="#E5E7EB" />
+                            <stop offset="78%" stopColor="#D1D5DB" />
+                            <stop offset="100%" stopColor="#C4C8CC" />
+                        </linearGradient>
+                        <radialGradient id="tooth-shade" cx="42%" cy="32%" r="62%">
+                            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+                            <stop offset="60%" stopColor="#F5F5F5" stopOpacity="0.4" />
+                            <stop offset="100%" stopColor="#E5E5E5" stopOpacity="0.2" />
+                        </radialGradient>
+                        <radialGradient id="primary-tooth-shade" cx="42%" cy="32%" r="62%">
+                            <stop offset="0%" stopColor="#E5E7EB" stopOpacity="0.9" />
+                            <stop offset="60%" stopColor="#D1D5DB" stopOpacity="0.5" />
+                            <stop offset="100%" stopColor="#B8BCC2" stopOpacity="0.3" />
+                        </radialGradient>
+                        <filter id="tooth-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(15, 23, 42, 0.25)" />
+                        </filter>
                         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
                             <feGaussianBlur stdDeviation="3" result="blur" />
                             <feComposite in="SourceGraphic" in2="blur" operator="over" />
@@ -376,8 +590,8 @@ export function InteractiveToothChart({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 className={cn(
-                                    "transition-all duration-300 cursor-pointer hover:stroke-emerald-500 hover:stroke-[3]",
-                                    status !== 'none' && "filter drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]"
+                                    "transition-all duration-300 cursor-pointer hover:stroke-cyan-400 hover:stroke-[3]",
+                                    status !== 'none' && "filter drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
                                 )}
                                 onClick={() => toggleQuadrant(quad)}
                             />
@@ -392,7 +606,6 @@ export function InteractiveToothChart({
                     {/* Teeth */}
                     {teethData.map((tooth) => {
                         const isSelected = selectedTeeth.includes(tooth.id)
-                        // Tooth shape: Simple rounded rect or path rotated
                         return (
                             <g
                                 key={tooth.id}
@@ -400,28 +613,21 @@ export function InteractiveToothChart({
                                 onClick={() => toggleTooth(tooth.id)}
                                 className="cursor-pointer group"
                             >
-                                {/* Tooth Body Outline (Root + Crown abstract) */}
-                                {/* Drawing a simple shape that looks like a tooth from occlusal view (ovalish) */}
-                                <ellipse
-                                    rx="14"
-                                    ry="10"
-                                    fill={isSelected ? 'rgba(16, 185, 129, 0.2)' : theme.toothFill}
-                                    stroke={isSelected ? '#34d399' : theme.toothStroke}
-                                    strokeWidth={isSelected ? 2 : 1.5}
+                                <g
                                     className={cn(
-                                        "transition-all duration-200 group-hover:stroke-emerald-400",
-                                        isSelected && "filter drop-shadow-[0_0_5px_rgba(52,211,153,0.4)]"
+                                        'transition-all duration-200 origin-center',
+                                        'group-hover:drop-shadow-[0_6px_10px_rgba(0,0,0,0.18)]',
+                                        isSelected && 'drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]'
                                     )}
-                                />
-
-                                {/* Selecting Indicator (Inner fill) */}
-                                {isSelected && (
-                                    <path
-                                        d="M -6 -4 L 0 4 L 6 -4"
-                                        fill="none" // Just a symbol? Or maybe just full fill.
-                                    // Let's just rely on the fill above.
+                                    style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+                                    filter="url(#tooth-shadow)"
+                                >
+                                    <ToothShape
+                                        type={tooth.type}
+                                        selected={isSelected}
+                                        quadrant={mapQuadrant(tooth.quadrant)}
                                     />
-                                )}
+                                </g>
 
                                 {/* Label Number */}
                                 <text
@@ -433,6 +639,37 @@ export function InteractiveToothChart({
                                     // Better to do text as separate <text> element in main coordinate space to avoid rotation.
                                     fill="none"
                                 />
+                            </g>
+                        )
+                    })}
+
+                    {/* Primary Teeth (inner ring, labels A-T) */}
+                    {primaryTeethData.map((tooth) => {
+                        const isSelected = selectedTeeth.includes(tooth.id)
+                        return (
+                            <g
+                                key={`primary-${tooth.id}`}
+                                transform={`translate(${tooth.x}, ${tooth.y}) rotate(${tooth.rotation})`}
+                                onClick={() => toggleTooth(tooth.id)}
+                                className="cursor-pointer group"
+                            >
+                                <g
+                                    className={cn(
+                                        'transition-all duration-200 origin-center',
+                                        'group-hover:drop-shadow-[0_6px_10px_rgba(0,0,0,0.18)]',
+                                        isSelected && 'drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                                    )}
+                                    style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+                                    filter="url(#tooth-shadow)"
+                                >
+                                    <ToothShape
+                                        type={tooth.type}
+                                        selected={isSelected}
+                                        quadrant={mapQuadrant(tooth.quadrant)}
+                                        scale={PRIMARY_TOOTH_SCALE}
+                                        isPrimary={true}
+                                    />
+                                </g>
                             </g>
                         )
                     })}
@@ -455,12 +692,36 @@ export function InteractiveToothChart({
                                 y={ly}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                fill={isSelected ? '#34d399' : theme.label}
+                                fill={isSelected ? '#10b981' : theme.label}
                                 fontSize="11"
                                 fontWeight={isSelected ? 'bold' : 'normal'}
                                 className="pointer-events-none select-none transition-colors"
                             >
                                 {system === 'UNS' ? tooth.uns : tooth.fdi}
+                            </text>
+                        )
+                    })}
+
+                    {primaryTeethData.map((tooth) => {
+                        const isSelected = selectedTeeth.includes(tooth.id)
+                        const angleRad = (tooth.rotation - 90) * Math.PI / 180
+                        const labelR = 20
+                        const lx = tooth.x + Math.cos(angleRad) * labelR
+                        const ly = tooth.y + Math.sin(angleRad) * labelR
+
+                        return (
+                            <text
+                                key={`primary-label-${tooth.id}`}
+                                x={lx}
+                                y={ly}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fill={isSelected ? '#10b981' : theme.label}
+                                fontSize="10"
+                                fontWeight={isSelected ? 'bold' : 'normal'}
+                                className="pointer-events-none select-none opacity-90"
+                            >
+                                {tooth.id}
                             </text>
                         )
                     })}
@@ -494,7 +755,7 @@ export function InteractiveToothChart({
                 {/* Selected Summary Chips */}
                 <div className="flex flex-wrap gap-2 mt-4 justify-center">
                     {selectedTeeth.sort((a, b) => parseInt(a) - parseInt(b)).map(id => (
-                        <div key={id} className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shadow-lg">
+                        <div key={id} className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow-lg">
                             {system === 'UNS' ? id : teethData.find(t => t.id === id)?.fdi}
                         </div>
                     ))}

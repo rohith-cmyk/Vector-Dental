@@ -95,11 +95,12 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
           toggleTooth(tooth)
         }}
         className={cn(
-          'relative w-8 h-12 rounded-full border-2 flex items-center justify-center text-xs font-medium transition-all',
-          'hover:scale-105 focus:outline-none z-10',
+          'relative w-8 h-12 rounded-2xl border flex items-center justify-center text-xs font-medium transition-all duration-200',
+          'hover:scale-105 hover:shadow-md focus:outline-none z-10',
+          'bg-gradient-to-br from-white to-gray-50',
           isSelected
-            ? 'bg-neutral-800 border-neutral-700 text-white'
-            : 'bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50'
+            ? 'border-gray-200 text-gray-700 ring-2 ring-cyan-400 shadow-[0_0_12px_rgba(56,189,248,0.4)]'
+            : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:shadow-sm'
         )}
         style={{
           transform: `rotate(${angle}deg) translateY(${offsetY}px)`,
@@ -127,14 +128,14 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
         className={cn(
           'relative p-4 rounded-lg border transition-all cursor-pointer min-h-[140px]',
           sectionSelected
-            ? 'border-neutral-800 bg-neutral-100'
-            : 'border-black/10 bg-white hover:border-neutral-300 hover:bg-neutral-50',
+            ? 'border-cyan-300 bg-cyan-50/30'
+            : 'border-gray-200 bg-white/50 hover:border-gray-300 hover:bg-gray-50',
           isUpper ? 'pb-24' : 'pt-24'
         )}
         onClick={() => selectSection(section)}
         title={`Click to select/deselect ${label} section`}
       >
-        <div className="absolute top-2 left-3 text-xs font-medium text-neutral-500 uppercase z-20">
+        <div className="absolute top-2 left-3 text-xs font-medium text-gray-400 z-20">
           {label}
         </div>
 
@@ -198,7 +199,7 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
       </div>
 
       {/* Mouth-shaped Teeth Diagram - Curved arches */}
-      <div className="bg-white rounded-lg">
+      <div className="bg-gray-50 rounded-lg p-4">
         {/* Upper Arch - Curved down */}
         <div className="mb-8 mt-4">
           {renderArch('lower', ADULT_TEETH_UPPER, PRIMARY_TEETH_UPPER, 'Upper', true)}
@@ -212,7 +213,7 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
 
       {/* Selected Teeth Display - Chips at bottom */}
       {selectedTeeth.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 p-4 bg-neutral-50 rounded-lg border border-black/10">
+        <div className="flex flex-wrap items-center gap-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <span className="text-sm font-medium text-neutral-700">Selected:</span>
           {selectedTeeth
             .sort((a, b) => {
@@ -225,7 +226,7 @@ export function TeethDiagram({ selectedTeeth, onTeethChange }: TeethDiagramProps
                 key={tooth}
                 type="button"
                 onClick={() => toggleTooth(tooth)}
-                className="px-3 py-1 text-sm font-medium bg-neutral-800 text-white rounded-full hover:bg-neutral-700 flex items-center gap-1 transition-colors"
+                className="px-3 py-1 text-sm font-medium bg-cyan-500 text-white rounded-full hover:bg-cyan-600 flex items-center gap-1 transition-colors shadow-sm"
               >
                 {tooth}
                 <X className="w-3 h-3" />
