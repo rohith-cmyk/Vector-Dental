@@ -24,10 +24,18 @@ export function SpecialistCard({ specialist, onClick }: SpecialistCardProps) {
       )}
     >
       <div className="flex flex-col items-center mb-5">
-        <div
-          className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 mb-4"
-          aria-label={`${specialist.firstName} ${specialist.lastName}`}
-        />
+        {specialist.headshotUrl ? (
+          <img
+            src={specialist.headshotUrl}
+            alt={`${specialist.firstName} ${specialist.lastName}`}
+            className="w-14 h-14 rounded-full object-cover mb-4 border border-emerald-100"
+          />
+        ) : (
+          <div
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 mb-4"
+            aria-label={`${specialist.firstName} ${specialist.lastName}`}
+          />
+        )}
         <div className="flex flex-col items-center gap-0.5">
           <h3 className="text-md font-semibold text-neutral-700 text-center">
             {specialist.firstName} {specialist.lastName}

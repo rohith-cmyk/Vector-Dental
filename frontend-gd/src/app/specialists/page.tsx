@@ -258,6 +258,18 @@ export default function DoctorNetworkPage() {
   )
 }
 
+function resolvePhotoUrl(photoUrl?: string | null): string | null {
+  if (!photoUrl) return null
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    return photoUrl
+  }
+  if (!photoUrl.startsWith('/')) return photoUrl
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/gd'
+  const serverBaseUrl = apiBaseUrl.replace(/\/api\/gd\/?$/, '')
+  return `${serverBaseUrl}${photoUrl}`
+}
+
 function mapDirectoryToProfiles(specialists: Specialist[]): SpecialistProfile[] {
   return specialists.map((specialist, index) => {
     const fallback = MOCK_SPECIALISTS[index % MOCK_SPECIALISTS.length]
@@ -280,7 +292,7 @@ function mapDirectoryToProfiles(specialists: Specialist[]): SpecialistProfile[] 
       languages: (profile?.languages && profile.languages.length > 0)
         ? profile.languages
         : fallback.languages,
-      headshotUrl: fallback.headshotUrl,
+      headshotUrl: resolvePhotoUrl(profile?.photoUrl) || fallback.headshotUrl,
       officePhotoUrl: fallback.officePhotoUrl,
       location: {
         address: profile?.address || specialist.clinic?.address || fallback.location.address,

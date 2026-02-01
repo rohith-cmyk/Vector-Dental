@@ -69,6 +69,33 @@ export async function uploadClinicLogo(
 }
 
 /**
+ * Upload a specialist photo to storage
+ * @param file - File buffer
+ * @param fileName - Original file name
+ * @param mimeType - MIME type of the file
+ * @param clinicId - Clinic ID for organizing files
+ * @param userId - Specialist user ID for organizing files
+ * @returns File upload result with storage key and URL
+ */
+export async function uploadSpecialistPhoto(
+  file: Buffer,
+  fileName: string,
+  mimeType: string,
+  clinicId: string,
+  userId: string
+): Promise<FileUploadResult> {
+  const uniqueId = crypto.randomBytes(16).toString('hex')
+  const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_')
+  const storageKey = `specialist-photos/${clinicId}/${userId}/${uniqueId}-${sanitizedFileName}`
+
+  if (config.nodeEnv === 'production' || process.env.USE_SUPABASE_STORAGE === 'true') {
+    return uploadToSupabase(file, storageKey, mimeType, fileName)
+  }
+
+  return uploadToLocal(file, storageKey, fileName, mimeType)
+}
+
+/**
  * Upload file to Supabase Storage
  */
 async function uploadToSupabase(

@@ -15,7 +15,6 @@ export async function getSpecialistDirectory(req: Request, res: Response) {
 
         // Build where clause
         const where: any = {
-            userType: 'SPECIALIST',
             role: { in: ['ADMIN', 'STAFF'] },
         }
 
@@ -68,6 +67,7 @@ export async function getSpecialistDirectory(req: Request, res: Response) {
                             phone: true,
                             email: true,
                             website: true,
+                            photoUrl: true,
                             address: true,
                             city: true,
                             state: true,
@@ -133,7 +133,7 @@ export async function getSpecialistProfile(req: Request, res: Response) {
         const specialist = await prisma.user.findFirst({
             where: {
                 id,
-                userType: 'SPECIALIST',
+                role: { in: ['ADMIN', 'STAFF'] },
             },
             select: {
                 id: true,

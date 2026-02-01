@@ -142,9 +142,17 @@ export const authService = {
         api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
       }
       const response = await api.get<{ success: boolean; data: User }>('/auth/profile')
-      
+
       return response.data.data
     } catch (error) {
+      // Clear stale auth state if the profile fetch fails
+      localStorage.removeItem('auth_token')
+      delete api.defaults.headers.common['Authorization']
+      try {
+        await supabase.auth.signOut()
+      } catch {
+        // Ignore sign out errors
+      }
       return null
     }
   },

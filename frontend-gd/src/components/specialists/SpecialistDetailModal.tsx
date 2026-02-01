@@ -54,10 +54,18 @@ export function SpecialistDetailModal({ isOpen, onClose, specialist }: Specialis
           </button>
 
           <div className="flex flex-col items-center mb-6">
-            <div
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 mb-4"
-              aria-label={`${specialist.firstName} ${specialist.lastName}`}
-            />
+            {specialist.headshotUrl ? (
+              <img
+                src={specialist.headshotUrl}
+                alt={`${specialist.firstName} ${specialist.lastName}`}
+                className="w-20 h-20 rounded-full object-cover mb-4 border border-emerald-100"
+              />
+            ) : (
+              <div
+                className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 mb-4"
+                aria-label={`${specialist.firstName} ${specialist.lastName}`}
+              />
+            )}
             <h2 className="text-lg font-semibold text-neutral-700 text-center">
               {specialist.firstName} {specialist.lastName}
             </h2>

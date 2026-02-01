@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types'
-import { authService } from '@/services/auth.service'
+import { authService } from '@/services/auth.supabase.service'
 
 interface AuthState {
   user: User | null
@@ -11,7 +11,7 @@ interface AuthState {
   isLoading: boolean
   setUser: (user: User | null) => void
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   checkAuth: () => Promise<void>
 }
 
@@ -29,7 +29,7 @@ export const useAuth = create<AuthState>()(
 
       login: async (email, password) => {
         try {
-          const response = await authService.login({ email, password })
+          const response = await authService.login(email, password)
           set({ user: response.user, isAuthenticated: true, isLoading: false })
         } catch (error) {
           set({ user: null, isAuthenticated: false, isLoading: false })
@@ -37,19 +37,15 @@ export const useAuth = create<AuthState>()(
         }
       },
 
-      logout: () => {
-        authService.logout()
+      logout: async () => {
+        await authService.logout()
         set({ user: null, isAuthenticated: false })
       },
 
       checkAuth: async () => {
         try {
-          if (authService.isAuthenticated()) {
-            const user = await authService.getCurrentUser()
-            set({ user, isAuthenticated: true, isLoading: false })
-          } else {
-            set({ user: null, isAuthenticated: false, isLoading: false })
-          }
+          const user = await authService.getCurrentUser()
+          set({ user, isAuthenticated: !!user, isLoading: false })
         } catch (error) {
           set({ user: null, isAuthenticated: false, isLoading: false })
         }

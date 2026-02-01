@@ -55,6 +55,7 @@ model User {
 
 enum UserRole {
   ADMIN
+  GENERAL_DENTIST
   STAFF
 }
 
@@ -75,6 +76,8 @@ model SpecialistProfile {
   phone            String?
   email            String?
   website          String?
+  photoUrl         String?  @map("photo_url")
+  photoStorageKey  String?  @map("photo_storage_key")
   address          String?
   city             String?
   state            String?

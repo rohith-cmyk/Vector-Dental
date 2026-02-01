@@ -27,6 +27,8 @@ export interface SpecialistProfile {
   phone?: string
   email?: string
   website?: string
+  photoUrl?: string
+  photoStorageKey?: string
   address?: string
   city?: string
   state?: string

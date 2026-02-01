@@ -4,30 +4,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { DashboardLayout } from '@/components/layout'
 import { Button, Card, CardContent, Input, Modal } from '@/components/ui'
 import { SPECIALTY_CATEGORIES } from '@/constants/specialists'
+import { handleApiError } from '@/lib/api'
+import {
+  specialistProfilesService,
+  type SpecialistProfileEntry,
+  type SpecialistRole,
+} from '@/services/specialist-profiles.service'
 
-type SpecialistRole = 'Admin' | 'Staff'
-
-interface SpecialistEntry {
-  id: string
-  fullName: string
-  email: string
-  role: SpecialistRole
-  credentials: string
-  specialty: string
-  yearsInPractice: string
-  boardCertified: boolean
-  phone: string
-  website: string
-  address: string
-  city: string
-  state: string
-  zip: string
-  languages: string
-  subSpecialties: string
-  insuranceAccepted: string
-}
-
-const STORAGE_KEY = 'specialist-profiles-list'
+type SpecialistEntry = SpecialistProfileEntry
 
 export default function SpecialistProfilesSettingsPage() {
   const [profiles, setProfiles] = useState<SpecialistEntry[]>([])
@@ -49,23 +33,31 @@ export default function SpecialistProfilesSettingsPage() {
   const [languages, setLanguages] = useState('')
   const [subSpecialties, setSubSpecialties] = useState('')
   const [insuranceAccepted, setInsuranceAccepted] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [formError, setFormError] = useState('')
+  const [loadError, setLoadError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDeleteName, setConfirmDeleteName] = useState('')
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (stored) {
+    const loadProfiles = async () => {
+      setLoadError('')
+      setIsLoading(true)
       try {
-        const parsed = JSON.parse(stored) as SpecialistEntry[]
-        setProfiles(parsed)
-      } catch {
-        setProfiles([])
+        const response = await specialistProfilesService.getAll()
+        setProfiles(response.data)
+      } catch (error) {
+        setLoadError(handleApiError(error))
+      } finally {
+        setIsLoading(false)
       }
     }
-  }, [])
 
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles))
-  }, [profiles])
+    loadProfiles()
+  }, [])
 
   const openAddModal = () => {
     setEditingId(null)
@@ -85,6 +77,7 @@ export default function SpecialistProfilesSettingsPage() {
     setLanguages('')
     setSubSpecialties('')
     setInsuranceAccepted('')
+    setPhotoFile(null)
     setFormError('')
     setIsModalOpen(true)
   }
@@ -107,46 +100,27 @@ export default function SpecialistProfilesSettingsPage() {
     setLanguages(entry.languages)
     setSubSpecialties(entry.subSpecialties)
     setInsuranceAccepted(entry.insuranceAccepted)
+    setPhotoFile(null)
     setFormError('')
     setIsModalOpen(true)
   }
 
-  const handleSave = () => {
+  const splitList = (value: string) =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+
+  const handleSave = async () => {
     setFormError('')
     if (!fullName.trim() || !email.trim()) {
       setFormError('Full name and email are required.')
       return
     }
 
-    if (editingId) {
-      setProfiles((prev) =>
-        prev.map((entry) =>
-          entry.id === editingId
-            ? {
-              ...entry,
-              fullName: fullName.trim(),
-              email: email.trim(),
-              role,
-              credentials: credentials.trim(),
-              specialty: specialty.trim(),
-              yearsInPractice: yearsInPractice.trim(),
-              boardCertified,
-              phone: phone.trim(),
-              website: website.trim(),
-              address: address.trim(),
-              city: city.trim(),
-              state: state.trim(),
-              zip: zip.trim(),
-              languages: languages.trim(),
-              subSpecialties: subSpecialties.trim(),
-              insuranceAccepted: insuranceAccepted.trim(),
-            }
-            : entry
-        )
-      )
-    } else {
-      const newEntry: SpecialistEntry = {
-        id: crypto.randomUUID(),
+    setIsSaving(true)
+    try {
+      const payload = {
         fullName: fullName.trim(),
         email: email.trim(),
         role,
@@ -160,14 +134,56 @@ export default function SpecialistProfilesSettingsPage() {
         city: city.trim(),
         state: state.trim(),
         zip: zip.trim(),
-        languages: languages.trim(),
-        subSpecialties: subSpecialties.trim(),
-        insuranceAccepted: insuranceAccepted.trim(),
+        languages: splitList(languages),
+        subSpecialties: splitList(subSpecialties),
+        insuranceAccepted: splitList(insuranceAccepted),
       }
-      setProfiles((prev) => [newEntry, ...prev])
-    }
 
-    setIsModalOpen(false)
+      if (editingId) {
+        const response = await specialistProfilesService.update(editingId, payload)
+        let nextEntry = response.data
+        if (photoFile) {
+          const photoResponse = await specialistProfilesService.uploadPhoto(editingId, photoFile)
+          nextEntry = photoResponse.data
+        }
+        setProfiles((prev) => prev.map((entry) => (entry.id === editingId ? nextEntry : entry)))
+      } else {
+        const response = await specialistProfilesService.create(payload)
+        let nextEntry = response.data
+        if (photoFile) {
+          const photoResponse = await specialistProfilesService.uploadPhoto(response.data.id, photoFile)
+          nextEntry = photoResponse.data
+        }
+        setProfiles((prev) => [nextEntry, ...prev])
+      }
+
+      setIsModalOpen(false)
+    } catch (error) {
+      setFormError(handleApiError(error))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeleteRequest = (entry: SpecialistEntry) => {
+    setConfirmDeleteId(entry.id)
+    setConfirmDeleteName(entry.fullName)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmDeleteId) return
+    setLoadError('')
+    setDeletingId(confirmDeleteId)
+    try {
+      await specialistProfilesService.remove(confirmDeleteId)
+      setProfiles((prev) => prev.filter((profile) => profile.id !== confirmDeleteId))
+      setConfirmDeleteId(null)
+      setConfirmDeleteName('')
+    } catch (error) {
+      setLoadError(handleApiError(error))
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const sortedProfiles = useMemo(() => {
@@ -186,6 +202,7 @@ export default function SpecialistProfilesSettingsPage() {
             Add user
           </Button>
         </div>
+        {loadError && <div className="text-sm text-amber-600">{loadError}</div>}
 
         <Card>
           <CardContent className="p-0">
@@ -200,7 +217,13 @@ export default function SpecialistProfilesSettingsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedProfiles.length === 0 ? (
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-sm text-neutral-400">
+                        Loading specialists...
+                      </td>
+                    </tr>
+                  ) : sortedProfiles.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-8 text-center text-sm text-neutral-400">
                         No specialists added yet.
@@ -222,6 +245,13 @@ export default function SpecialistProfilesSettingsPage() {
                             onClick={() => openEditModal(entry)}
                           >
                             Edit
+                          </button>
+                          <button
+                            className="ml-3 text-sm text-red-500 hover:text-red-700"
+                            onClick={() => handleDeleteRequest(entry)}
+                            disabled={deletingId === entry.id}
+                          >
+                            {deletingId === entry.id ? 'Deleting...' : 'Delete'}
                           </button>
                         </td>
                       </tr>
@@ -350,6 +380,15 @@ export default function SpecialistProfilesSettingsPage() {
             onChange={(e) => setInsuranceAccepted(e.target.value)}
             placeholder="Delta Dental PPO, Cigna Dental PPO"
           />
+          <Input
+            label="Doctor Photo"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null
+              setPhotoFile(file)
+            }}
+          />
           <div className="space-y-2">
             <label className="block text-[10pt] text-neutral-400">Role</label>
             <select
@@ -365,8 +404,39 @@ export default function SpecialistProfilesSettingsPage() {
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleSave}>
-              Save
+            <Button variant="primary" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!confirmDeleteId}
+        onClose={() => {
+          if (deletingId) return
+          setConfirmDeleteId(null)
+          setConfirmDeleteName('')
+        }}
+        title="Delete specialist?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-neutral-600">
+            Delete {confirmDeleteName}? This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmDeleteId(null)
+                setConfirmDeleteName('')
+              }}
+              disabled={!!deletingId}
+            >
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleDeleteConfirm} disabled={!!deletingId}>
+              {deletingId ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </div>

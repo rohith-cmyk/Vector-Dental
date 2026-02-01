@@ -39,6 +39,7 @@ export interface Specialist {
         phone?: string | null
         email?: string | null
         website?: string | null
+        photoUrl?: string | null
         address?: string | null
         city?: string | null
         state?: string | null
