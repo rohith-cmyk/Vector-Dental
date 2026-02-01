@@ -89,6 +89,7 @@ export const referralService = {
         urgency?: 'ROUTINE' | 'URGENT' | 'EMERGENCY'
         selectedTeeth?: string[]
         notes?: string
+        status?: 'DRAFT' | 'SUBMITTED'
     }): Promise<ApiResponse<Referral>> {
         const response = await api.post('/referrals', data)
         return response.data

@@ -191,6 +191,7 @@ export async function createReferral(req: Request, res: Response) {
             urgency = 'ROUTINE',
             selectedTeeth = [],
             notes,
+            status,
         } = req.body
 
         // Validate required fields
@@ -258,7 +259,7 @@ export async function createReferral(req: Request, res: Response) {
                 notes,
 
                 // Status
-                status: 'SUBMITTED',
+                status: status === 'DRAFT' ? 'DRAFT' : 'SUBMITTED',
                 statusToken,
             },
             include: {

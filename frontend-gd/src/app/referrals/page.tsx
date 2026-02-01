@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowUpRight, Eye, Search } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout'
 import { Badge, Card, CardContent, LoadingState } from '@/components/ui'
+import { NewReferralForm } from '@/components/referrals/NewReferralModal'
 import { referralService } from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Referral } from '@/types'
@@ -369,6 +370,8 @@ export default function ReferralsPage() {
   const { user, isLoading: authLoading } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [activeTab, setActiveTab] = useState<'sent' | 'draft'>('sent')
+  const [view, setView] = useState<'list' | 'form'>('list')
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -378,30 +381,37 @@ export default function ReferralsPage() {
     }
   }, [user, authLoading, router])
 
+  const fetchReferrals = async () => {
+    setLoading(true)
+    try {
+      const response = await referralService.getMyReferrals({
+        limit: 50,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchQuery.trim() || undefined,
+      })
+      setReferrals(getReferralsList(response.data.data))
+    } catch (error) {
+      console.error('Failed to fetch referrals:', error)
+      setReferrals([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!user) return
-    const timer = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const response = await referralService.getMyReferrals({
-          limit: 50,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
-          search: searchQuery.trim() || undefined,
-        })
-        setReferrals(getReferralsList(response.data.data))
-      } catch (error) {
-        console.error('Failed to fetch referrals:', error)
-        setReferrals([])
-      } finally {
-        setLoading(false)
-      }
+    const timer = setTimeout(() => {
+      fetchReferrals()
     }, 300)
 
     return () => clearTimeout(timer)
   }, [user, searchQuery, statusFilter])
 
   const effectiveReferrals = referrals.length > 0 ? referrals : mockReferrals
-  const hasResults = effectiveReferrals.length > 0
+  const tabFilteredReferrals = effectiveReferrals.filter((referral) =>
+    activeTab === 'draft' ? referral.status === 'DRAFT' : referral.status !== 'DRAFT'
+  )
+  const hasResults = tabFilteredReferrals.length > 0
 
   const statusValue = useMemo(() => statusFilter, [statusFilter])
 
@@ -420,138 +430,203 @@ export default function ReferralsPage() {
   return (
     <DashboardLayout title="Referrals" subtitle="Track referrals you have sent">
       <div className="space-y-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white p-1 shadow-sm">
-          <button className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
-            <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
-            Sent
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" strokeWidth={1.5} />
-              <input
-                type="text"
-                placeholder="Search referrals"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="cursor-pointer w-full pl-10 pr-4 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-100 bg-white text-sm text-neutral-700 placeholder-neutral-400 transition-colors"
+        <div className="flex items-center justify-between gap-4">
+          <div className="relative inline-flex items-center rounded-full border border-black/10 bg-white p-1 shadow-sm">
+            {view === 'list' && (
+              <span
+                className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full border border-emerald-200 bg-emerald-50 transition-transform duration-300 ${
+                  activeTab === 'draft' ? 'translate-x-full' : ''
+                }`}
               />
-            </div>
-            <div className="flex-shrink-0">
-              <select
-                value={statusValue}
-                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                className="cursor-pointer w-full min-w-[160px] appearance-none rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-100"
-              >
-                {statusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('sent')
+                setStatusFilter('all')
+                setView('list')
+              }}
+              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                view === 'list' && activeTab === 'sent'
+                  ? 'text-emerald-700'
+                  : 'text-neutral-500 hover:text-neutral-700'
+              }`}
+            >
+              <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+              Sent
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('draft')
+                setStatusFilter('DRAFT')
+                setView('list')
+              }}
+              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                view === 'list' && activeTab === 'draft'
+                  ? 'text-emerald-700'
+                  : 'text-neutral-500 hover:text-neutral-700'
+              }`}
+            >
+              Draft
+            </button>
           </div>
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-sm text-white rounded-full hover:bg-emerald-700 transition-colors"
-          >
-            New Referral
-          </button>
+          {view === 'form' && (
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              className="px-3 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 border border-neutral-200 rounded-full hover:border-neutral-300"
+            >
+              Back to list
+            </button>
+          )}
         </div>
 
-        <Card>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400"></div>
+        {view === 'list' && (
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" strokeWidth={1.5} />
+                <input
+                  type="text"
+                  placeholder="Search referrals"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="cursor-pointer w-full pl-10 pr-4 py-2 border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-neutral-100 bg-white text-sm text-neutral-700 placeholder-neutral-400 transition-colors"
+                />
               </div>
-            ) : !hasResults ? (
-              <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
-                <p>No referrals found</p>
+              <div className="flex-shrink-0">
+                <select
+                  value={statusValue}
+                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                  className="cursor-pointer w-full min-w-[160px] appearance-none rounded-lg border border-black/10 bg-white px-3 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-100"
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ) : (
-              <div className="overflow-x-auto rounded-lg">
-                <table className="w-full table-fixed">
-                  <thead className="bg-neutral-50">
-                    <tr>
-                      <th className="w-52 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
-                        Patient
-                      </th>
-                      <th className="w-56 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
-                        To Clinic
-                      </th>
-                      <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
-                        Reason
-                      </th>
-                      <th className="w-28 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
-                        Urgency
-                      </th>
-                      <th className="w-28 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
-                        Status
-                      </th>
-                      <th className="w-32 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
-                        Sent
-                      </th>
-                      <th className="w-20 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-black/5">
-                    {effectiveReferrals.map((referral) => (
-                      <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-neutral-700">
-                            {getPatientName(referral)}
-                          </div>
-                          <div className="text-xs text-neutral-400">
-                            {referral.patientPhone || '—'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-neutral-700">
-                            {referral.intendedRecipient?.clinic?.name || 'Clinic'}
-                          </div>
-                          <div className="text-xs text-neutral-400">
-                            {referral.intendedRecipient?.name || 'Specialist'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-neutral-400 truncate">
-                            {referral.reason}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={getUrgencyBadgeVariant(referral.urgency)}>
-                            {(referral.urgency || '').toUpperCase()}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge variant={getStatusBadgeVariant(referral.status)}>
-                            {(referral.status || '').toUpperCase()}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
-                          {referral.createdAt ? formatRelativeTime(referral.createdAt) : '—'}
-                        </td>
-                        <td className="px-6 py-4 text-right text-sm">
-                          <button
-                            type="button"
-                            className="text-neutral-400 hover:text-neutral-800"
-                          >
-                            <Eye className="h-4 w-4" strokeWidth={1.5} />
-                          </button>
-                        </td>
+            </div>
+            <button
+              type="button"
+              onClick={() => setView('form')}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-sm text-white rounded-full hover:bg-emerald-700 transition-colors"
+            >
+              New Referral
+            </button>
+          </div>
+        )}
+
+        {view === 'form' ? (
+          <div className="space-y-4">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-neutral-900">Create Referral</h2>
+              <p className="text-sm text-neutral-500">Fill in the details and send to a specialist.</p>
+            </div>
+            <Card className="max-w-4xl mx-auto w-full">
+              <CardContent className="p-6">
+                <NewReferralForm
+                  onCancel={() => setView('list')}
+                  onSuccess={fetchReferrals}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400"></div>
+                </div>
+              ) : !hasResults ? (
+                <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
+                  <p>{activeTab === 'draft' ? 'No draft referrals found' : 'No referrals found'}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg">
+                  <table className="w-full table-fixed">
+                    <thead className="bg-neutral-50">
+                      <tr>
+                        <th className="w-52 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                          Patient
+                        </th>
+                        <th className="w-56 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                          To Clinic
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                          Reason
+                        </th>
+                        <th className="w-28 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                          Urgency
+                        </th>
+                        <th className="w-28 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                          Status
+                        </th>
+                        <th className="w-32 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
+                          Sent
+                        </th>
+                        <th className="w-20 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
+                          Actions
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-black/5">
+                      {tabFilteredReferrals.map((referral) => (
+                        <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-medium text-neutral-700">
+                              {getPatientName(referral)}
+                            </div>
+                            <div className="text-xs text-neutral-400">
+                              {referral.patientPhone || '—'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-medium text-neutral-700">
+                              {referral.intendedRecipient?.clinic?.name || 'Clinic'}
+                            </div>
+                            <div className="text-xs text-neutral-400">
+                              {referral.intendedRecipient?.name || 'Specialist'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-neutral-400 truncate">
+                              {referral.reason}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={getUrgencyBadgeVariant(referral.urgency)}>
+                              {(referral.urgency || '').toUpperCase()}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Badge variant={getStatusBadgeVariant(referral.status)}>
+                              {(referral.status || '').toUpperCase()}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
+                            {referral.createdAt ? formatRelativeTime(referral.createdAt) : '—'}
+                          </td>
+                          <td className="px-6 py-4 text-right text-sm">
+                            <button
+                              type="button"
+                              className="text-neutral-400 hover:text-neutral-800"
+                            >
+                              <Eye className="h-4 w-4" strokeWidth={1.5} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   )

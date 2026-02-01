@@ -24,15 +24,24 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
 
         <div className="relative group">
+          <style>{`
+            select {
+              color-scheme: light;
+            }
+            select option {
+              background-color: #ffffff;
+              color: #374151;
+            }
+          `}</style>
           <select
             ref={ref}
             id={selectId}
             className={cn(
               'w-full appearance-none rounded-xl py-2.5 pl-4 pr-10 text-sm transition-all outline-none',
-              'bg-neutral-50 border border-transparent text-neutral-400',
+              'bg-white border border-neutral-200 text-neutral-700 shadow-sm',
               'placeholder:text-neutral-400',
               'focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500',
-              error && 'bg-red-50 border-red-200 focus:border-red-500 focus:ring-red-200',
+              error && 'bg-red-50 border-red-200 text-red-600 focus:border-red-500 focus:ring-red-200',
               className
             )}
             {...props}
