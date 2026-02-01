@@ -50,6 +50,13 @@ router.get('/profile', authenticateSupabase, authSupabaseController.getProfile)
 router.put('/profile', authenticateSupabase, authSupabaseController.updateProfile)
 
 /**
+ * @route   PUT /api/auth/profile/specialist
+ * @desc    Update specialist profile
+ * @access  Private (requires Supabase token)
+ */
+router.put('/profile/specialist', authenticateSupabase, authSupabaseController.updateSpecialistProfile)
+
+/**
  * @route   PUT /api/auth/profile/logo
  * @desc    Upload clinic logo
  * @access  Private (requires Supabase token)

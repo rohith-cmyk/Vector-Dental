@@ -26,6 +26,24 @@ export interface Specialist {
     referralCount: number
     rating: number
     distance?: number | null
+    specialistProfile?: {
+        firstName?: string | null
+        lastName?: string | null
+        credentials?: string | null
+        specialty?: string | null
+        subSpecialties?: string[] | null
+        yearsInPractice?: number | null
+        boardCertified?: boolean | null
+        languages?: string[] | null
+        insuranceAccepted?: string[] | null
+        phone?: string | null
+        email?: string | null
+        website?: string | null
+        address?: string | null
+        city?: string | null
+        state?: string | null
+        zip?: string | null
+    } | null
 }
 
 export interface Referral {

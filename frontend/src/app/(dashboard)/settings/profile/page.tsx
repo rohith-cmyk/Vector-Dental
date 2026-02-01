@@ -68,6 +68,7 @@ export default function ProfileSettingsPage() {
     }
   }
 
+
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogoMessage('')
     setLogoError('')
@@ -203,6 +204,7 @@ export default function ProfileSettingsPage() {
           </CardContent>
         </Card>
 
+
         <Card>
           <CardContent className="p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
@@ -235,3 +237,4 @@ export default function ProfileSettingsPage() {
     </DashboardLayout>
   )
 }
+

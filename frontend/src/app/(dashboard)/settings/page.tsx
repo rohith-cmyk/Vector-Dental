@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout'
-import { User, Lock, Palette, Key } from 'lucide-react'
+import { User, Lock, Palette, Key, Stethoscope } from 'lucide-react'
 
 export default function SettingsPage() {
   const settingsSections = [
@@ -25,6 +25,12 @@ export default function SettingsPage() {
       description: 'Update your personal information and preferences',
       icon: <User className="h-6 w-6 text-neutral-500" />,
       href: '/settings/profile',
+    },
+    {
+      title: 'Specialist Profiles',
+      description: 'Manage specialist directory details for your clinic',
+      icon: <Stethoscope className="h-6 w-6 text-neutral-500" />,
+      href: '/settings/specialist-profiles',
     },
     {
       title: 'Security',

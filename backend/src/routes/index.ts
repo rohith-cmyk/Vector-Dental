@@ -7,6 +7,7 @@ import publicRoutes from './public.routes'
 import referralLinkRoutes from './referral-link.routes'
 import magicReferralLinkRoutes from './magic-referral-link.routes'
 import notificationsRoutes from './notifications.routes'
+import gdRoutes from './gd'
 
 const router = Router()
 
@@ -19,6 +20,7 @@ router.use('/public', publicRoutes) // Public routes (no auth required)
 router.use('/referral-link', referralLinkRoutes) // Clinic referral link management (slug-based)
 router.use('/referral-links', magicReferralLinkRoutes) // Referral link management (token-based)
 router.use('/notifications', notificationsRoutes) // Notifications
+router.use('/gd', gdRoutes) // GD Platform routes
 
 // Health check
 router.get('/health', (_req, res) => {

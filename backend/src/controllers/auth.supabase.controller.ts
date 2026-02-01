@@ -127,6 +127,7 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
       where: { id: req.user.userId },
       include: {
         clinic: true,
+        specialistProfile: true,
       },
     })
 
@@ -143,6 +144,7 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
         role: user.role,
         clinicId: user.clinicId,
         clinic: user.clinic,
+        specialistProfile: user.specialistProfile,
       },
     })
   } catch (error) {
@@ -175,7 +177,7 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
 
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      include: { clinic: true },
+      include: { clinic: true, specialistProfile: true },
     })
 
     if (!user) {
@@ -191,6 +193,130 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
         role: user.role,
         clinicId: user.clinicId,
         clinic: clinic || user.clinic,
+        specialistProfile: user.specialistProfile,
+      },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Update specialist profile for current user
+ */
+export async function updateSpecialistProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.user) {
+      throw errors.unauthorized()
+    }
+
+    const {
+      firstName,
+      lastName,
+      credentials,
+      specialty,
+      subSpecialties,
+      yearsInPractice,
+      boardCertified,
+      languages,
+      insuranceAccepted,
+      phone,
+      email,
+      website,
+      address,
+      city,
+      state,
+      zip,
+    } = req.body as {
+      firstName?: string
+      lastName?: string
+      credentials?: string
+      specialty?: string
+      subSpecialties?: string[]
+      yearsInPractice?: number
+      boardCertified?: boolean
+      languages?: string[]
+      insuranceAccepted?: string[]
+      phone?: string
+      email?: string
+      website?: string
+      address?: string
+      city?: string
+      state?: string
+      zip?: string
+    }
+
+    const specialistProfile = await prisma.specialistProfile.upsert({
+      where: { userId: req.user.userId },
+      create: {
+        userId: req.user.userId,
+        clinicId: req.user.clinicId,
+        firstName: firstName?.trim() || null,
+        lastName: lastName?.trim() || null,
+        credentials: credentials?.trim() || null,
+        specialty: specialty?.trim() || null,
+        subSpecialties: subSpecialties || [],
+        yearsInPractice: typeof yearsInPractice === 'number' ? yearsInPractice : null,
+        boardCertified: !!boardCertified,
+        languages: languages || [],
+        insuranceAccepted: insuranceAccepted || [],
+        phone: phone?.trim() || null,
+        email: email?.trim() || null,
+        website: website?.trim() || null,
+        address: address?.trim() || null,
+        city: city?.trim() || null,
+        state: state?.trim() || null,
+        zip: zip?.trim() || null,
+      },
+      update: {
+        firstName: firstName?.trim() || null,
+        lastName: lastName?.trim() || null,
+        credentials: credentials?.trim() || null,
+        specialty: specialty?.trim() || null,
+        subSpecialties: subSpecialties || [],
+        yearsInPractice: typeof yearsInPractice === 'number' ? yearsInPractice : null,
+        boardCertified: !!boardCertified,
+        languages: languages || [],
+        insuranceAccepted: insuranceAccepted || [],
+        phone: phone?.trim() || null,
+        email: email?.trim() || null,
+        website: website?.trim() || null,
+        address: address?.trim() || null,
+        city: city?.trim() || null,
+        state: state?.trim() || null,
+        zip: zip?.trim() || null,
+      },
+    })
+
+    if (firstName || lastName) {
+      const displayName = [firstName, lastName].filter(Boolean).join(' ').trim()
+      if (displayName) {
+        await prisma.user.update({
+          where: { id: req.user.userId },
+          data: { name: displayName },
+        })
+      }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: { clinic: true, specialistProfile: true },
+    })
+
+    if (!user) {
+      throw errors.notFound('User profile not found')
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        clinicId: user.clinicId,
+        clinic: user.clinic,
+        specialistProfile: user.specialistProfile || specialistProfile,
       },
     })
   } catch (error) {

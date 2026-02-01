@@ -131,12 +131,16 @@ export const authService = {
       // Check Supabase session
       const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session) {
+      const fallbackToken = localStorage.getItem('auth_token')
+      if (!session && !fallbackToken) {
         return null
       }
 
       // Get profile from backend
-      api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+      const accessToken = session?.access_token || fallbackToken
+      if (accessToken) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+      }
       const response = await api.get<{ success: boolean; data: User }>('/auth/profile')
       
       return response.data.data
@@ -150,6 +154,31 @@ export const authService = {
    */
   async updateProfile(data: { clinicName?: string; clinicEmail?: string }): Promise<User> {
     const response = await api.put<{ success: boolean; data: User }>('/auth/profile', data)
+    return response.data.data
+  },
+
+  /**
+   * Update specialist profile
+   */
+  async updateSpecialistProfile(data: {
+    firstName?: string
+    lastName?: string
+    credentials?: string
+    specialty?: string
+    subSpecialties?: string[]
+    yearsInPractice?: number
+    boardCertified?: boolean
+    languages?: string[]
+    insuranceAccepted?: string[]
+    phone?: string
+    email?: string
+    website?: string
+    address?: string
+    city?: string
+    state?: string
+    zip?: string
+  }): Promise<User> {
+    const response = await api.put<{ success: boolean; data: User }>('/auth/profile/specialist', data)
     return response.data.data
   },
 

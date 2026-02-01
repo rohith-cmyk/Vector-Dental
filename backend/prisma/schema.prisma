@@ -27,6 +27,7 @@ model Clinic {
   referrals      Referral[]
   referralLink   ClinicReferralLink?
   notifications  Notification[]
+  specialistProfiles SpecialistProfile[]
 
   @@map("clinics")
 }
@@ -46,6 +47,7 @@ model User {
   clinic         Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   referralLinks  ReferralLink[]
   intendedReferrals Referral[] @relation("IntendedRecipient")
+  specialistProfile SpecialistProfile?
 
   @@index([clinicId])
   @@map("users")
@@ -54,6 +56,37 @@ model User {
 enum UserRole {
   ADMIN
   STAFF
+}
+
+// Specialist Profile (Directory data)
+model SpecialistProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  clinicId         String   @map("clinic_id")
+  firstName        String?  @map("first_name")
+  lastName         String?  @map("last_name")
+  credentials      String?
+  specialty        String?
+  subSpecialties   String[] @default([]) @map("sub_specialties")
+  yearsInPractice  Int?     @map("years_in_practice")
+  boardCertified   Boolean  @default(false) @map("board_certified")
+  languages        String[] @default([])
+  insuranceAccepted String[] @default([]) @map("insurance_accepted")
+  phone            String?
+  email            String?
+  website          String?
+  address          String?
+  city             String?
+  state            String?
+  zip              String?
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@map("specialist_profiles")
 }
 
 // Contact Model (Referral Recipients/Specialists)

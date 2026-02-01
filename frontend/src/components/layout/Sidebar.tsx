@@ -24,7 +24,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar-white p-4">
       <div className="flex h-full flex-col border border-black/10 rounded-2xl bg-white">
         {/* Logo */}
-        <div className="flex flex-col gap-3 px-6 py-12">
+        <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
           <img 
             src="/logo.png" 
             alt="Logo" 

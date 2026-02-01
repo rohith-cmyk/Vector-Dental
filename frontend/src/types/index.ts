@@ -6,6 +6,31 @@ export interface User {
   role: 'admin' | 'staff'
   clinicId: string
   clinic?: Clinic
+  specialistProfile?: SpecialistProfile
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SpecialistProfile {
+  id: string
+  userId: string
+  clinicId: string
+  firstName?: string
+  lastName?: string
+  credentials?: string
+  specialty?: string
+  subSpecialties?: string[]
+  yearsInPractice?: number
+  boardCertified?: boolean
+  languages?: string[]
+  insuranceAccepted?: string[]
+  phone?: string
+  email?: string
+  website?: string
+  address?: string
+  city?: string
+  state?: string
+  zip?: string
   createdAt: string
   updatedAt: string
 }

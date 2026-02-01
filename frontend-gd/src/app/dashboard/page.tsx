@@ -7,6 +7,7 @@ import { dashboardService, referralService } from '@/services/api'
 import type { DashboardStats, Referral } from '@/types'
 import { DashboardLayout } from '@/components/layout'
 import { Card, CardContent, LoadingState } from '@/components/ui'
+import { ArrowUpRight, CheckCircle, Clock, XCircle, CheckCircle2 } from 'lucide-react'
 import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcessFlowChart'
 import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
 import { BreakdownChart } from '@/components/dashboard/BreakdownChart'
@@ -358,31 +359,46 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     <Card>
                         <CardContent className="py-6">
-                            <p className="text-sm font-medium text-neutral-400">Total Referrals</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-neutral-400">Total Referrals</p>
+                                <ArrowUpRight className="h-5 w-5 text-neutral-400" />
+                            </div>
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.total || 0}</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="py-6">
-                            <p className="text-sm font-medium text-neutral-400">Pending</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-neutral-400">Pending</p>
+                                <Clock className="h-5 w-5 text-neutral-400" />
+                            </div>
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.pending || 0}</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="py-6">
-                            <p className="text-sm font-medium text-neutral-400">Accepted</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-neutral-400">Accepted</p>
+                                <CheckCircle className="h-5 w-5 text-neutral-400" />
+                            </div>
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.accepted || 0}</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="py-6">
-                            <p className="text-sm font-medium text-neutral-400">Completed</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-neutral-400">Completed</p>
+                                <CheckCircle2 className="h-5 w-5 text-neutral-400" />
+                            </div>
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.completed || 0}</p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="py-6">
-                            <p className="text-sm font-medium text-neutral-400">Rejected</p>
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium text-neutral-400">Rejected</p>
+                                <XCircle className="h-5 w-5 text-neutral-400" />
+                            </div>
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.rejected || 0}</p>
                         </CardContent>
                     </Card>
