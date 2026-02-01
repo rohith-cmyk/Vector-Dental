@@ -56,6 +56,7 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showSpecialistSelector, setShowSpecialistSelector] = useState(false)
   const [specialistSearchQuery, setSpecialistSearchQuery] = useState('')
+  const [specialistDropdownValue, setSpecialistDropdownValue] = useState('')
 
   const [formData, setFormData] = useState<FormData>({
     referringDoctorFirstName: user?.name?.split(' ')[0] || '',
@@ -214,33 +215,38 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
   const clinic = user?.clinic
   const selectedSpecialist = specialists.find(s => s.id === formData.specialistUserId)
   const specialistLabel = selectedSpecialist?.specialistProfile?.specialty || selectedSpecialist?.clinic?.name || 'Specialist'
+  const specialistOptions = [
+    { value: '', label: 'All specialists' },
+    ...specialists.map((specialist) => ({
+      value: specialist.id,
+      label: specialist.clinic?.name
+        ? `${specialist.name} • ${specialist.clinic.name}`
+        : specialist.name,
+    })),
+  ]
 
   return (
     <div className="space-y-10">
       {clinic && (
         <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4 flex-1">
-              <div className="w-16 h-16 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Building2 className="w-8 h-8 text-emerald-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                  {clinic.name}
-                </h3>
-                {clinic.address && (
-                  <div className="flex items-center gap-2 text-gray-600 mb-1">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm">{clinic.address}</span>
-                  </div>
-                )}
-                {clinic.phone && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Phone className="w-4 h-4" />
-                    <span className="text-sm">{clinic.phone}</span>
-                  </div>
-                )}
-              </div>
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="h-16 w-16 rounded-2xl border border-neutral-200 bg-white flex items-center justify-center overflow-hidden shadow-sm">
+              <img src="/logo.png" alt="Clinic Logo" className="h-10 w-10 object-contain" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900">{clinic.name}</h3>
+              {clinic.address && (
+                <div className="flex items-center justify-center gap-2 text-gray-600 mt-1">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{clinic.address}</span>
+                </div>
+              )}
+              {clinic.phone && (
+                <div className="flex items-center justify-center gap-2 text-gray-600 mt-1">
+                  <Phone className="w-4 h-4" />
+                  <span className="text-sm">{clinic.phone}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -251,13 +257,17 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
             <label className="block text-sm font-semibold text-gray-900">
               Sending referral to <span className="text-red-500">*</span>
             </label>
-            <button
-              type="button"
-              onClick={() => setShowSpecialistSelector(!showSpecialistSelector)}
-              className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
-            >
-              {formData.specialistUserId ? 'Change' : 'Select'}
-            </button>
+            {formData.specialistUserId ? (
+              <button
+                type="button"
+                onClick={() => setShowSpecialistSelector(true)}
+                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                Change
+              </button>
+            ) : (
+              <span className="text-sm text-neutral-400">Search or select a specialist</span>
+            )}
           </div>
 
           {formData.specialistUserId ? (
@@ -286,39 +296,55 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                       )}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleChange('specialistUserId', '')
-                      setShowSpecialistSelector(true)
-                    }}
-                    className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
-                  >
-                    Change
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowSpecialistSelector(true)}
+                      className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
+                    >
+                      Change
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleChange('specialistUserId', '')
+                        setShowSpecialistSelector(true)
+                      }}
+                      className="px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           ) : (
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 border-dashed">
-              <p className="text-sm text-gray-500">No specialist selected. Click &quot;Select&quot; to choose a doctor.</p>
+              <p className="text-sm text-gray-500">No specialist selected. Use the search or dropdown below.</p>
             </div>
           )}
 
-          {showSpecialistSelector && (
+          {(!formData.specialistUserId || showSpecialistSelector) && (
             <div className="bg-white rounded-lg border border-gray-200 shadow-lg p-4 space-y-3 max-h-96 overflow-hidden flex flex-col">
-              <div className="flex items-center gap-2 relative">
-                <Search className="absolute left-3 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search specialists by name or clinic..."
-                  value={specialistSearchQuery}
-                  onChange={(e) => setSpecialistSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  autoFocus
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 relative">
+                  <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search specialist or clinic..."
+                    value={specialistSearchQuery}
+                    onChange={(e) => setSpecialistSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    autoFocus
+                  />
+                </div>
+                <Select
+                  value={specialistDropdownValue}
+                  onChange={(e) => setSpecialistDropdownValue(e.target.value)}
+                  options={specialistOptions}
                 />
               </div>
-              <div className="overflow-y-auto flex-1 space-y-2">
+              <div className="overflow-y-auto flex-1 space-y-2 max-h-52">
                 {loadingSpecialists ? (
                   <LoadingState
                     className="py-8"
@@ -327,11 +353,15 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                   />
                 ) : (() => {
                   const query = specialistSearchQuery.toLowerCase()
-                  const filteredSpecialists = specialists.filter((specialist) =>
-                    specialist.name.toLowerCase().includes(query) ||
-                    (specialist.clinic?.name || '').toLowerCase().includes(query) ||
-                    (specialist.specialistProfile?.specialty || '').toLowerCase().includes(query)
-                  )
+                  const filteredSpecialists = specialists
+                    .filter((specialist) =>
+                      specialist.name.toLowerCase().includes(query) ||
+                      (specialist.clinic?.name || '').toLowerCase().includes(query) ||
+                      (specialist.specialistProfile?.specialty || '').toLowerCase().includes(query)
+                    )
+                    .filter((specialist) =>
+                      specialistDropdownValue ? specialist.id === specialistDropdownValue : true
+                    )
 
                   if (filteredSpecialists.length === 0) {
                     return (
@@ -347,8 +377,9 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                       type="button"
                       onClick={() => {
                         handleChange('specialistUserId', specialist.id)
-                        setShowSpecialistSelector(false)
                         setSpecialistSearchQuery('')
+                        setSpecialistDropdownValue('')
+                        setShowSpecialistSelector(false)
                         if (errors.specialistUserId) {
                           setErrors(prev => ({ ...prev, specialistUserId: '' }))
                         }
@@ -396,18 +427,17 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                   ))
                 })()}
               </div>
-              <div className="pt-2 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSpecialistSelector(false)
-                    setSpecialistSearchQuery('')
-                  }}
-                  className="w-full px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
-                >
-                  Cancel
-                </button>
-              </div>
+              {formData.specialistUserId && (
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setShowSpecialistSelector(false)}
+                    className="w-full px-3 py-1.5 text-sm font-normal rounded-full border border-neutral-200 bg-white text-gray-600 hover:border-emerald-500 hover:bg-emerald-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -374,6 +374,7 @@ export default function ReferralsPage() {
   const [view, setView] = useState<'list' | 'form'>('list')
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
+  const [useMockReferrals, setUseMockReferrals] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -389,10 +390,12 @@ export default function ReferralsPage() {
         status: statusFilter !== 'all' ? statusFilter : undefined,
         search: searchQuery.trim() || undefined,
       })
-      setReferrals(getReferralsList(response.data.data))
+      setReferrals(getReferralsList(response.data))
+      setUseMockReferrals(false)
     } catch (error) {
       console.error('Failed to fetch referrals:', error)
       setReferrals([])
+      setUseMockReferrals(true)
     } finally {
       setLoading(false)
     }
@@ -407,7 +410,7 @@ export default function ReferralsPage() {
     return () => clearTimeout(timer)
   }, [user, searchQuery, statusFilter])
 
-  const effectiveReferrals = referrals.length > 0 ? referrals : mockReferrals
+  const effectiveReferrals = useMockReferrals ? mockReferrals : referrals
   const tabFilteredReferrals = effectiveReferrals.filter((referral) =>
     activeTab === 'draft' ? referral.status === 'DRAFT' : referral.status !== 'DRAFT'
   )

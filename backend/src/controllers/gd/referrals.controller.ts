@@ -8,16 +8,33 @@ import crypto from 'crypto'
  */
 export async function getMyReferrals(req: Request, res: Response) {
     try {
-        const clinicId = req.user!.clinicId
         const { page = 1, limit = 10, status, search } = req.query
 
         const skip = (Number(page) - 1) * Number(limit)
         const take = Number(limit)
 
-        // Build where clause
-        const where: any = {
-            fromClinicId: clinicId,
+        const gdUser = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            include: { clinic: true },
+        })
+
+        const clinicId = gdUser?.clinicId || req.user?.clinicId
+        const clinicEmail = gdUser?.clinic?.email || undefined
+        const clinicName = gdUser?.clinic?.name || undefined
+        const tokenEmail = req.user?.email
+
+        if (!clinicId && !tokenEmail && !clinicEmail && !clinicName) {
+            throw errors.notFound('Clinic not found for user')
         }
+
+        const whereOr: any[] = []
+        if (clinicId) whereOr.push({ fromClinicId: clinicId })
+        if (clinicEmail) whereOr.push({ fromClinicEmail: clinicEmail })
+        if (clinicName) whereOr.push({ fromClinicName: clinicName })
+        if (tokenEmail) whereOr.push({ fromClinicEmail: tokenEmail })
+
+        // Build where clause
+        const where: any = whereOr.length ? { OR: whereOr } : {}
 
         if (status && status !== 'all') {
             where.status = status
@@ -55,20 +72,6 @@ export async function getMyReferrals(req: Request, res: Response) {
                         }
                     },
                     files: true,
-                    operativeReports: {
-                        select: {
-                            id: true,
-                            reportDate: true,
-                            createdAt: true,
-                        }
-                    },
-                    postTreatmentReports: {
-                        select: {
-                            id: true,
-                            reportDate: true,
-                            createdAt: true,
-                        }
-                    },
                 }
             }),
             prisma.referral.count({ where })
@@ -126,26 +129,6 @@ export async function getReferralById(req: Request, res: Response) {
                     }
                 },
                 files: true,
-                operativeReports: {
-                    include: {
-                        createdBy: {
-                            select: {
-                                id: true,
-                                name: true,
-                            }
-                        }
-                    }
-                },
-                postTreatmentReports: {
-                    include: {
-                        createdBy: {
-                            select: {
-                                id: true,
-                                name: true,
-                            }
-                        }
-                    }
-                },
             }
         })
 
@@ -172,7 +155,6 @@ export async function getReferralById(req: Request, res: Response) {
 export async function createReferral(req: Request, res: Response) {
     try {
         const userId = req.user!.userId
-        const clinicId = req.user!.clinicId
 
         const {
             // Specialist info
@@ -208,12 +190,15 @@ export async function createReferral(req: Request, res: Response) {
         if (!gdUser) {
             throw errors.notFound('User not found')
         }
+        if (!gdUser.clinicId) {
+            throw errors.notFound('Clinic not found for user')
+        }
 
         // Get specialist info
         const specialist = await prisma.user.findFirst({
             where: {
                 id: specialistUserId,
-                userType: 'SPECIALIST',
+                role: { in: ['ADMIN', 'STAFF'] },
             },
             include: { clinic: true }
         })
@@ -232,7 +217,7 @@ export async function createReferral(req: Request, res: Response) {
                 referralType: 'OUTGOING',
 
                 // From (GD)
-                fromClinicId: clinicId,
+                fromClinicId: gdUser.clinicId,
                 fromClinicName: gdUser.clinic.name,
                 fromClinicEmail: gdUser.clinic.email,
                 fromClinicPhone: gdUser.clinic.phone,
