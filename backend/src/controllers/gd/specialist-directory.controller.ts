@@ -8,7 +8,7 @@ import { errors } from '../../utils/errors'
  */
 export async function getSpecialistDirectory(req: Request, res: Response) {
     try {
-        const { search, specialty, page = 1, limit = 20 } = req.query
+        const { search, page = 1, limit = 20 } = req.query
 
         const skip = (Number(page) - 1) * Number(limit)
         const take = Number(limit)

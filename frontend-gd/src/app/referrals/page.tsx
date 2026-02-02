@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowUpRight, Eye, Search } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout'
@@ -366,7 +366,7 @@ function getReferralsList(payload: unknown): Referral[] {
   return (firstArray as Referral[]) || []
 }
 
-export default function ReferralsPage() {
+function ReferralsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, isLoading: authLoading } = useAuth()
@@ -698,5 +698,13 @@ export default function ReferralsPage() {
         }}
       />
     </DashboardLayout>
+  )
+}
+
+export default function ReferralsPage() {
+  return (
+    <Suspense fallback={<LoadingState title="Loading referrals..." subtitle="Preparing referral list" />}>
+      <ReferralsPageContent />
+    </Suspense>
   )
 }

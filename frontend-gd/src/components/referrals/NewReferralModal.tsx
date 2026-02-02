@@ -62,7 +62,7 @@ function resolvePhotoUrl(photoUrl?: string | null): string | null {
 }
 
 export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialSpecialistId }: NewReferralFormProps) {
-  const { user } = useAuth()
+  const { user, clinic } = useAuth()
   const [specialists, setSpecialists] = useState<Specialist[]>([])
   const [loadingSpecialists, setLoadingSpecialists] = useState(false)
   const [showAdditionalPatientInfo, setShowAdditionalPatientInfo] = useState(false)
@@ -279,7 +279,6 @@ export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialS
     }
   }
 
-  const clinic = user?.clinic
   const selectedSpecialist = specialists.find(s => s.id === formData.specialistUserId)
   const specialistLabel = selectedSpecialist?.specialistProfile?.specialty || selectedSpecialist?.clinic?.name || 'Specialist'
   const selectedPhotoUrl = resolvePhotoUrl(selectedSpecialist?.specialistProfile?.photoUrl)
@@ -652,7 +651,7 @@ export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialS
               onReasonToggle={handleReasonToggle}
               onCustomReasonChange={(value) => handleChange('customReason', value)}
               error={errors.reason}
-              specialty={selectedSpecialist?.specialistProfile?.specialty}
+              specialty={selectedSpecialist?.specialistProfile?.specialty || undefined}
               showCustomReason={false}
             />
             <div className="space-y-2">

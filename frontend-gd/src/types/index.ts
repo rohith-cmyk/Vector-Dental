@@ -184,12 +184,15 @@ export interface ApiResponse<T> {
 export interface PaginatedResponse<T> {
     success: boolean
     data: {
-        [key: string]: T[]
         pagination: {
             page: number
             limit: number
             total: number
             totalPages: number
         }
+        items?: T[]
+        referrals?: T[]
+        specialists?: T[]
+        [key: string]: unknown
     }
 }
