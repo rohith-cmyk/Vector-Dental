@@ -426,37 +426,53 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       return `${minutes}m`
     }
 
-    const computeAverageDuration = async (status: 'ACCEPTED' | 'SENT' | 'COMPLETED') => {
-      const rows = await prisma.referral.findMany({
-        where: {
-          status,
-          OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
-            { toClinicId: clinicId }
-          ],
-          createdAt: {
-            gte: monthStart,
-            lt: monthEnd,
-          },
-        },
-        select: { createdAt: true, updatedAt: true },
-      })
-      if (rows.length === 0) return '-'
-      const totalMs = rows.reduce((sum, row) => sum + (row.updatedAt.getTime() - row.createdAt.getTime()), 0)
-      return formatDuration(totalMs / rows.length)
+    const averageMs = (values: number[]) => {
+      if (!values.length) return null
+      const total = values.reduce((sum, value) => sum + value, 0)
+      return total / values.length
     }
 
-    const [avgSchedule, avgAppointment, avgTimeToTreatment] = await Promise.all([
-      computeAverageDuration('ACCEPTED'),
-      computeAverageDuration('SENT'),
-      computeAverageDuration('COMPLETED'),
-    ])
+    const incomingScope = {
+      OR: [
+        { fromClinicId: clinicId, referralType: 'INCOMING' },
+        { toClinicId: clinicId }
+      ],
+    }
+
+    const incomingThisMonth = await prisma.referral.findMany({
+      where: {
+        ...incomingScope,
+        createdAt: {
+          gte: monthStart,
+          lt: monthEnd,
+        },
+      },
+      select: {
+        createdAt: true,
+        scheduledAt: true,
+        completedAt: true,
+      },
+    })
+
+    const scheduleDurations = incomingThisMonth
+      .filter((row) => row.scheduledAt)
+      .map((row) => row.scheduledAt!.getTime() - row.createdAt.getTime())
+    const appointmentDurations = incomingThisMonth
+      .filter((row) => row.scheduledAt && row.completedAt)
+      .map((row) => row.completedAt!.getTime() - row.scheduledAt!.getTime())
+    const treatmentDurations = incomingThisMonth
+      .filter((row) => row.completedAt)
+      .map((row) => row.completedAt!.getTime() - row.createdAt.getTime())
+
+    const avgSchedule = averageMs(scheduleDurations)
+    const avgAppointment = averageMs(appointmentDurations)
+    const avgTimeToTreatment = averageMs(treatmentDurations)
 
     const overviewMetrics = {
       dailyAverage: parseFloat((totalIncomingThisMonth / daysElapsedInMonth).toFixed(2)),
-      avgSchedule,
-      avgAppointment,
-      avgTimeToTreatment,
+      avgSchedule: avgSchedule === null ? '-' : formatDuration(avgSchedule),
+      avgAppointment: avgAppointment === null ? '-' : formatDuration(avgAppointment),
+      avgTimeToTreatment: avgTimeToTreatment === null ? '-' : formatDuration(avgTimeToTreatment),
     }
 
     const referralProcessFlow = totalIncomingThisMonth > 0 ? [
