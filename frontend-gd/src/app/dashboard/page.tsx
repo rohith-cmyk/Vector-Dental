@@ -475,7 +475,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-6">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Sent Referrals</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Outbound Referrals</h2>
                         <Card>
                             <CardContent className="p-0">
                                 <div className="overflow-x-auto rounded-lg">
@@ -535,15 +535,14 @@ export default function DashboardPage() {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${
-                                                                referral.status === 'COMPLETED'
+                                                            <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${referral.status === 'COMPLETED'
                                                                     ? 'bg-green-100 text-green-500'
                                                                     : referral.status === 'ACCEPTED'
-                                                                    ? 'bg-blue-100 text-blue-500'
-                                                                    : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
-                                                                    ? 'bg-red-100 text-red-500'
-                                                                    : 'bg-yellow-100 text-yellow-500'
-                                                            }`}>
+                                                                        ? 'bg-blue-100 text-blue-500'
+                                                                        : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
+                                                                            ? 'bg-red-100 text-red-500'
+                                                                            : 'bg-yellow-100 text-yellow-500'
+                                                                }`}>
                                                                 {(referral.status || '').toUpperCase()}
                                                             </span>
                                                         </td>
