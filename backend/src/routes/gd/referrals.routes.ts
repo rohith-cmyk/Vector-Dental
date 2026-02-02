@@ -4,6 +4,7 @@ import {
     getMyReferrals,
     getReferralById,
     createReferral,
+    updateReferral,
 } from '../../controllers/gd/referrals.controller'
 
 const router = Router()
@@ -28,5 +29,12 @@ router.get('/:id', authenticate, getReferralById)
  * @access  Private (GD only)
  */
 router.post('/', authenticate, createReferral)
+
+/**
+ * @route   PUT /api/gd/referrals/:id
+ * @desc    Update an existing referral (drafts only)
+ * @access  Private (GD only)
+ */
+router.put('/:id', authenticate, updateReferral)
 
 export default router

@@ -9,12 +9,43 @@ import { DashboardLayout } from '@/components/layout'
 import { Card, CardContent, LoadingState } from '@/components/ui'
 import { ArrowUpRight, CheckCircle, Clock, XCircle, CheckCircle2 } from 'lucide-react'
 import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcessFlowChart'
+import { OverviewMetrics } from '@/components/dashboard/OverviewMetrics'
 import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
 import { BreakdownChart } from '@/components/dashboard/BreakdownChart'
 
 interface TrendPoint {
     month: string
     sent: number
+}
+
+const MINUTES_IN_DAY = 24 * 60
+
+const formatDuration = (minutes: number | null) => {
+    if (!minutes || minutes <= 0 || Number.isNaN(minutes)) return '-'
+    if (minutes >= MINUTES_IN_DAY) {
+        const days = Math.floor(minutes / MINUTES_IN_DAY)
+        const hours = Math.floor((minutes % MINUTES_IN_DAY) / 60)
+        return `${days}d ${hours}h`
+    }
+    const hours = Math.floor(minutes / 60)
+    const mins = Math.round(minutes % 60)
+    if (hours === 0) return `${mins}m`
+    return `${hours}h ${mins}m`
+}
+
+const averageMinutes = (values: number[]) => {
+    if (!values.length) return null
+    const total = values.reduce((sum, val) => sum + val, 0)
+    return total / values.length
+}
+
+const diffMinutes = (start?: string | null, end?: string | null) => {
+    if (!start || !end) return null
+    const startDate = new Date(start)
+    const endDate = new Date(end)
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null
+    const minutes = (endDate.getTime() - startDate.getTime()) / (1000 * 60)
+    return minutes > 0 ? minutes : null
 }
 
 interface BreakdownPoint {
@@ -351,12 +382,41 @@ export default function DashboardPage() {
 
     const trendData = buildMonthlyTrend(effectiveReferrals)
     const officeBreakdown = buildOfficeBreakdown(effectiveReferrals)
-    const recentReferrals = effectiveReferrals.slice(0, 5)
+    const recentReferrals = effectiveReferrals
+        .filter((referral) => referral.status !== 'DRAFT' && referral.intendedRecipient?.id)
+        .sort((a, b) => {
+            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+            return bTime - aTime
+        })
+        .slice(0, 5)
+
+    const now = new Date()
+    const last30Days = effectiveReferrals.filter((referral) => {
+        if (!referral.createdAt) return false
+        const createdAt = new Date(referral.createdAt)
+        return now.getTime() - createdAt.getTime() <= 30 * 24 * 60 * 60 * 1000
+    })
+    const dailyAverage = last30Days.length / 30
+
+    const scheduleMinutes = effectiveReferrals
+        .map((referral) => diffMinutes(referral.createdAt, referral.scheduledAt))
+        .filter((value): value is number => value !== null)
+    const appointmentMinutes = effectiveReferrals
+        .map((referral) => diffMinutes(referral.scheduledAt, referral.completedAt))
+        .filter((value): value is number => value !== null)
+    const timeToTreatmentMinutes = effectiveReferrals
+        .map((referral) => diffMinutes(referral.createdAt, referral.completedAt))
+        .filter((value): value is number => value !== null)
+
+    const avgSchedule = formatDuration(averageMinutes(scheduleMinutes))
+    const avgAppointment = formatDuration(averageMinutes(appointmentMinutes))
+    const avgTimeToTreatment = formatDuration(averageMinutes(timeToTreatmentMinutes))
 
     return (
         <DashboardLayout title="Dashboard" subtitle={`Welcome back, ${user.name}`}>
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <Card>
                         <CardContent className="py-6">
                             <div className="flex items-center justify-between">
@@ -369,19 +429,10 @@ export default function DashboardPage() {
                     <Card>
                         <CardContent className="py-6">
                             <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-400">Pending</p>
+                                <p className="text-sm font-medium text-neutral-400">Pending Action</p>
                                 <Clock className="h-5 w-5 text-neutral-400" />
                             </div>
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.pending || 0}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="py-6">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-400">Accepted</p>
-                                <CheckCircle className="h-5 w-5 text-neutral-400" />
-                            </div>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.accepted || 0}</p>
                         </CardContent>
                     </Card>
                     <Card>
@@ -393,19 +444,18 @@ export default function DashboardPage() {
                             <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.completed || 0}</p>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent className="py-6">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-400">Rejected</p>
-                                <XCircle className="h-5 w-5 text-neutral-400" />
-                            </div>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.rejected || 0}</p>
-                        </CardContent>
-                    </Card>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
-                    <ReferralProcessFlowChart data={processFlowData} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <OverviewMetrics
+                        dailyAverage={dailyAverage}
+                        avgSchedule={avgSchedule}
+                        avgAppointment={avgAppointment}
+                        avgTimeToTreatment={avgTimeToTreatment}
+                    />
+                    <div className="lg:col-span-2">
+                        <ReferralProcessFlowChart data={processFlowData} />
+                    </div>
                 </div>
 
                 <div className="space-y-6">
@@ -424,7 +474,7 @@ export default function DashboardPage() {
 
                 <div className="space-y-6">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Referral Sent</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Sent Referrals</h2>
                         <Card>
                             <CardContent className="p-0">
                                 <div className="overflow-x-auto rounded-lg">
@@ -450,7 +500,11 @@ export default function DashboardPage() {
                                         </thead>
                                         <tbody className="bg-white divide-y divide-black/5">
                                             {recentReferrals.map((referral) => (
-                                                <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
+                                                <tr
+                                                    key={referral.id}
+                                                    className="hover:bg-neutral-50 transition-colors cursor-pointer"
+                                                    onClick={() => router.push(`/referrals?openId=${referral.id}`)}
+                                                >
                                                     <td className="px-6 py-4">
                                                         <div className="text-sm font-medium text-neutral-800">
                                                             {getPatientName(referral)}

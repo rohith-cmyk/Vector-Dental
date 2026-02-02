@@ -270,12 +270,8 @@ export default function ReferralsPage() {
         // Use mock data for development
         let filteredReferrals = mockReferrals
 
-        // Filter by type (received = INCOMING, sent = OUTGOING, ops-report = INCOMING)
-        if (activeTab === 'received') {
-          filteredReferrals = filteredReferrals.filter(r => r.referralType === 'INCOMING')
-        } else if (activeTab === 'sent') {
-          filteredReferrals = filteredReferrals.filter(r => r.referralType === 'OUTGOING')
-        } else if (activeTab === 'ops-report') {
+        // Filter by type (received/ops-report = INCOMING)
+        if (activeTab === 'received' || activeTab === 'ops-report') {
           filteredReferrals = filteredReferrals.filter(r => r.referralType === 'INCOMING')
         }
 
@@ -306,7 +302,7 @@ export default function ReferralsPage() {
       } else {
         // Use real API
         const params: any = {
-          type: activeTab === 'ops-report' ? 'received' : activeTab,
+          type: 'received',
           limit: 50, // Get more for list view
         }
 
@@ -514,11 +510,6 @@ export default function ReferralsPage() {
               // badge: pendingIncomingCount // Optional: re-enable if we have count
             },
             {
-              id: 'sent',
-              label: 'Sent',
-              icon: <ArrowUpRight className="h-4 w-4" />
-            },
-            {
               id: 'ops-report',
               label: 'Ops Report',
               icon: <ClipboardList className="h-4 w-4" />
@@ -559,24 +550,14 @@ export default function ReferralsPage() {
                     />
                   </div>
                 </div>
-                {(activeTab === 'sent' || activeTab === 'ops-report') && (
-                  <button
-                    onClick={() => setIsNewReferralModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-sm text-white rounded-full hover:bg-emerald-700 transition-colors"
-                  >
-                    <Plus className="h-4 w-4" strokeWidth={1.5} />
-                    New Referral
-                  </button>
-                )}
+                
               </div>
 
               {/* Referrals Table - Changes Based on Tab */}
               <Card>
                 <CardContent className="p-0">
                   {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400"></div>
-                    </div>
+                    <LoadingState className="h-64" title="Loading referrals..." />
                   ) : referrals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
                       <p>No referrals found</p>

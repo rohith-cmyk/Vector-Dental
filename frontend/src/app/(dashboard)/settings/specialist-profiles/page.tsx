@@ -235,7 +235,7 @@ export default function SpecialistProfilesSettingsPage() {
                         <td className="px-6 py-4 text-sm text-neutral-700">{entry.fullName}</td>
                         <td className="px-6 py-4 text-sm text-neutral-500">{entry.email}</td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-600">
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                             {entry.role}
                           </span>
                         </td>

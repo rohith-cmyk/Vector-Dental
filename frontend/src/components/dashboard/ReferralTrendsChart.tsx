@@ -11,12 +11,14 @@ interface ReferralTrendsChartProps {
   }>
   period?: 'monthly' | 'weekly' | 'yearly'
   onPeriodChange?: (period: 'monthly' | 'weekly' | 'yearly') => void
+  showOutgoing?: boolean
 }
 
 export function ReferralTrendsChart({
   data,
   period = 'monthly',
   onPeriodChange = () => {},
+  showOutgoing = true,
 }: ReferralTrendsChartProps) {
   // Handle undefined or empty data
   const safeData = data || []
@@ -26,7 +28,9 @@ export function ReferralTrendsChart({
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <div>
           <CardTitle className="text-lg font-semibold text-gray-900">Referral Trends</CardTitle>
-          <p className="text-sm text-neutral-400 mt-1">Sent vs Received over time</p>
+          <p className="text-sm text-neutral-400 mt-1">
+            {showOutgoing ? 'Sent vs Received over time' : 'Received over time'}
+          </p>
         </div>
         <select
           value={period}
@@ -43,10 +47,12 @@ export function ReferralTrendsChart({
           <ResponsiveContainer width="100%" height={320} className="ml-[-20px]">
             <AreaChart data={safeData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <defs>
-              <linearGradient id="colorOutgoing" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
-              </linearGradient>
+              {showOutgoing && (
+                <linearGradient id="colorOutgoing" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.05}/>
+                </linearGradient>
+              )}
               <linearGradient id="colorIncoming" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
@@ -79,14 +85,16 @@ export function ReferralTrendsChart({
               wrapperStyle={{ paddingTop: '20px' }}
               iconType="rect"
             />
-            <Area
-              type="monotone"
-              dataKey="outgoing"
-              name="Sent Out"
-              stroke="#10b981"
-              strokeWidth={2.5}
-              fill="url(#colorOutgoing)"
-            />
+            {showOutgoing && (
+              <Area
+                type="monotone"
+                dataKey="outgoing"
+                name="Sent Out"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                fill="url(#colorOutgoing)"
+              />
+            )}
             <Area
               type="monotone"
               dataKey="incoming"

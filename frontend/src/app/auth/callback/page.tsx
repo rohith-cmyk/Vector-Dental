@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Card, CardContent } from '@/components/ui'
+import { Card, CardContent, LoadingState } from '@/components/ui'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
@@ -57,11 +57,11 @@ export default function AuthCallbackPage() {
       <Card className="w-full max-w-md">
         <CardContent className="p-8 text-center">
           {status === 'loading' && (
-            <>
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-brand-600 mx-auto mb-4"></div>
-              <h2 className="text-xl font-semibold text-gray-900">Verifying...</h2>
-              <p className="text-gray-600 mt-2">Please wait while we verify your email.</p>
-            </>
+            <LoadingState
+              title="Verifying..."
+              subtitle="Please wait while we verify your email."
+              className="py-4"
+            />
           )}
 
           {status === 'success' && (

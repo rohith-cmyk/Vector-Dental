@@ -174,12 +174,6 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
               const color = colors[index % colors.length]
               return (
                 <div key={`stat-${step.label}`} className="text-center">
-                  <div 
-                    className="text-2xl font-semibold"
-                    style={{ color: color.fill }}
-                  >
-                    {step.count}
-                  </div>
                   <div className="text-xs text-neutral-500 mt-1">{step.label}</div>
                   <div className="text-xs text-neutral-400 mt-0.5">{step.percentage}% of total</div>
                 </div>

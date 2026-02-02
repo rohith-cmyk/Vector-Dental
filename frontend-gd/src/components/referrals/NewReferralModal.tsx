@@ -5,7 +5,7 @@ import { Button, Input, Select, LoadingState, Modal } from '@/components/ui'
 import { useAuth } from '@/contexts/AuthContext'
 import { specialistService, referralService } from '@/services/api'
 import { MapPin, Phone, Building2, Info, Search, User, Check } from 'lucide-react'
-import type { Specialist } from '@/types'
+import type { Specialist, Referral } from '@/types'
 import { InteractiveToothChart } from './InteractiveToothChart'
 import { FileUpload } from './FileUpload'
 import { ReferralReasonButtons } from './ReferralReasonButtons'
@@ -13,6 +13,8 @@ import { ReferralReasonButtons } from './ReferralReasonButtons'
 interface NewReferralFormProps {
   onCancel?: () => void
   onSuccess?: () => void
+  initialReferral?: Referral | null
+  initialSpecialistId?: string | null
 }
 
 type ReferralUrgency = 'ROUTINE' | 'URGENT' | 'EMERGENCY'
@@ -47,7 +49,19 @@ function getSpecialistsList(payload: any): Specialist[] {
   return []
 }
 
-export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
+function resolvePhotoUrl(photoUrl?: string | null): string | null {
+  if (!photoUrl) return null
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    return photoUrl
+  }
+  if (!photoUrl.startsWith('/')) return photoUrl
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/gd'
+  const serverBaseUrl = apiBaseUrl.replace(/\/api\/gd\/?$/, '')
+  return `${serverBaseUrl}${photoUrl}`
+}
+
+export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialSpecialistId }: NewReferralFormProps) {
   const { user } = useAuth()
   const [specialists, setSpecialists] = useState<Specialist[]>([])
   const [loadingSpecialists, setLoadingSpecialists] = useState(false)
@@ -81,6 +95,36 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
   useEffect(() => {
     loadSpecialists()
   }, [])
+
+  useEffect(() => {
+    if (!initialReferral) return
+    const firstName = initialReferral.patientFirstName || initialReferral.patientName?.split(' ')[0] || ''
+    const lastName = initialReferral.patientLastName || initialReferral.patientName?.split(' ').slice(1).join(' ') || ''
+
+    setFormData((prev) => ({
+      ...prev,
+      patientFirstName: firstName,
+      patientLastName: lastName,
+      patientPhone: initialReferral.patientPhone || '',
+      patientEmail: initialReferral.patientEmail || '',
+      patientDob: initialReferral.patientDob ? initialReferral.patientDob.slice(0, 10) : '',
+      specialistUserId: initialReferral.intendedRecipient?.id || '',
+      reasons: [],
+      customReason: initialReferral.reason || '',
+      urgency: initialReferral.urgency || 'ROUTINE',
+      notes: initialReferral.notes || '',
+      selectedTeeth: initialReferral.selectedTeeth || [],
+    }))
+  }, [initialReferral])
+
+  useEffect(() => {
+    if (!initialSpecialistId) return
+    setFormData((prev) => ({
+      ...prev,
+      specialistUserId: initialSpecialistId,
+    }))
+    setShowSpecialistSelector(false)
+  }, [initialSpecialistId])
 
   const loadSpecialists = async () => {
     try {
@@ -180,7 +224,11 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
         status: saveAsDraft ? 'DRAFT' : 'SUBMITTED',
       } as const
 
-      await referralService.createReferral(referralData)
+      if (initialReferral?.id) {
+        await referralService.updateReferral(initialReferral.id, referralData)
+      } else {
+        await referralService.createReferral(referralData)
+      }
 
       setFormData({
         referringDoctorFirstName: user?.name?.split(' ')[0] || '',
@@ -216,6 +264,7 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
   const clinic = user?.clinic
   const selectedSpecialist = specialists.find(s => s.id === formData.specialistUserId)
   const specialistLabel = selectedSpecialist?.specialistProfile?.specialty || selectedSpecialist?.clinic?.name || 'Specialist'
+  const selectedPhotoUrl = resolvePhotoUrl(selectedSpecialist?.specialistProfile?.photoUrl)
   const specialistOptions = [
     { value: '', label: 'All specialists' },
     ...specialists.map((specialist) => ({
@@ -287,9 +336,17 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
             <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
               {selectedSpecialist && (
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <User className="w-6 h-6 text-emerald-600" />
-                  </div>
+                  {selectedPhotoUrl ? (
+                    <img
+                      src={selectedPhotoUrl}
+                      alt={selectedSpecialist.name}
+                      className="w-12 h-12 rounded-full object-cover flex-shrink-0 border border-emerald-100"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                      <User className="w-6 h-6 text-emerald-600" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h4 className="text-base font-semibold text-gray-900 truncate">
                       {selectedSpecialist.name}

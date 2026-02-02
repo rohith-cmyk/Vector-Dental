@@ -13,18 +13,21 @@ interface StatsCardsV2Props {
     incomingChange?: number
     completedChange?: number
   }
+  showOutgoing?: boolean
 }
 
-export function StatsCardsV2({ stats }: StatsCardsV2Props) {
+export function StatsCardsV2({ stats, showOutgoing = true }: StatsCardsV2Props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Sent Out"
-          value={stats.totalOutgoing}
-          change={stats.outgoingChange}
-          icon={<ArrowUpRight className="h-5 w-5" />}
-          className="hover:shadow-lg transition-all duration-200 border-gray-200/60"
-        />
+    <div className={`grid grid-cols-1 md:grid-cols-2 ${showOutgoing ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
+        {showOutgoing && (
+          <StatCard
+            title="Sent Out"
+            value={stats.totalOutgoing}
+            change={stats.outgoingChange}
+            icon={<ArrowUpRight className="h-5 w-5" />}
+            className="hover:shadow-lg transition-all duration-200 border-gray-200/60"
+          />
+        )}
         <StatCard
           title="Received"
           value={stats.totalIncoming}

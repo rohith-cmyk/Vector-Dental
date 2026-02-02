@@ -6,6 +6,7 @@ import type {
     DashboardStats,
     Specialist,
     Referral,
+    NotificationItem,
 } from '@/types'
 
 // Auth Services
@@ -92,6 +93,47 @@ export const referralService = {
         status?: 'DRAFT' | 'SUBMITTED'
     }): Promise<ApiResponse<Referral>> {
         const response = await api.post('/referrals', data)
+        return response.data
+    },
+
+    async updateReferral(id: string, data: {
+        specialistUserId?: string
+        patientFirstName?: string
+        patientLastName?: string
+        patientDob?: string
+        patientPhone?: string
+        patientEmail?: string
+        insurance?: string
+        reason?: string
+        urgency?: 'ROUTINE' | 'URGENT' | 'EMERGENCY'
+        selectedTeeth?: string[]
+        notes?: string
+        status?: 'DRAFT' | 'SUBMITTED'
+    }): Promise<ApiResponse<Referral>> {
+        const response = await api.put(`/referrals/${id}`, data)
+        return response.data
+    },
+}
+
+// Notification Services
+export const notificationService = {
+    async getUnreadCount(): Promise<ApiResponse<{ count: number }>> {
+        const response = await api.get('/notifications/unread-count')
+        return response.data
+    },
+
+    async getNotifications(filter: 'all' | 'unread' = 'all'): Promise<ApiResponse<NotificationItem[]>> {
+        const response = await api.get('/notifications', { params: { filter } })
+        return response.data
+    },
+
+    async markAllAsRead(): Promise<ApiResponse<{ count: number }>> {
+        const response = await api.patch('/notifications/mark-all-read')
+        return response.data
+    },
+
+    async markAsRead(id: string): Promise<ApiResponse<NotificationItem>> {
+        const response = await api.patch(`/notifications/${id}/read`)
         return response.data
     },
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowUpRight, Eye, Search } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout'
 import { Badge, Card, CardContent, LoadingState } from '@/components/ui'
@@ -368,6 +368,7 @@ function getReferralsList(payload: unknown): Referral[] {
 
 export default function ReferralsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, isLoading: authLoading } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -378,12 +379,48 @@ export default function ReferralsPage() {
   const [useMockReferrals, setUseMockReferrals] = useState(false)
   const [selectedReferralId, setSelectedReferralId] = useState<string | null>(null)
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
+  const [editingDraft, setEditingDraft] = useState<Referral | null>(null)
+  const [prefillSpecialistId, setPrefillSpecialistId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login')
     }
   }, [user, authLoading, router])
+
+  useEffect(() => {
+    const openId = searchParams.get('openId')
+    if (!openId) return
+    setView('list')
+    setActiveTab('sent')
+
+    const existing = referrals.find((referral) => referral.id === openId) || null
+    if (existing) {
+      setSelectedReferralId(openId)
+      setSelectedReferral(existing)
+      return
+    }
+
+    referralService
+      .getReferralById(openId)
+      .then((response) => {
+        if (response.data) {
+          setSelectedReferralId(openId)
+          setSelectedReferral(response.data)
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load referral from link:', error)
+      })
+  }, [searchParams, referrals, router])
+
+  useEffect(() => {
+    const specialistId = searchParams.get('specialistId')
+    if (!specialistId) return
+    setPrefillSpecialistId(specialistId)
+    setEditingDraft(null)
+    setView('form')
+  }, [searchParams])
 
   const fetchReferrals = async () => {
     setLoading(true)
@@ -517,7 +554,10 @@ export default function ReferralsPage() {
             </div>
             <button
               type="button"
-              onClick={() => setView('form')}
+              onClick={() => {
+                setEditingDraft(null)
+                setView('form')
+              }}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-sm text-white rounded-full hover:bg-emerald-700 transition-colors"
             >
               New Referral
@@ -534,8 +574,19 @@ export default function ReferralsPage() {
             <Card className="max-w-4xl mx-auto w-full">
               <CardContent className="p-6">
                 <NewReferralForm
-                  onCancel={() => setView('list')}
-                  onSuccess={fetchReferrals}
+                  initialReferral={editingDraft}
+                  initialSpecialistId={prefillSpecialistId}
+                  onCancel={() => {
+                    setView('list')
+                    setEditingDraft(null)
+                    setPrefillSpecialistId(null)
+                  }}
+                  onSuccess={() => {
+                    fetchReferrals()
+                    setView('list')
+                    setEditingDraft(null)
+                    setPrefillSpecialistId(null)
+                  }}
                 />
               </CardContent>
             </Card>
@@ -585,6 +636,11 @@ export default function ReferralsPage() {
                           key={referral.id}
                           className="hover:bg-neutral-50 transition-colors cursor-pointer"
                           onClick={() => {
+                            if (activeTab === 'draft' && referral.status === 'DRAFT') {
+                              setEditingDraft(referral)
+                              setView('form')
+                              return
+                            }
                             setSelectedReferralId(referral.id)
                             setSelectedReferral(referral)
                           }}
@@ -629,6 +685,11 @@ export default function ReferralsPage() {
                               className="text-neutral-400 hover:text-neutral-800"
                               onClick={(event) => {
                                 event.stopPropagation()
+                                if (activeTab === 'draft' && referral.status === 'DRAFT') {
+                                  setEditingDraft(referral)
+                                  setView('form')
+                                  return
+                                }
                                 setSelectedReferralId(referral.id)
                                 setSelectedReferral(referral)
                               }}

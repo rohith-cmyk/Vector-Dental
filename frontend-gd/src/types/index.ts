@@ -18,6 +18,24 @@ export interface Clinic {
     logoUrl: string | null
 }
 
+export interface NotificationItem {
+    id: string
+    clinicId: string
+    userId?: string | null
+    type: string
+    referralId?: string | null
+    title: string
+    message: string
+    isRead: boolean
+    createdAt: string
+    referral?: {
+        id: string
+        patientName?: string
+        status?: string
+        urgency?: string
+    } | null
+}
+
 export interface Specialist {
     id: string
     name: string
@@ -68,6 +86,10 @@ export interface Referral {
     treatmentCompletedAt?: string | null
     createdAt: string
     updatedAt: string
+    acceptedAt?: string | null
+    scheduledAt?: string | null
+    completedAt?: string | null
+    postOpScheduledAt?: string | null
     intendedRecipient?: {
         id: string
         name: string

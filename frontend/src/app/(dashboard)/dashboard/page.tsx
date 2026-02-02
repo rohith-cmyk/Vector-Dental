@@ -358,6 +358,7 @@ export default function DashboardPage() {
             incomingChange: stats.incomingChange,
             completedChange: stats.completedChange,
           }}
+          showOutgoing={false}
         />
 
         {/* Overview Metrics & Process Flow */}
@@ -381,7 +382,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Analytics</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <ReferralTrendsChart data={referralTrendsData} />
+                <ReferralTrendsChart data={referralTrendsData} showOutgoing={false} />
               </div>
               <div className="lg:col-span-1">
                 <BreakdownChart

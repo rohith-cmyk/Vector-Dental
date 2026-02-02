@@ -4,7 +4,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "1", firstName: "Sarah", lastName: "Connors", credentials: "DDS, MS", specialty: "Endodontics",
     subSpecialties: ["Root Canal Therapy", "Apicoectomy"], yearsInPractice: 12, boardCertified: true,
-    languages: ["English", "Spanish"], headshotUrl: "https://i.pravatar.cc/150?u=sarah",
+    languages: ["English", "Spanish"], headshotUrl: "/doctor-1.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
     location: { address: "123 Dental Ln, Ste 100", city: "Austin", state: "TX", zip: "78701",
       coordinates: { lat: 30.26, lng: -97.74 }, officeHours: "Mon-Fri 8am-5pm", emergencyHours: "Sat 10am-2pm",
@@ -20,7 +20,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "2", firstName: "James", lastName: "Wong", credentials: "DMD", specialty: "Oral & Maxillofacial Surgery",
     subSpecialties: ["Tooth Extractions", "Dental Implant Surgery"], yearsInPractice: 8, boardCertified: true,
-    languages: ["English", "Mandarin"], headshotUrl: "https://i.pravatar.cc/150?u=james",
+    languages: ["English", "Mandarin"], headshotUrl: "/doctor-2.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
     location: { address: "450 Medical Blvd", city: "Austin", state: "TX", zip: "78705",
       coordinates: { lat: 30.29, lng: -97.74 }, officeHours: "Mon-Fri 7am-4pm", emergencyHours: null,
@@ -36,7 +36,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "3", firstName: "Maria", lastName: "Rodriguez", credentials: "DDS, MSD", specialty: "Orthodontics",
     subSpecialties: ["Clear Aligners", "Traditional Braces", "Pediatric Orthodontics"], yearsInPractice: 15, boardCertified: true,
-    languages: ["English", "Spanish", "Portuguese"], headshotUrl: "https://i.pravatar.cc/150?u=maria",
+    languages: ["English", "Spanish", "Portuguese"], headshotUrl: "/doctor-3.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?auto=format&fit=crop&w=800&q=80",
     location: { address: "789 Smile Ave, Suite 200", city: "Austin", state: "TX", zip: "78702",
       coordinates: { lat: 30.27, lng: -97.73 }, officeHours: "Mon-Thu 9am-6pm, Fri 9am-2pm", emergencyHours: "Sat 9am-12pm",
@@ -52,7 +52,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "4", firstName: "Emily", lastName: "Davis", credentials: "DDS", specialty: "Periodontics",
     subSpecialties: ["Gum Disease Treatment", "Dental Implants"], yearsInPractice: 10, boardCertified: true,
-    languages: ["English"], headshotUrl: "https://i.pravatar.cc/150?u=emily",
+    languages: ["English"], headshotUrl: "/doctor-4.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1504813184591-01572f98c85f?auto=format&fit=crop&w=800&q=80",
     location: { address: "220 Pearl St, Suite 400", city: "Austin", state: "TX", zip: "78704",
       coordinates: { lat: 30.25, lng: -97.75 }, officeHours: "Mon-Fri 8am-4pm", emergencyHours: null,
@@ -68,7 +68,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "5", firstName: "Olivia", lastName: "Martinez", credentials: "DDS", specialty: "Pediatric Dentistry",
     subSpecialties: ["Preventive Care", "Sedation Management"], yearsInPractice: 9, boardCertified: true,
-    languages: ["English", "Spanish"], headshotUrl: "https://i.pravatar.cc/150?u=olivia",
+    languages: ["English", "Spanish"], headshotUrl: "/doctor-5.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=800&q=80",
     location: { address: "980 Cedar Ave", city: "Austin", state: "TX", zip: "78703",
       coordinates: { lat: 30.28, lng: -97.76 }, officeHours: "Mon-Thu 9am-5pm, Fri 9am-1pm", emergencyHours: "Sat 10am-12pm",
@@ -84,7 +84,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "6", firstName: "Nathan", lastName: "Lee", credentials: "DMD", specialty: "Prosthodontics",
     subSpecialties: ["Fixed Prosthodontics", "Implant-Supported"], yearsInPractice: 14, boardCertified: true,
-    languages: ["English", "Korean"], headshotUrl: "https://i.pravatar.cc/150?u=nathan",
+    languages: ["English", "Korean"], headshotUrl: "/doctor-6.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=800&q=80",
     location: { address: "410 Congress Ave", city: "Austin", state: "TX", zip: "78701",
       coordinates: { lat: 30.27, lng: -97.74 }, officeHours: "Mon-Fri 8am-6pm", emergencyHours: null,
@@ -100,7 +100,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "7", firstName: "Grace", lastName: "Nguyen", credentials: "DDS", specialty: "Oral & Maxillofacial Surgery",
     subSpecialties: ["Dental Implant Surgery", "Corrective Jaw Surgery"], yearsInPractice: 11, boardCertified: true,
-    languages: ["English", "Vietnamese"], headshotUrl: "https://i.pravatar.cc/150?u=grace",
+    languages: ["English", "Vietnamese"], headshotUrl: "/doctor-7.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80",
     location: { address: "710 Medical Pkwy", city: "Austin", state: "TX", zip: "78705",
       coordinates: { lat: 30.30, lng: -97.75 }, officeHours: "Mon-Fri 7am-3pm", emergencyHours: "Sat 9am-12pm",
@@ -116,7 +116,7 @@ export const MOCK_SPECIALISTS: SpecialistProfile[] = [
   {
     id: "8", firstName: "Michael", lastName: "Chen", credentials: "DDS", specialty: "Endodontics",
     subSpecialties: ["Root Canal Therapy", "Retreatment"], yearsInPractice: 7, boardCertified: false,
-    languages: ["English", "Mandarin"], headshotUrl: "https://i.pravatar.cc/150?u=michael",
+    languages: ["English", "Mandarin"], headshotUrl: "/doctor-8.png",
     officePhotoUrl: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
     location: { address: "1450 Barton Springs Rd", city: "Austin", state: "TX", zip: "78704",
       coordinates: { lat: 30.26, lng: -97.77 }, officeHours: "Mon-Thu 9am-5pm, Fri 9am-1pm", emergencyHours: null,

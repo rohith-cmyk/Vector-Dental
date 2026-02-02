@@ -320,3 +320,95 @@ export async function createReferral(req: Request, res: Response) {
         })
     }
 }
+
+/**
+ * Update an existing referral (drafts only)
+ */
+export async function updateReferral(req: Request, res: Response) {
+    try {
+        const { id } = req.params
+        const userId = req.user!.userId
+
+        const {
+            specialistUserId,
+            patientFirstName,
+            patientLastName,
+            patientDob,
+            patientPhone,
+            patientEmail,
+            insurance,
+            reason,
+            urgency = 'ROUTINE',
+            selectedTeeth = [],
+            notes,
+            status,
+        } = req.body
+
+        const gdUser = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { clinic: true },
+        })
+
+        const clinicId = gdUser?.clinicId || req.user?.clinicId
+        const clinicEmail = gdUser?.clinic?.email || undefined
+        const clinicName = gdUser?.clinic?.name || undefined
+        const tokenEmail = req.user?.email
+
+        if (!clinicId && !tokenEmail && !clinicEmail && !clinicName) {
+            throw errors.notFound('Clinic not found for user')
+        }
+
+        const whereOr: any[] = []
+        if (clinicId) whereOr.push({ fromClinicId: clinicId })
+        if (clinicEmail) whereOr.push({ fromClinicEmail: clinicEmail })
+        if (clinicName) whereOr.push({ fromClinicName: clinicName })
+        if (tokenEmail) whereOr.push({ fromClinicEmail: tokenEmail })
+
+        const existing = await prisma.referral.findFirst({
+            where: {
+                id,
+                OR: whereOr,
+            },
+        })
+
+        if (!existing) {
+            throw errors.notFound('Referral not found')
+        }
+
+        if (existing.status !== 'DRAFT') {
+            throw errors.badRequest('Only draft referrals can be edited')
+        }
+
+        const updated = await prisma.referral.update({
+            where: { id },
+            data: {
+                intendedRecipientId: specialistUserId || existing.intendedRecipientId,
+                patientFirstName: patientFirstName || existing.patientFirstName,
+                patientLastName: patientLastName || existing.patientLastName,
+                patientName: patientFirstName && patientLastName
+                    ? `${patientFirstName} ${patientLastName}`
+                    : existing.patientName,
+                patientDob: patientDob ? new Date(patientDob) : existing.patientDob,
+                patientPhone: patientPhone || existing.patientPhone,
+                patientEmail: patientEmail || existing.patientEmail,
+                insurance: insurance ?? existing.insurance,
+                reason: reason || existing.reason,
+                urgency,
+                selectedTeeth,
+                notes: notes ?? existing.notes,
+                status: status || existing.status,
+            },
+        })
+
+        res.json({
+            success: true,
+            data: updated,
+        })
+    } catch (error: any) {
+        console.error('Update referral error:', error)
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message || 'Failed to update referral',
+        })
+    }
+}

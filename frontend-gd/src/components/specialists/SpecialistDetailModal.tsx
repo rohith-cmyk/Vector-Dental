@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Modal } from '@/components/ui'
@@ -31,6 +32,7 @@ interface SpecialistDetailModalProps {
 
 export function SpecialistDetailModal({ isOpen, onClose, specialist }: SpecialistDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'reviews' | 'location' | 'contact'>('overview')
+  const router = useRouter()
 
   if (!specialist) return null
 
@@ -72,10 +74,19 @@ export function SpecialistDetailModal({ isOpen, onClose, specialist }: Specialis
             <p className="text-[10pt] font-medium text-emerald-600 text-center mt-1">{specialist.specialty}</p>
           </div>
 
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-8 gap-3">
             <button className="bg-neutral-800 text-white py-2.5 px-8 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:bg-neutral-900">
               <Calendar className="h-4 w-4 text-white" />
               Schedule
+            </button>
+            <button
+              onClick={() => {
+                onClose()
+                router.push(`/referrals?specialistId=${specialist.id}`)
+              }}
+              className="bg-emerald-600 text-white py-2.5 px-6 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:bg-emerald-700"
+            >
+              Send a Referral
             </button>
           </div>
 
