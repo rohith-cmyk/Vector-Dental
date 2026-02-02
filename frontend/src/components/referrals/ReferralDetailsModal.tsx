@@ -174,7 +174,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                     <div className="flex items-center justify-center gap-3 text-sm text-neutral-400">
                         {statusSteps.map((step, index) => {
                             const isCompleted = currentStepIndex > index
-                              || (currentStepIndex === index && displayReferral.status === 'COMPLETED')
+                                || (currentStepIndex === index && displayReferral.status === 'COMPLETED')
                             const isCurrent = currentStepIndex === index && !isCompleted
                             const Icon = step.icon
                             return (
@@ -193,8 +193,8 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                                 isCompleted
                                                     ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
                                                     : isCurrent
-                                                    ? 'bg-neutral-100 border-neutral-200 text-neutral-700'
-                                                    : 'bg-neutral-50 border-neutral-200 text-neutral-400'
+                                                        ? 'bg-neutral-100 border-neutral-200 text-neutral-700'
+                                                        : 'bg-neutral-50 border-neutral-200 text-neutral-400'
                                             )}
                                         >
                                             <Icon className="h-3.5 w-3.5" />
@@ -367,8 +367,8 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                             state.isCompleted
                                                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                                 : state.isCurrent
-                                                ? 'bg-white border-neutral-200 text-neutral-700'
-                                                : 'bg-white border-neutral-200 text-neutral-500 hover:border-neutral-300',
+                                                    ? 'bg-white border-neutral-200 text-neutral-700'
+                                                    : 'bg-white border-neutral-200 text-neutral-500 hover:border-neutral-300',
                                             !canClick && 'opacity-50 cursor-not-allowed',
                                             canClick && 'hover:bg-neutral-50 cursor-pointer'
                                         )}
@@ -426,34 +426,53 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                     ? `${API_URL.replace('/api', '')}${file.fileUrl}`
                                     : file.fileUrl
 
+                                // Check if file is an image
+                                const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(file.fileName)
+
                                 return (
-                                    <a
+                                    <div
                                         key={file.id}
-                                        href={fileUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-5 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all"
+                                        className="bg-white border border-neutral-200 rounded-xl overflow-hidden"
                                     >
-                                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <div className="flex-shrink-0 p-3 bg-neutral-50 rounded-lg">
-                                                <FileText className="h-5 w-5 text-neutral-500" />
+                                        {/* Image Preview */}
+                                        {isImage && (
+                                            <div className="w-full bg-neutral-50 p-4 flex justify-center">
+                                                <img
+                                                    src={fileUrl}
+                                                    alt={file.fileName}
+                                                    className="max-w-[45%] h-auto rounded-lg"
+                                                />
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-neutral-700 truncate">
-                                                    {file.fileName}
-                                                </p>
-                                                <p className="text-xs text-neutral-500 mt-2">
-                                                    {(file.fileSize / 1024).toFixed(1)} KB
-                                                </p>
+                                        )}
+
+                                        {/* File Info */}
+                                        <a
+                                            href={fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between p-5 hover:bg-neutral-50 transition-all"
+                                        >
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                <div className="flex-shrink-0 p-3 bg-neutral-50 rounded-lg">
+                                                    <FileText className="h-5 w-5 text-neutral-500" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-neutral-700 truncate">
+                                                        {file.fileName}
+                                                    </p>
+                                                    <p className="text-xs text-neutral-500 mt-2">
+                                                        {(file.fileSize / 1024).toFixed(1)} KB
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex-shrink-0 ml-4">
-                                            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors">
-                                                <Download className="h-4 w-4" />
-                                                Download
-                                            </button>
-                                        </div>
-                                    </a>
+                                            <div className="flex-shrink-0 ml-4">
+                                                <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-50 rounded-lg hover:bg-neutral-100 transition-colors">
+                                                    <Download className="h-4 w-4" />
+                                                    Download
+                                                </button>
+                                            </div>
+                                        </a>
+                                    </div>
                                 )
                             })}
                         </div>
