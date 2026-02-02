@@ -17,7 +17,6 @@ const statusOptions: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All Status' },
   { value: 'DRAFT', label: 'Draft' },
   { value: 'SENT', label: 'Sent' },
-  { value: 'SUBMITTED', label: 'Submitted' },
   { value: 'ACCEPTED', label: 'Accepted' },
   { value: 'COMPLETED', label: 'Completed' },
   { value: 'REJECTED', label: 'Rejected' },
