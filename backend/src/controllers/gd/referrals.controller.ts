@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { prisma } from '../../config/database'
 import { errors } from '../../utils/errors'
+import { uploadFile } from '../../utils/storage'
 import crypto from 'crypto'
 
 /**
@@ -96,6 +97,20 @@ export async function getMyReferrals(req: Request, res: Response) {
             message: error.message || 'Failed to fetch referrals'
         })
     }
+}
+
+const parseSelectedTeeth = (value: unknown): string[] => {
+    if (!value) return []
+    if (Array.isArray(value)) return value.map(String)
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value)
+            if (Array.isArray(parsed)) return parsed.map(String)
+        } catch {
+            return value.split(',').map((item) => item.trim()).filter(Boolean)
+        }
+    }
+    return []
 }
 
 /**
@@ -201,7 +216,7 @@ export async function createReferral(req: Request, res: Response) {
             // Referral details
             reason,
             urgency = 'ROUTINE',
-            selectedTeeth = [],
+            selectedTeeth,
             notes,
             status,
         } = req.body
@@ -240,6 +255,8 @@ export async function createReferral(req: Request, res: Response) {
         // Generate status token for tracking
         const statusToken = crypto.randomBytes(32).toString('hex')
 
+        const normalizedSelectedTeeth = parseSelectedTeeth(selectedTeeth)
+
         // Create referral
         const referral = await prisma.referral.create({
             data: {
@@ -270,7 +287,7 @@ export async function createReferral(req: Request, res: Response) {
                 // Referral details
                 reason,
                 urgency,
-                selectedTeeth,
+                selectedTeeth: normalizedSelectedTeeth,
                 notes,
 
                 // Status
@@ -294,6 +311,44 @@ export async function createReferral(req: Request, res: Response) {
             }
         })
 
+        const files = (req.files as Express.Multer.File[]) || []
+        if (files.length > 0) {
+            for (const file of files) {
+                const uploadResult = await uploadFile(file.buffer, file.originalname, file.mimetype, referral.id)
+                await prisma.referralFile.create({
+                    data: {
+                        referralId: referral.id,
+                        fileName: uploadResult.fileName,
+                        fileType: uploadResult.mimeType.split('/')[1] || 'unknown',
+                        fileUrl: uploadResult.fileUrl,
+                        fileSize: uploadResult.fileSize,
+                        storageKey: uploadResult.storageKey,
+                        mimeType: uploadResult.mimeType,
+                    },
+                })
+            }
+        }
+
+        const referralWithFiles = await prisma.referral.findUnique({
+            where: { id: referral.id },
+            include: {
+                intendedRecipient: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        clinic: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    }
+                },
+                files: true,
+            }
+        })
+
         // Create notification for specialist
         await prisma.notification.create({
             data: {
@@ -310,7 +365,7 @@ export async function createReferral(req: Request, res: Response) {
 
         res.status(201).json({
             success: true,
-            data: referral
+            data: referralWithFiles || referral
         })
     } catch (error: any) {
         console.error('Create referral error:', error)
@@ -339,7 +394,7 @@ export async function updateReferral(req: Request, res: Response) {
             insurance,
             reason,
             urgency = 'ROUTINE',
-            selectedTeeth = [],
+            selectedTeeth,
             notes,
             status,
         } = req.body
@@ -379,6 +434,7 @@ export async function updateReferral(req: Request, res: Response) {
             throw errors.badRequest('Only draft referrals can be edited')
         }
 
+        const normalizedSelectedTeeth = parseSelectedTeeth(selectedTeeth)
         const updated = await prisma.referral.update({
             where: { id },
             data: {
@@ -394,15 +450,53 @@ export async function updateReferral(req: Request, res: Response) {
                 insurance: insurance ?? existing.insurance,
                 reason: reason || existing.reason,
                 urgency,
-                selectedTeeth,
+                selectedTeeth: normalizedSelectedTeeth.length ? normalizedSelectedTeeth : existing.selectedTeeth,
                 notes: notes ?? existing.notes,
                 status: status || existing.status,
             },
         })
 
+        const files = (req.files as Express.Multer.File[]) || []
+        if (files.length > 0) {
+            for (const file of files) {
+                const uploadResult = await uploadFile(file.buffer, file.originalname, file.mimetype, updated.id)
+                await prisma.referralFile.create({
+                    data: {
+                        referralId: updated.id,
+                        fileName: uploadResult.fileName,
+                        fileType: uploadResult.mimeType.split('/')[1] || 'unknown',
+                        fileUrl: uploadResult.fileUrl,
+                        fileSize: uploadResult.fileSize,
+                        storageKey: uploadResult.storageKey,
+                        mimeType: uploadResult.mimeType,
+                    },
+                })
+            }
+        }
+
+        const updatedWithFiles = await prisma.referral.findUnique({
+            where: { id: updated.id },
+            include: {
+                intendedRecipient: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        clinic: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    }
+                },
+                files: true,
+            }
+        })
+
         res.json({
             success: true,
-            data: updated,
+            data: updatedWithFiles || updated,
         })
     } catch (error: any) {
         console.error('Update referral error:', error)

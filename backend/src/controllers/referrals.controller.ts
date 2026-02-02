@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
 import { generateShareToken, verifyAccessCode } from '../utils/tokens'
-import { schedulePostAcceptStatusProgression } from '../utils/demo-status'
 import { sendEmail } from '../utils/email'
 import { sendSms } from '../utils/sms'
 import { config } from '../config/env'
@@ -304,6 +303,7 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
       data: {
         status,
         acceptedAt: status === 'ACCEPTED' && !existingReferral.acceptedAt ? now : undefined,
+        scheduledAt: status === 'ACCEPTED' && !existingReferral.scheduledAt ? now : undefined,
         completedAt: status === 'SENT' && !existingReferral.completedAt ? now : undefined,
         postOpScheduledAt: status === 'COMPLETED' && !existingReferral.postOpScheduledAt ? now : undefined,
       },
@@ -326,10 +326,6 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
       } catch (smsError) {
         console.warn('Failed to send appointment SMS:', smsError)
       }
-    }
-
-    if (status === 'ACCEPTED') {
-      schedulePostAcceptStatusProgression(referral.id)
     }
 
     res.json({

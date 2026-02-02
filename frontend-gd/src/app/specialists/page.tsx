@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/layout'
 import { FilterSidebar } from '@/components/specialists/FilterSidebar'
 import { SpecialistCard } from '@/components/specialists/SpecialistCard'
 import { SpecialistDetailModal } from '@/components/specialists/SpecialistDetailModal'
-import { Modal, Input, Select, Button } from '@/components/ui'
+import { Modal, Input, Select, Button, LoadingState } from '@/components/ui'
 import { Plus } from 'lucide-react'
 import { MOCK_SPECIALISTS } from '@/data/mockSpecialists'
 import type { SpecialistProfile, InsuranceProvider } from '@/types/specialists'
@@ -291,7 +291,7 @@ export default function DoctorNetworkPage() {
                   className="bg-white rounded-3xl border border-neutral-100 p-12"
                 >
                   <div className="flex flex-col items-center justify-center text-center">
-                    <p className="text-sm font-normal text-neutral-400">Loading specialists...</p>
+                    <LoadingState title="Loading specialists..." />
                   </div>
                 </motion.div>
               ) : filteredSpecialists.length === 0 ? (

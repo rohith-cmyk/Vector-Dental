@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import multer from 'multer'
 import { authenticate } from '../../middleware/auth.middleware'
 import {
     getMyReferrals,
@@ -8,6 +9,10 @@ import {
 } from '../../controllers/gd/referrals.controller'
 
 const router = Router()
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+})
 
 /**
  * @route   GET /api/gd/referrals
@@ -28,13 +33,13 @@ router.get('/:id', authenticate, getReferralById)
  * @desc    Create a new referral to a specialist
  * @access  Private (GD only)
  */
-router.post('/', authenticate, createReferral)
+router.post('/', authenticate, upload.array('files'), createReferral)
 
 /**
  * @route   PUT /api/gd/referrals/:id
  * @desc    Update an existing referral (drafts only)
  * @access  Private (GD only)
  */
-router.put('/:id', authenticate, updateReferral)
+router.put('/:id', authenticate, upload.array('files'), updateReferral)
 
 export default router

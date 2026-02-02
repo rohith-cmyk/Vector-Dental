@@ -50,6 +50,17 @@ const buildTimelineStages = (
         dateLabel: stageDates[stepStatus],
       }
     }
+    if (stepStatus === 'SUBMITTED') {
+      return {
+        key: stepStatus,
+        label: STATUS_LABELS[stepStatus],
+        status: stepStatus,
+        isCompleted: true,
+        isCurrent: false,
+        isPending: false,
+        dateLabel: stageDates[stepStatus],
+      }
+    }
     if (index < currentIndex) {
       return {
         key: stepStatus,
@@ -66,8 +77,8 @@ const buildTimelineStages = (
         key: stepStatus,
         label: STATUS_LABELS[stepStatus],
         status: stepStatus,
-        isCompleted: status === 'COMPLETED',
-        isCurrent: status !== 'COMPLETED',
+        isCompleted: true,
+        isCurrent: true,
         isPending: false,
         dateLabel: stageDates[stepStatus],
       }
@@ -91,6 +102,19 @@ const formatDate = (date?: string | null) => {
   return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+const formatDateTime = (date?: string | null) => {
+  if (!date) return '—'
+  const parsed = new Date(date)
+  if (Number.isNaN(parsed.getTime())) return '—'
+  return parsed.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 const resolveFileUrl = (fileUrl?: string) => {
   if (!fileUrl) return ''
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
@@ -99,6 +123,11 @@ const resolveFileUrl = (fileUrl?: string) => {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/gd'
   const serverBaseUrl = apiBaseUrl.replace(/\/api\/gd\/?$/, '')
   return fileUrl.startsWith('/') ? `${serverBaseUrl}${fileUrl}` : fileUrl
+}
+
+const isImageFile = (fileName?: string, fileUrl?: string) => {
+  const candidate = (fileName || fileUrl || '').toLowerCase()
+  return /\.(png|jpe?g|gif|webp|bmp)$/i.test(candidate)
 }
 
 export function ReferralDetailModal({ isOpen, referralId, initialReferral, onClose }: ReferralDetailModalProps) {
@@ -152,10 +181,10 @@ export function ReferralDetailModal({ isOpen, referralId, initialReferral, onClo
   const stages = useMemo(() => {
     if (!referral) return []
     const stageDates: Partial<Record<Referral['status'], string>> = {
-      SUBMITTED: formatDate(referral.acceptedAt || referral.createdAt),
-      ACCEPTED: formatDate(referral.scheduledAt),
-      SENT: formatDate(referral.completedAt),
-      COMPLETED: formatDate(referral.postOpScheduledAt),
+      SUBMITTED: formatDateTime(referral.acceptedAt || referral.createdAt),
+      ACCEPTED: formatDateTime(referral.scheduledAt),
+      SENT: formatDateTime(referral.completedAt),
+      COMPLETED: formatDateTime(referral.postOpScheduledAt),
     }
     return buildTimelineStages(referral.status, stageDates)
   }, [referral])
@@ -205,15 +234,22 @@ export function ReferralDetailModal({ isOpen, referralId, initialReferral, onClo
                 <div
                   className={clsx(
                     'flex h-10 w-10 items-center justify-center rounded-full border-2',
-                    stage.isCompleted || stage.isCurrent
+                    stage.isCompleted
                       ? 'border-emerald-500 bg-emerald-500 text-white'
+                      : stage.isCurrent
+                      ? 'border-emerald-500 bg-white text-emerald-500'
                       : 'border-neutral-200 bg-white text-neutral-300'
                   )}
                 >
-                  {stage.isCompleted || stage.isCurrent ? (
+                  {stage.isCompleted ? (
                     <Check className="h-4 w-4" />
                   ) : (
-                    <span className="h-2 w-2 rounded-full bg-current" />
+                    <span
+                      className={clsx(
+                        'h-2 w-2 rounded-full',
+                        stage.isCurrent ? 'bg-emerald-500' : 'bg-current'
+                      )}
+                    />
                   )}
                 </div>
                 <div className="pt-1">
@@ -224,19 +260,30 @@ export function ReferralDetailModal({ isOpen, referralId, initialReferral, onClo
                     )}
                   </div>
                   {stage.status === 'SENT' && referral?.operativeReports?.length ? (
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 space-y-3">
                       {referral.operativeReports.flatMap((report) =>
-                        (report.files || []).map((file) => (
-                          <a
-                            key={file.id}
-                            href={resolveFileUrl(file.fileUrl)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block text-sm text-emerald-600 hover:text-emerald-700"
-                          >
-                            {file.fileName}
-                          </a>
-                        ))
+                        (report.files || []).map((file) => {
+                          const fileHref = resolveFileUrl(file.fileUrl)
+                          const showPreview = isImageFile(file.fileName, file.fileUrl)
+                          return (
+                            <a
+                              key={file.id}
+                              href={fileHref}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-3 text-sm text-emerald-600 hover:text-emerald-700"
+                            >
+                              {showPreview ? (
+                                <img
+                                  src={fileHref}
+                                  alt={file.fileName}
+                                  className="w-[100px] h-[100px] rounded-md object-cover border border-emerald-100"
+                                />
+                              ) : null}
+                              <span className="truncate">{file.fileName}</span>
+                            </a>
+                          )
+                        })
                       )}
                     </div>
                   ) : null}
@@ -261,18 +308,29 @@ export function ReferralDetailModal({ isOpen, referralId, initialReferral, onClo
                     {report.comment || 'No comments added yet.'}
                   </div>
                   {(report.files || []).length > 0 ? (
-                    <div className="mt-3 space-y-1">
-                      {(report.files || []).map((file) => (
-                        <a
-                          key={file.id}
-                          href={resolveFileUrl(file.fileUrl)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block text-sm text-emerald-600 hover:text-emerald-700"
-                        >
-                          {file.fileName}
-                        </a>
-                      ))}
+                    <div className="mt-3 space-y-3">
+                      {(report.files || []).map((file) => {
+                        const fileHref = resolveFileUrl(file.fileUrl)
+                        const showPreview = isImageFile(file.fileName, file.fileUrl)
+                        return (
+                          <a
+                            key={file.id}
+                            href={fileHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-3 text-sm text-emerald-600 hover:text-emerald-700"
+                          >
+                            {showPreview ? (
+                              <img
+                                src={fileHref}
+                                alt={file.fileName}
+                                className="w-[100px] h-[100px] rounded-md object-cover border border-emerald-100"
+                              />
+                            ) : null}
+                            <span className="truncate">{file.fileName}</span>
+                          </a>
+                        )
+                      })}
                     </div>
                   ) : (
                     <div className="text-neutral-400 mt-2">No documents attached.</div>

@@ -340,7 +340,7 @@ export default function DashboardPage() {
                 referralService.getMyReferrals({ limit: 200 }),
             ])
             setStats(statsResponse.data.stats)
-            setReferrals(getReferralsList(referralsResponse.data.data))
+            setReferrals(getReferralsList(referralsResponse.data))
         } catch (error) {
             console.error('Failed to load dashboard data:', error)
         } finally {
@@ -369,6 +369,7 @@ export default function DashboardPage() {
             stats.rejected > 0)
     const effectiveStats = hasRealStats ? stats : mockStats
     const effectiveReferrals = referrals.length > 0 ? referrals : mockReferrals
+    const recentSourceReferrals = referrals
 
     const totalReferrals = effectiveStats.total || 0
     const acceptedReferrals = effectiveStats.accepted || 0
@@ -382,7 +383,7 @@ export default function DashboardPage() {
 
     const trendData = buildMonthlyTrend(effectiveReferrals)
     const officeBreakdown = buildOfficeBreakdown(effectiveReferrals)
-    const recentReferrals = effectiveReferrals
+    const recentReferrals = recentSourceReferrals
         .filter((referral) => referral.status !== 'DRAFT' && referral.intendedRecipient?.id)
         .sort((a, b) => {
             const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
@@ -499,51 +500,59 @@ export default function DashboardPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-black/5">
-                                            {recentReferrals.map((referral) => (
-                                                <tr
-                                                    key={referral.id}
-                                                    className="hover:bg-neutral-50 transition-colors cursor-pointer"
-                                                    onClick={() => router.push(`/referrals?openId=${referral.id}`)}
-                                                >
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-medium text-neutral-800">
-                                                            {getPatientName(referral)}
-                                                        </div>
-                                                        <div className="text-xs text-neutral-500">
-                                                            {referral.patientPhone || '—'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-medium text-neutral-800">
-                                                            {referral.intendedRecipient?.name || 'Specialist'}
-                                                        </div>
-                                                        <div className="text-xs text-neutral-500">
-                                                            {referral.intendedRecipient?.clinic?.name || '—'}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm text-neutral-700 max-w-xs truncate">
-                                                            {referral.reason}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${
-                                                            referral.status === 'COMPLETED'
-                                                                ? 'bg-green-100 text-green-500'
-                                                                : referral.status === 'ACCEPTED'
-                                                                ? 'bg-blue-100 text-blue-500'
-                                                                : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
-                                                                ? 'bg-red-100 text-red-500'
-                                                                : 'bg-yellow-100 text-yellow-500'
-                                                        }`}>
-                                                            {(referral.status || '').toUpperCase()}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
-                                                        {referral.createdAt ? formatRelativeTime(referral.createdAt) : '—'}
+                                            {recentReferrals.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-400">
+                                                        No recent sent referrals yet.
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ) : (
+                                                recentReferrals.map((referral) => (
+                                                    <tr
+                                                        key={referral.id}
+                                                        className="hover:bg-neutral-50 transition-colors cursor-pointer"
+                                                        onClick={() => router.push(`/referrals?openId=${referral.id}`)}
+                                                    >
+                                                        <td className="px-6 py-4">
+                                                            <div className="text-sm font-medium text-neutral-800">
+                                                                {getPatientName(referral)}
+                                                            </div>
+                                                            <div className="text-xs text-neutral-500">
+                                                                {referral.patientPhone || '—'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="text-sm font-medium text-neutral-800">
+                                                                {referral.intendedRecipient?.name || 'Specialist'}
+                                                            </div>
+                                                            <div className="text-xs text-neutral-500">
+                                                                {referral.intendedRecipient?.clinic?.name || '—'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="text-sm text-neutral-700 max-w-xs truncate">
+                                                                {referral.reason}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${
+                                                                referral.status === 'COMPLETED'
+                                                                    ? 'bg-green-100 text-green-500'
+                                                                    : referral.status === 'ACCEPTED'
+                                                                    ? 'bg-blue-100 text-blue-500'
+                                                                    : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
+                                                                    ? 'bg-red-100 text-red-500'
+                                                                    : 'bg-yellow-100 text-yellow-500'
+                                                            }`}>
+                                                                {(referral.status || '').toUpperCase()}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
+                                                            {referral.createdAt ? formatRelativeTime(referral.createdAt) : '—'}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>

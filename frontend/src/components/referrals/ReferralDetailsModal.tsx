@@ -95,32 +95,19 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
         const statusIndex = STATUS_ORDER.indexOf(status)
 
         if (statusIndex === -1) {
-            // Status not in progression (like CANCELLED)
             return { isCompleted: false, isCurrent: false, isPending: true }
         }
 
-        // If current status is SUBMITTED, "Reviewed" (SUBMITTED) is current
-        // If current status is ACCEPTED, "Reviewed" (SUBMITTED) is completed, "Appointment Scheduled" (ACCEPTED) is current
-        // And so on...
-        if (statusIndex < currentIndex) {
+        // Always mark "Reviewed" as completed when the form is open.
+        if (status === 'SUBMITTED') {
             return { isCompleted: true, isCurrent: false, isPending: false }
-        } else if (statusIndex === currentIndex) {
-            if (currentStatus === 'COMPLETED') {
-                return { isCompleted: true, isCurrent: false, isPending: false }
-            }
-            return { isCompleted: false, isCurrent: true, isPending: false }
-        } else {
-            return { isCompleted: false, isCurrent: false, isPending: true }
         }
-    }
 
-    // Get next status in progression
-    const getNextStatus = (currentStatus: ReferralStatus): ReferralStatus | null => {
-        const currentIndex = STATUS_ORDER.indexOf(currentStatus)
-        if (currentIndex === -1 || currentIndex >= STATUS_ORDER.length - 1) {
-            return null
+        if (currentIndex >= 0 && statusIndex <= currentIndex) {
+            return { isCompleted: true, isCurrent: statusIndex === currentIndex, isPending: false }
         }
-        return STATUS_ORDER[currentIndex + 1]
+
+        return { isCompleted: false, isCurrent: false, isPending: true }
     }
 
     const getAppointmentDisplay = () => {
@@ -363,8 +350,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             {STATUS_ORDER.map((status) => {
                                 const state = getStatusState(status)
-                                // Allow clicking completed steps (to go back) or current step (to advance)
-                                const canClick = !isUpdatingStatus && (state.isCompleted || state.isCurrent)
+                                const canClick = !isUpdatingStatus
 
                                 return (
                                     <button
@@ -372,19 +358,7 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                         type="button"
                                         onClick={() => {
                                             if (canClick) {
-                                                if (state.isCompleted) {
-                                                    // Clicking a completed step - go back to that status
-                                                    handleStatusUpdate(status)
-                                                } else if (state.isCurrent) {
-                                                    // Clicking the current step - advance to next status
-                                                    const nextStatus = getNextStatus(displayReferral.status)
-                                                    if (nextStatus) {
-                                                        handleStatusUpdate(nextStatus)
-                                                    } else {
-                                                        // Already at last step - just ensure it's marked as completed
-                                                        handleStatusUpdate(status)
-                                                    }
-                                                }
+                                                handleStatusUpdate(status)
                                             }
                                         }}
                                         disabled={!canClick}
@@ -415,16 +389,16 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
                                 )
                             })}
                         </div>
-                        {/* Cancelled option (separate from progression) */}
+                        {/* Cancel option (separate from progression) */}
                         {displayReferral.status !== 'CANCELLED' && (
                             <div className="pt-4 border-t border-neutral-200">
                                 <button
                                     type="button"
                                     onClick={() => !isUpdatingStatus && handleStatusUpdate('CANCELLED')}
                                     disabled={isUpdatingStatus}
-                                    className="w-full px-4 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
                                 >
-                                    {STATUS_LABELS.CANCELLED}
+                                    Cancel
                                 </button>
                             </div>
                         )}

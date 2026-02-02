@@ -224,10 +224,28 @@ export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialS
         status: saveAsDraft ? 'DRAFT' : 'SUBMITTED',
       } as const
 
+      const payload = formData.files.length > 0
+        ? (() => {
+            const formPayload = new FormData()
+            Object.entries(referralData).forEach(([key, value]) => {
+              if (value === undefined || value === null) return
+              if (Array.isArray(value)) {
+                formPayload.append(key, JSON.stringify(value))
+                return
+              }
+              formPayload.append(key, String(value))
+            })
+            formData.files.forEach((file) => {
+              formPayload.append('files', file)
+            })
+            return formPayload
+          })()
+        : referralData
+
       if (initialReferral?.id) {
-        await referralService.updateReferral(initialReferral.id, referralData)
+        await referralService.updateReferral(initialReferral.id, payload)
       } else {
-        await referralService.createReferral(referralData)
+        await referralService.createReferral(payload)
       }
 
       setFormData({

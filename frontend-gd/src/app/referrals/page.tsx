@@ -625,9 +625,6 @@ export default function ReferralsPage() {
                         <th className="w-32 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                           Sent
                         </th>
-                        <th className="w-20 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
-                          Actions
-                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-black/5">
@@ -678,24 +675,6 @@ export default function ReferralsPage() {
                           </td>
                           <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
                             {referral.createdAt ? formatRelativeTime(referral.createdAt) : '—'}
-                          </td>
-                          <td className="px-6 py-4 text-right text-sm">
-                            <button
-                              type="button"
-                              className="text-neutral-400 hover:text-neutral-800"
-                              onClick={(event) => {
-                                event.stopPropagation()
-                                if (activeTab === 'draft' && referral.status === 'DRAFT') {
-                                  setEditingDraft(referral)
-                                  setView('form')
-                                  return
-                                }
-                                setSelectedReferralId(referral.id)
-                                setSelectedReferral(referral)
-                              }}
-                            >
-                              <Eye className="h-4 w-4" strokeWidth={1.5} />
-                            </button>
                           </td>
                         </tr>
                       ))}

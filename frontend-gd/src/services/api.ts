@@ -78,7 +78,7 @@ export const referralService = {
         return response.data
     },
 
-    async createReferral(data: {
+    async createReferral(data: FormData | {
         specialistUserId: string
         patientFirstName: string
         patientLastName: string
@@ -92,11 +92,14 @@ export const referralService = {
         notes?: string
         status?: 'DRAFT' | 'SUBMITTED'
     }): Promise<ApiResponse<Referral>> {
-        const response = await api.post('/referrals', data)
+        const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
+        const response = await api.post('/referrals', data, isFormData ? {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        } : undefined)
         return response.data
     },
 
-    async updateReferral(id: string, data: {
+    async updateReferral(id: string, data: FormData | {
         specialistUserId?: string
         patientFirstName?: string
         patientLastName?: string
@@ -110,7 +113,10 @@ export const referralService = {
         notes?: string
         status?: 'DRAFT' | 'SUBMITTED'
     }): Promise<ApiResponse<Referral>> {
-        const response = await api.put(`/referrals/${id}`, data)
+        const isFormData = typeof FormData !== 'undefined' && data instanceof FormData
+        const response = await api.put(`/referrals/${id}`, data, isFormData ? {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        } : undefined)
         return response.data
     },
 }

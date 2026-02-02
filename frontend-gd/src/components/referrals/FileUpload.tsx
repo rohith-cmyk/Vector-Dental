@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, DragEvent, ChangeEvent } from 'react'
+import { useState, useRef, DragEvent, ChangeEvent, useMemo, useEffect } from 'react'
 import { X, File as FileIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -97,6 +97,31 @@ export function FileUpload({
     onFilesChange(files.filter((_, i) => i !== index))
   }
 
+  const isImageFile = (file: File) => {
+    if (file.type.startsWith('image/')) return true
+    const extension = file.name.split('.').pop()?.toLowerCase() || ''
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)
+  }
+
+  const previews = useMemo(
+    () =>
+      files.map((file) => ({
+        file,
+        url: isImageFile(file) ? URL.createObjectURL(file) : null,
+      })),
+    [files]
+  )
+
+  useEffect(() => {
+    return () => {
+      previews.forEach((preview) => {
+        if (preview.url) {
+          URL.revokeObjectURL(preview.url)
+        }
+      })
+    }
+  }, [previews])
+
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B'
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
@@ -148,19 +173,27 @@ export function FileUpload({
 
       {files.length > 0 && (
         <div className="space-y-2">
-          {files.map((file, index) => (
+          {previews.map((preview, index) => (
             <div
               key={index}
               className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <FileIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                {preview.url ? (
+                  <img
+                    src={preview.url}
+                    alt={preview.file.name}
+                    className="w-14 h-14 rounded-md object-cover border border-gray-200 flex-shrink-0"
+                  />
+                ) : (
+                  <FileIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {file.name}
+                    {preview.file.name}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {formatFileSize(file.size)}
+                    {formatFileSize(preview.file.size)}
                   </p>
                 </div>
               </div>

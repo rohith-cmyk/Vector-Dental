@@ -251,7 +251,7 @@ export default function ReferralsPage() {
   const [opsComment, setOpsComment] = useState('')
   const [opsFiles, setOpsFiles] = useState<File[]>([])
   const [isSendingOps, setIsSendingOps] = useState(false)
-  const [opsSuccessMessage, setOpsSuccessMessage] = useState('')
+  const [toastMessage, setToastMessage] = useState('')
 
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
@@ -455,7 +455,6 @@ export default function ReferralsPage() {
     setOpsReferral(referral)
     setOpsComment(referral.notes || '')
     setOpsFiles([])
-    setOpsSuccessMessage('')
     setIsOpsModalOpen(true)
   }
 
@@ -464,7 +463,13 @@ export default function ReferralsPage() {
     setOpsReferral(null)
     setOpsComment('')
     setOpsFiles([])
-    setOpsSuccessMessage('')
+  }
+
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    setTimeout(() => {
+      setToastMessage('')
+    }, 2500)
   }
 
   const handleSendOps = async () => {
@@ -475,7 +480,8 @@ export default function ReferralsPage() {
         comment: opsComment,
         files: opsFiles,
       })
-      setOpsSuccessMessage('Ops report sent successfully.')
+      showToast('Ops report sent successfully.')
+      closeOpsModal()
     } finally {
       setIsSendingOps(false)
     }
@@ -553,6 +559,14 @@ export default function ReferralsPage() {
                 
               </div>
 
+              {toastMessage && (
+                <div className="flex justify-center">
+                  <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 shadow-sm">
+                    {toastMessage}
+                  </div>
+                </div>
+              )}
+
               {/* Referrals Table - Changes Based on Tab */}
               <Card>
                 <CardContent className="p-0">
@@ -586,9 +600,6 @@ export default function ReferralsPage() {
                               </th>
                               <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Ops Status
-                              </th>
-                              <th className="w-16 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
-                                
                               </th>
                             </tr>
                           </thead>
@@ -629,14 +640,6 @@ export default function ReferralsPage() {
                                     {getOpsStatusLabel(referral.status)}
                                   </Badge>
                                 </td>
-                                <td className="w-16 px-6 py-4 text-right">
-                                  <button
-                                    onClick={() => setSelectedReferral(referral)}
-                                    className="text-neutral-400 hover:text-neutral-800"
-                                  >
-                                    <Eye className="h-4 w-4" strokeWidth={1.5} />
-                                  </button>
-                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -663,9 +666,6 @@ export default function ReferralsPage() {
                               </th>
                               <th className="w-32 px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Received
-                              </th>
-                              <th className="w-48 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
-                                Actions
                               </th>
                             </tr>
                           </thead>
@@ -711,31 +711,6 @@ export default function ReferralsPage() {
                                 <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
                                   {referral.createdAt && formatRelativeTime(referral.createdAt)}
                                 </td>
-                                <td className="w-48 px-6 py-4 text-right text-sm">
-                                  <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                                    {/* Always render accept/reject buttons but hide when not needed */}
-                                    <div className={`flex gap-2 ${!(referral.status === 'SENT' || referral.status === 'SUBMITTED') ? 'invisible' : ''}`}>
-                                      <button
-                                        onClick={() => handleStatusUpdate(referral.id, 'ACCEPTED')}
-                                        className="flex items-center gap-2 px-2 py-2 text-sm bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition-colors"
-                                      >
-                                        <CheckIcon className="h-4 w-4" strokeWidth={1.5} />
-                                      </button>
-                                      <button
-                                        onClick={() => handleStatusUpdate(referral.id, 'REJECTED')}
-                                        className="flex items-center gap-2 px-2 py-2 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors"
-                                      >
-                                        <X className="h-4 w-4" strokeWidth={1.5} />
-                                      </button>
-                                    </div>
-                                    <button
-                                      onClick={() => setSelectedReferral(referral)}
-                                      className="p-2 text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg transition-colors"
-                                    >
-                                      <Eye className="h-4 w-4" strokeWidth={1.5} />
-                                    </button>
-                                  </div>
-                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -762,9 +737,6 @@ export default function ReferralsPage() {
                               </th>
                               <th className="px-6 py-4 text-left text-xs font-medium text-neutral-400 tracking-wide">
                                 Sent
-                              </th>
-                              <th className="w-48 px-6 py-4 text-right text-xs font-medium text-neutral-400 tracking-wide">
-                                Actions
                               </th>
                             </tr>
                           </thead>
@@ -804,25 +776,6 @@ export default function ReferralsPage() {
                                 </td>
                                 <td className="px-6 py-4 text-sm text-neutral-500" suppressHydrationWarning>
                                   {referral.createdAt && formatRelativeTime(referral.createdAt)}
-                                </td>
-                                <td className="w-48 px-6 py-4 text-right text-sm">
-                                  <div className="flex items-center justify-end gap-2">
-                                    <button
-                                      onClick={() => setSelectedReferral(referral)}
-                                      className="p-2 text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg transition-colors"
-                                    >
-                                      <Eye className="h-4 w-4" strokeWidth={1.5} />
-                                    </button>
-                                    {/* Always render edit/trash buttons but hide when not needed */}
-                                    <div className={`flex gap-2 ${referral.status !== 'DRAFT' ? 'invisible' : ''}`}>
-                                      <button className="p-2 text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg transition-colors">
-                                        <Edit className="h-4 w-4" strokeWidth={1.5} />
-                                      </button>
-                                      <button className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                                      </button>
-                                    </div>
-                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -869,11 +822,6 @@ export default function ReferralsPage() {
         >
           {opsReferral && (
             <div className="space-y-6">
-              {opsSuccessMessage && (
-                <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  {opsSuccessMessage}
-                </div>
-              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="text-xs text-neutral-400">Patient Name</div>
