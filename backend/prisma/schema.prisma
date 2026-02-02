@@ -48,6 +48,7 @@ model User {
   referralLinks  ReferralLink[]
   intendedReferrals Referral[] @relation("IntendedRecipient")
   specialistProfile SpecialistProfile?
+  operativeReports  OperativeReport[] @relation("OperativeReportAuthor")
 
   @@index([clinicId])
   @@map("users")
@@ -184,6 +185,7 @@ model Referral {
   intendedRecipient User?       @relation("IntendedRecipient", fields: [intendedRecipientId], references: [id])
   referralLink  ReferralLink?   @relation(fields: [referralLinkId], references: [id], onDelete: SetNull)
   files         ReferralFile[]
+  operativeReports OperativeReport[]
   notifications Notification[]
 
   @@index([fromClinicId])
@@ -238,6 +240,41 @@ model ReferralFile {
 
   @@index([referralId])
   @@map("referral_files")
+}
+
+// Operative Report Model (Ops report from specialist)
+model OperativeReport {
+  id           String   @id @default(uuid())
+  referralId   String   @map("referral_id")
+  createdById  String?  @map("created_by_id")
+  comment      String?  @map("comment")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  createdBy User?   @relation("OperativeReportAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  files     OperativeReportFile[]
+
+  @@index([referralId])
+  @@map("operative_reports")
+}
+
+// Operative Report File Model
+model OperativeReportFile {
+  id         String   @id @default(uuid())
+  reportId   String   @map("report_id")
+  fileName   String
+  fileType   String
+  fileUrl    String
+  fileSize   Int
+  storageKey String?  // Where file lives (S3 key, Supabase path, etc.)
+  mimeType   String?  // More accurate MIME type
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  report OperativeReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@map("operative_report_files")
 }
 
 // Clinic Referral Link Model (Shareable Public Link)

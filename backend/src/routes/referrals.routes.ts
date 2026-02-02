@@ -1,10 +1,15 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
+import multer from 'multer'
 import * as referralsController from '../controllers/referrals.controller'
 import { authenticateSupabase } from '../middleware/auth.supabase.middleware'
 import { validateRequest } from '../middleware/validation.middleware'
 
 const router = Router()
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+})
 
 // All routes require authentication
 router.use(authenticateSupabase)
@@ -53,6 +58,17 @@ router.patch(
       .withMessage('Invalid status'),
   ]),
   referralsController.updateReferralStatus
+)
+
+/**
+ * @route   POST /api/referrals/:id/ops-report
+ * @desc    Submit ops report with attachments
+ * @access  Private
+ */
+router.post(
+  '/:id/ops-report',
+  upload.array('files'),
+  referralsController.submitOperativeReport
 )
 
 

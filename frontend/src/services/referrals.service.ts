@@ -68,6 +68,23 @@ export const referralsService = {
   },
 
   /**
+   * Submit ops report with attachments
+   */
+  async submitOpsReport(id: string, payload: { comment?: string; files?: File[] }): Promise<any> {
+    const formData = new FormData()
+    if (payload.comment) {
+      formData.append('comment', payload.comment)
+    }
+    if (payload.files?.length) {
+      payload.files.forEach((file) => formData.append('files', file))
+    }
+    const response = await api.post<{ success: boolean; data: any }>(`/referrals/${id}/ops-report`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data.data
+  },
+
+  /**
    * Share referral - Generate share token and send email
    */
   async shareReferral(id: string): Promise<{ shareUrl: string; shareToken: string; mailtoLink?: string }> {

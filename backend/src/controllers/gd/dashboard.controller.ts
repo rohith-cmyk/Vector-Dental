@@ -8,7 +8,27 @@ import { errors } from '../../utils/errors'
  */
 export async function getDashboardStats(req: Request, res: Response) {
     try {
-        const clinicId = req.user!.clinicId
+        const gdUser = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            include: { clinic: true },
+        })
+
+        const clinicId = gdUser?.clinicId || req.user?.clinicId
+        const clinicEmail = gdUser?.clinic?.email || undefined
+        const clinicName = gdUser?.clinic?.name || undefined
+        const tokenEmail = req.user?.email
+
+        if (!clinicId && !tokenEmail && !clinicEmail && !clinicName) {
+            throw errors.notFound('Clinic not found for user')
+        }
+
+        const whereOr: any[] = []
+        if (clinicId) whereOr.push({ fromClinicId: clinicId })
+        if (clinicEmail) whereOr.push({ fromClinicEmail: clinicEmail })
+        if (clinicName) whereOr.push({ fromClinicName: clinicName })
+        if (tokenEmail) whereOr.push({ fromClinicEmail: tokenEmail })
+
+        const baseWhere: any = whereOr.length ? { OR: whereOr } : {}
 
         // Get referral counts
         const [
@@ -20,33 +40,33 @@ export async function getDashboardStats(req: Request, res: Response) {
         ] = await Promise.all([
             // Total referrals created by this GD
             prisma.referral.count({
-                where: { fromClinicId: clinicId }
+                where: baseWhere
             }),
             // Pending (SUBMITTED status)
             prisma.referral.count({
                 where: {
-                    fromClinicId: clinicId,
+                    ...baseWhere,
                     status: 'SUBMITTED'
                 }
             }),
             // Accepted
             prisma.referral.count({
                 where: {
-                    fromClinicId: clinicId,
+                    ...baseWhere,
                     status: 'ACCEPTED'
                 }
             }),
             // Completed
             prisma.referral.count({
                 where: {
-                    fromClinicId: clinicId,
+                    ...baseWhere,
                     status: 'COMPLETED'
                 }
             }),
             // Rejected
             prisma.referral.count({
                 where: {
-                    fromClinicId: clinicId,
+                    ...baseWhere,
                     status: 'REJECTED'
                 }
             }),
@@ -54,7 +74,7 @@ export async function getDashboardStats(req: Request, res: Response) {
 
         // Get recent referrals
         const recentReferrals = await prisma.referral.findMany({
-            where: { fromClinicId: clinicId },
+            where: baseWhere,
             take: 5,
             orderBy: { createdAt: 'desc' },
             include: {

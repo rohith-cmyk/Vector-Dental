@@ -7,13 +7,12 @@ import { errors } from '../../utils/errors'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
-const signGdToken = (user: { id: string; email: string; role: string; userType: string; clinicId: string | null }) => {
+const signGdToken = (user: { id: string; email: string; role: string; clinicId: string | null }) => {
     return jwt.sign(
         {
             userId: user.id,
             email: user.email,
             role: user.role,
-            userType: user.userType,
             clinicId: user.clinicId,
         },
         JWT_SECRET,
@@ -93,7 +92,6 @@ export async function signup(req: Request, res: Response) {
                     password: hashedPassword,
                     name: userName,
                     role: 'GENERAL_DENTIST',
-                    userType: 'GENERAL_DENTIST',
                     clinicId: clinic.id,
                 },
                 select: {
@@ -101,7 +99,6 @@ export async function signup(req: Request, res: Response) {
                     email: true,
                     name: true,
                     role: true,
-                    userType: true,
                     clinicId: true,
                     createdAt: true,
                 }
@@ -111,17 +108,7 @@ export async function signup(req: Request, res: Response) {
         })
 
         // Generate JWT token
-        const token = jwt.sign(
-            {
-                userId: result.user.id,
-                email: result.user.email,
-                role: result.user.role,
-                userType: result.user.userType,
-                clinicId: result.user.clinicId,
-            },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        )
+        const token = signGdToken(result.user)
 
         res.status(201).json({
             success: true,
@@ -165,7 +152,7 @@ export async function login(req: Request, res: Response) {
         }
 
         // Check if user is a GD
-        if (user.userType !== 'GENERAL_DENTIST') {
+        if (user.role !== 'GENERAL_DENTIST') {
             throw errors.forbidden('This login is for General Dentists only')
         }
 
@@ -176,17 +163,7 @@ export async function login(req: Request, res: Response) {
         }
 
         // Generate JWT token
-        const token = jwt.sign(
-            {
-                userId: user.id,
-                email: user.email,
-                role: user.role,
-                userType: user.userType,
-                clinicId: user.clinicId,
-            },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        )
+        const token = signGdToken(user)
 
         // Remove password from response
         const { password: _, ...userWithoutPassword } = user
@@ -238,7 +215,7 @@ export async function oauthStatus(req: Request, res: Response) {
             return
         }
 
-        if (existingUser.userType !== 'GENERAL_DENTIST') {
+        if (existingUser.role !== 'GENERAL_DENTIST') {
             throw errors.forbidden('This account is not a General Dentist')
         }
 
@@ -283,7 +260,7 @@ export async function completeOAuthSignup(req: Request, res: Response) {
         })
 
         if (existingUser) {
-            if (existingUser.userType !== 'GENERAL_DENTIST') {
+            if (existingUser.role !== 'GENERAL_DENTIST') {
                 throw errors.forbidden('This account is not a General Dentist')
             }
 
@@ -337,7 +314,6 @@ export async function completeOAuthSignup(req: Request, res: Response) {
                     password: '',
                     name: displayName,
                     role: 'GENERAL_DENTIST',
-                    userType: 'GENERAL_DENTIST',
                     clinicId: clinic.id,
                 },
                 include: { clinic: true },

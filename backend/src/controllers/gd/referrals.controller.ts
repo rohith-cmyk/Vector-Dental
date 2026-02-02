@@ -103,13 +103,32 @@ export async function getMyReferrals(req: Request, res: Response) {
  */
 export async function getReferralById(req: Request, res: Response) {
     try {
-        const clinicId = req.user!.clinicId
         const { id } = req.params
+
+        const gdUser = await prisma.user.findUnique({
+            where: { id: req.user!.userId },
+            include: { clinic: true },
+        })
+
+        const clinicId = gdUser?.clinicId || req.user?.clinicId
+        const clinicEmail = gdUser?.clinic?.email || undefined
+        const clinicName = gdUser?.clinic?.name || undefined
+        const tokenEmail = req.user?.email
+
+        if (!clinicId && !tokenEmail && !clinicEmail && !clinicName) {
+            throw errors.notFound('Clinic not found for user')
+        }
+
+        const whereOr: any[] = []
+        if (clinicId) whereOr.push({ fromClinicId: clinicId })
+        if (clinicEmail) whereOr.push({ fromClinicEmail: clinicEmail })
+        if (clinicName) whereOr.push({ fromClinicName: clinicName })
+        if (tokenEmail) whereOr.push({ fromClinicEmail: tokenEmail })
 
         const referral = await prisma.referral.findFirst({
             where: {
                 id,
-                fromClinicId: clinicId, // Ensure GD can only see their clinic's referrals
+                OR: whereOr,
             },
             include: {
                 intendedRecipient: {
@@ -129,6 +148,17 @@ export async function getReferralById(req: Request, res: Response) {
                     }
                 },
                 files: true,
+                operativeReports: {
+                    include: {
+                        createdBy: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        },
+                        files: true,
+                    }
+                },
             }
         })
 

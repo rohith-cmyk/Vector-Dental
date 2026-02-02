@@ -472,7 +472,10 @@ export default function ReferralsPage() {
     if (!opsReferral) return
     setIsSendingOps(true)
     try {
-      // Placeholder until backend endpoint is available
+      await referralsService.submitOpsReport(opsReferral.id, {
+        comment: opsComment,
+        files: opsFiles,
+      })
       alert('Ops report sent successfully.')
       closeOpsModal()
     } finally {

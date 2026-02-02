@@ -128,6 +128,7 @@ export interface Referral {
 
   // Files
   files?: ReferralFile[]
+  operativeReports?: OperativeReport[]
 
   // Status tracking
   statusToken?: string // Token for status tracking page (only for referrals submitted via referral link)
@@ -135,6 +136,24 @@ export interface Referral {
   // Timestamps
   createdAt: string
   updatedAt: string
+}
+
+export interface OperativeReportFile {
+  id: string
+  fileName: string
+  fileUrl: string
+  fileSize?: number
+}
+
+export interface OperativeReport {
+  id: string
+  comment?: string | null
+  createdAt?: string
+  createdBy?: {
+    id: string
+    name: string
+  }
+  files?: OperativeReportFile[]
 }
 
 // Notification Types

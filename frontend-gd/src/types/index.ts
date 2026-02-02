@@ -75,7 +75,7 @@ export interface Referral {
         clinic: Clinic
     }
     files?: ReferralFile[]
-    operativeReports?: OperativeReport[]
+    operativeReports?: OperativeReportSummary[]
     postTreatmentReports?: PostTreatmentReport[]
 }
 
@@ -100,6 +100,24 @@ export interface OperativeReport {
         id: string
         name: string
     }
+}
+
+export interface OperativeReportFile {
+    id: string
+    fileName: string
+    fileUrl: string
+    fileSize?: number
+}
+
+export interface OperativeReportSummary {
+    id: string
+    comment?: string | null
+    createdAt?: string
+    createdBy?: {
+        id: string
+        name: string
+    }
+    files?: OperativeReportFile[]
 }
 
 export interface PostTreatmentReport {

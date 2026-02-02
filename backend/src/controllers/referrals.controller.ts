@@ -6,6 +6,7 @@ import { schedulePostAcceptStatusProgression } from '../utils/demo-status'
 import { sendEmail } from '../utils/email'
 import { sendSms } from '../utils/sms'
 import { config } from '../config/env'
+import { uploadFile } from '../utils/storage'
 
 /**
  * Status mapping for timeline display
@@ -284,7 +285,13 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
 
     // Check if referral exists and belongs to clinic
     const existingReferral = await prisma.referral.findFirst({
-      where: { id, fromClinicId: clinicId },
+      where: {
+        id,
+        OR: [
+          { fromClinicId: clinicId },
+          { toClinicId: clinicId },
+        ],
+      },
     })
 
     if (!existingReferral) {
@@ -328,6 +335,77 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
     res.json({
       success: true,
       data: referral,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Submit operative report (ops report) with attachments
+ */
+export async function submitOperativeReport(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params
+    const clinicId = req.user!.clinicId
+    const { comment } = req.body as { comment?: string }
+    const files = (req.files as Express.Multer.File[]) || []
+
+    const referral = await prisma.referral.findFirst({
+      where: {
+        id,
+        OR: [
+          { fromClinicId: clinicId },
+          { toClinicId: clinicId },
+        ],
+      },
+    })
+
+    if (!referral) {
+      throw errors.notFound('Referral not found')
+    }
+
+    const report = await prisma.operativeReport.create({
+      data: {
+        referralId: referral.id,
+        createdById: req.user!.userId,
+        comment: comment?.trim() || null,
+      },
+    })
+
+    if (files.length > 0) {
+      const uploadedFiles = await Promise.all(
+        files.map((file) =>
+          uploadFile(file.buffer, file.originalname, file.mimetype, referral.id)
+        )
+      )
+
+      await prisma.operativeReportFile.createMany({
+        data: uploadedFiles.map((uploaded, index) => ({
+          reportId: report.id,
+          fileName: uploaded.fileName,
+          fileType: files[index].mimetype,
+          fileUrl: uploaded.fileUrl,
+          fileSize: uploaded.fileSize,
+          storageKey: uploaded.storageKey,
+          mimeType: uploaded.mimeType,
+        })),
+      })
+    }
+
+    const createdReport = await prisma.operativeReport.findUnique({
+      where: { id: report.id },
+      include: {
+        createdBy: {
+          select: { id: true, name: true },
+        },
+        files: true,
+      },
+    })
+
+    res.status(201).json({
+      success: true,
+      data: createdReport,
     })
   } catch (error) {
     next(error)
@@ -446,6 +524,14 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
       }
     })
 
+    const latestOpsReport = referral.referralLinkId
+      ? await prisma.operativeReport.findFirst({
+          where: { referralId: referral.id },
+          orderBy: { createdAt: 'desc' },
+          include: { files: true },
+        })
+      : null
+
     res.json({
       success: true,
       data: {
@@ -461,6 +547,13 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
         scheduledAt: referral.scheduledAt,
         completedAt: referral.completedAt,
         postOpScheduledAt: referral.postOpScheduledAt,
+        opsReportComment: latestOpsReport?.comment || null,
+        opsReportFiles: latestOpsReport?.files?.map((file) => ({
+          id: file.id,
+          fileName: file.fileName,
+          fileUrl: file.fileUrl,
+          fileSize: file.fileSize,
+        })) || [],
         clinic: referral.clinic,
       },
     })

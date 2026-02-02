@@ -6,6 +6,7 @@ import { ArrowUpRight, Eye, Search } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout'
 import { Badge, Card, CardContent, LoadingState } from '@/components/ui'
 import { NewReferralForm } from '@/components/referrals/NewReferralModal'
+import { ReferralDetailModal } from '@/components/referrals/ReferralDetailModal'
 import { referralService } from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Referral } from '@/types'
@@ -375,6 +376,8 @@ export default function ReferralsPage() {
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
   const [useMockReferrals, setUseMockReferrals] = useState(false)
+  const [selectedReferralId, setSelectedReferralId] = useState<string | null>(null)
+  const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -578,7 +581,14 @@ export default function ReferralsPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-black/5">
                       {tabFilteredReferrals.map((referral) => (
-                        <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
+                        <tr
+                          key={referral.id}
+                          className="hover:bg-neutral-50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            setSelectedReferralId(referral.id)
+                            setSelectedReferral(referral)
+                          }}
+                        >
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-neutral-700">
                               {getPatientName(referral)}
@@ -617,6 +627,11 @@ export default function ReferralsPage() {
                             <button
                               type="button"
                               className="text-neutral-400 hover:text-neutral-800"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                setSelectedReferralId(referral.id)
+                                setSelectedReferral(referral)
+                              }}
                             >
                               <Eye className="h-4 w-4" strokeWidth={1.5} />
                             </button>
@@ -631,6 +646,17 @@ export default function ReferralsPage() {
           </Card>
         )}
       </div>
+
+      <ReferralDetailModal
+        isOpen={!!selectedReferralId}
+        referralId={selectedReferralId}
+        initialReferral={selectedReferral}
+        onClose={() => {
+          setSelectedReferralId(null)
+          setSelectedReferral(null)
+          fetchReferrals()
+        }}
+      />
     </DashboardLayout>
   )
 }
