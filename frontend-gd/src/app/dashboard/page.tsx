@@ -46,6 +46,21 @@ const demoOfficeAdditions = [
     { office: 'Verde Valley Dental Wellness', count: 6 },
 ]
 
+const demoTrendData: TrendPoint[] = [
+    { month: 'Mar', sent: 3 },
+    { month: 'Apr', sent: 4 },
+    { month: 'May', sent: 2 },
+    { month: 'Jun', sent: 5 },
+    { month: 'Jul', sent: 4 },
+    { month: 'Aug', sent: 6 },
+    { month: 'Sep', sent: 5 },
+    { month: 'Oct', sent: 7 },
+    { month: 'Nov', sent: 6 },
+    { month: 'Dec', sent: 8 },
+    { month: 'Jan', sent: 9 },
+    { month: 'Feb', sent: 11 },
+]
+
 const mockRecentReferrals: Referral[] = [
     {
         id: 'mock-1',
@@ -366,7 +381,7 @@ export default function DashboardPage() {
         { label: 'Completed', count: completedReferrals, percentage: Math.round((completedReferrals / baseTotal) * 100) },
     ]
 
-    const trendData = buildMonthlyTrend(effectiveReferrals)
+    const trendData = demoTrendData
     const officeBreakdown = applyDemoOfficeAdditions(buildOfficeBreakdown(effectiveReferrals), demoOfficeAdditions)
     const recentReferrals = recentSourceReferrals
         .filter((referral) => referral.status !== 'DRAFT' && referral.intendedRecipient?.id)
