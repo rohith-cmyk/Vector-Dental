@@ -477,9 +477,8 @@ function ReferralsPageContent() {
           <div className="relative inline-flex items-center rounded-full border border-black/10 bg-white p-1 shadow-sm">
             {view === 'list' && (
               <span
-                className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full border border-emerald-200 bg-emerald-50 transition-transform duration-300 ${
-                  activeTab === 'draft' ? 'translate-x-full' : ''
-                }`}
+                className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full border border-emerald-200 bg-emerald-50 transition-transform duration-300 ${activeTab === 'draft' ? 'translate-x-full' : ''
+                  }`}
               />
             )}
             <button
@@ -489,11 +488,10 @@ function ReferralsPageContent() {
                 setStatusFilter('all')
                 setView('list')
               }}
-              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                view === 'list' && activeTab === 'sent'
-                  ? 'text-emerald-700'
-                  : 'text-neutral-500 hover:text-neutral-700'
-              }`}
+              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${view === 'list' && activeTab === 'sent'
+                ? 'text-emerald-700'
+                : 'text-neutral-500 hover:text-neutral-700'
+                }`}
             >
               <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
               Sent
@@ -505,11 +503,10 @@ function ReferralsPageContent() {
                 setStatusFilter('DRAFT')
                 setView('list')
               }}
-              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                view === 'list' && activeTab === 'draft'
-                  ? 'text-emerald-700'
-                  : 'text-neutral-500 hover:text-neutral-700'
-              }`}
+              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${view === 'list' && activeTab === 'draft'
+                ? 'text-emerald-700'
+                : 'text-neutral-500 hover:text-neutral-700'
+                }`}
             >
               Draft
             </button>
@@ -631,7 +628,7 @@ function ReferralsPageContent() {
                       {tabFilteredReferrals.map((referral) => (
                         <tr
                           key={referral.id}
-                          className="hover:bg-neutral-50 transition-colors cursor-pointer"
+                          className="hover:bg-gray-100 transition-colors cursor-pointer"
                           onClick={() => {
                             if (activeTab === 'draft' && referral.status === 'DRAFT') {
                               setEditingDraft(referral)

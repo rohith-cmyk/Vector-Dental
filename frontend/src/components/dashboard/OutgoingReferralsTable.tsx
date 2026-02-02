@@ -76,7 +76,7 @@ export function OutgoingReferralsTable({ referrals, onView }: OutgoingReferralsT
               </thead>
               <tbody className="bg-white divide-y divide-black/5">
                 {safeReferrals.length > 0 ? safeReferrals.map((referral) => (
-                  <tr key={referral.id} className="hover:bg-neutral-50 transition-colors">
+                  <tr key={referral.id} className="hover:bg-gray-100 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-neutral-700">{referral.patientName}</div>
                       <div className="text-xs text-neutral-500">{referral.patientPhone}</div>

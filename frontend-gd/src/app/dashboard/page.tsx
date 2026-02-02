@@ -510,7 +510,7 @@ export default function DashboardPage() {
                                                 recentReferrals.map((referral) => (
                                                     <tr
                                                         key={referral.id}
-                                                        className="hover:bg-neutral-50 transition-colors cursor-pointer"
+                                                        className="hover:bg-gray-100 transition-colors cursor-pointer"
                                                         onClick={() => router.push(`/referrals?openId=${referral.id}`)}
                                                     >
                                                         <td className="px-6 py-4">
@@ -536,12 +536,12 @@ export default function DashboardPage() {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${referral.status === 'COMPLETED'
-                                                                    ? 'bg-green-100 text-green-500'
-                                                                    : referral.status === 'ACCEPTED'
-                                                                        ? 'bg-blue-100 text-blue-500'
-                                                                        : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
-                                                                            ? 'bg-red-100 text-red-500'
-                                                                            : 'bg-yellow-100 text-yellow-500'
+                                                                ? 'bg-green-100 text-green-500'
+                                                                : referral.status === 'ACCEPTED'
+                                                                    ? 'bg-blue-100 text-blue-500'
+                                                                    : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
+                                                                        ? 'bg-red-100 text-red-500'
+                                                                        : 'bg-yellow-100 text-yellow-500'
                                                                 }`}>
                                                                 {(referral.status || '').toUpperCase()}
                                                             </span>
