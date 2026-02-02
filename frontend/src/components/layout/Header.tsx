@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, type ReactNode } from 'react'
-import { ChevronDown, LogOut, User, Settings, Bell } from 'lucide-react'
+import { ChevronDown, LogOut, User, Settings, Bell, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
 import { authService } from '@/services/auth.supabase.service'
-import type { User as UserType } from '@/types'
+import type { User as UserType, Notification } from '@/types'
 
 interface HeaderProps {
   title: string
@@ -16,15 +16,17 @@ interface HeaderProps {
 export function Header({ title, subtitle, actions }: HeaderProps) {
   const [user, setUser] = useState<UserType | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const previousUnread = useRef<number | null>(null)
   const soundPrefKey = 'notification_sound_enabled'
-  
+
   // Load user data on mount
   useEffect(() => {
     loadUser()
   }, [])
-  
+
   // Load unread count
   useEffect(() => {
     loadUnreadCount()
@@ -32,7 +34,7 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
     const interval = setInterval(loadUnreadCount, 30000)
     return () => clearInterval(interval)
   }, [])
-  
+
   const loadUser = async () => {
     try {
       // Check if token exists first
@@ -42,7 +44,7 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
         setUser(null)
         return
       }
-      
+
       const currentUser = await authService.getCurrentUser()
       if (currentUser) {
         setUser(currentUser)
@@ -56,7 +58,7 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
       setUser(null)
     }
   }
-  
+
   const loadUnreadCount = async () => {
     try {
       const count = await notificationsService.getUnreadCount()
@@ -99,7 +101,23 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
       // Ignore sound errors (autoplay restrictions, etc.)
     }
   }
-  
+
+  const loadNotifications = async () => {
+    try {
+      const response = await notificationsService.getAll('unread')
+      setNotifications(response || [])
+    } catch {
+      setNotifications([])
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    await notificationsService.markAllAsRead()
+    setUnreadCount(0)
+    setNotifications([])
+    setNotificationsOpen(false)
+  }
+
   const handleLogout = async () => {
     await authService.logout()
     window.location.href = '/login'
@@ -117,18 +135,86 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
       <div className="flex items-center gap-3">
         {actions && <div className="flex items-center gap-3">{actions}</div>}
         {/* Notifications Bell */}
-        <button
-          onClick={() => window.location.href = '/notifications'}
-          className="relative p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-800 rounded-lg transition-colors"
-          title="Notifications"
-        >
-          <Bell className="h-5 w-5" strokeWidth={1.5} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
-              {unreadCount}
-            </span>
+        <div className="relative">
+          <button
+            onClick={async () => {
+              const nextOpen = !notificationsOpen
+              setNotificationsOpen(nextOpen)
+              if (nextOpen) {
+                await loadNotifications()
+              }
+            }}
+            className="relative flex items-center justify-center rounded-full h-10 w-10 hover:bg-neutral-100 transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5 text-neutral-500" strokeWidth={1.5} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notificationsOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setNotificationsOpen(false)} />
+              <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-lg bg-white border border-black/10 shadow-lg z-20">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
+                  <p className="text-sm font-semibold text-neutral-800">Notifications</p>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-xs text-emerald-600 hover:text-emerald-700"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-sm text-neutral-500 text-center">
+                      No new notifications
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div key={notif.id} className="px-4 py-3 border-b border-neutral-100 hover:bg-neutral-50">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 min-w-0 flex-1">
+                            <div className="mt-1 h-6 w-6 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                              <Check className="h-3 w-3 text-emerald-600" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <p className="text-sm font-medium text-neutral-800">{notif.title}</p>
+                                <p className="text-[11px] text-neutral-400 whitespace-nowrap">
+                                  {new Date(notif.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <p className="text-xs text-neutral-500 mt-1">{notif.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                        {notif.referralId && (
+                          <div className="mt-2 ml-8">
+                            <button
+                              onClick={() => {
+                                setNotificationsOpen(false)
+                                window.location.href = `/referrals?id=${notif.referralId}`
+                              }}
+                              className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                            >
+                              View
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
           )}
-        </button>
+        </div>
         {/* User Dropdown */}
         <div className="relative">
           <button
