@@ -14,6 +14,11 @@ const app = express()
 /**
  * Middleware
  */
+const allowedCorsOrigins = (config.corsOrigin || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
@@ -24,8 +29,8 @@ app.use(cors({
       return callback(null, true)
     }
 
-    // Allow configured origin
-    if (origin === config.corsOrigin) {
+    // Allow configured origins (comma-separated)
+    if (allowedCorsOrigins.includes(origin)) {
       return callback(null, true)
     }
 
@@ -52,7 +57,7 @@ if (config.nodeEnv !== 'production') {
 app.use('/api', routes)
 
 /**
- * Error handling
+ * Error handlers (must be last)
  */
 app.use(notFoundHandler)
 app.use(errorHandler)
@@ -60,7 +65,7 @@ app.use(errorHandler)
 /**
  * Start server
  */
-async function startServer() {
+const startServer = async () => {
   try {
     // Connect to database
     await connectDatabase()
@@ -94,4 +99,3 @@ process.on('SIGINT', async () => {
 
 // Start the server
 startServer()
-

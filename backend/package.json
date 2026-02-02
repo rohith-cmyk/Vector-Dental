@@ -4,7 +4,7 @@
   "description": "Backend API for Vector Dental",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "dotenv -e .env -- tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
@@ -46,6 +46,7 @@
     "@types/nodemailer": "^7.0.5",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
     "@typescript-eslint/parser": "^7.16.0",
+    "dotenv-cli": "^7.4.2",
     "eslint": "^8.57.0",
     "prisma": "^5.16.1",
     "tsx": "^4.20.6",
