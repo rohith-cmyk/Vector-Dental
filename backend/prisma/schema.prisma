@@ -245,11 +245,13 @@ model ReferralFile {
 // Operative Report Model (Ops report from specialist)
 model OperativeReport {
   id           String   @id @default(uuid())
-  referralId   String   @map("referral_id")
-  createdById  String?  @map("created_by_id")
-  comment      String?  @map("comment")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  referralId   String
+  createdById  String?
+  findings     String
+  treatmentPlan String
+  comment      String?  @map("notes")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
   createdBy User?   @relation("OperativeReportAuthor", fields: [createdById], references: [id], onDelete: SetNull)
@@ -262,14 +264,14 @@ model OperativeReport {
 // Operative Report File Model
 model OperativeReportFile {
   id         String   @id @default(uuid())
-  reportId   String   @map("report_id")
+  reportId   String
   fileName   String
   fileType   String
   fileUrl    String
   fileSize   Int
   storageKey String?  // Where file lives (S3 key, Supabase path, etc.)
   mimeType   String?  // More accurate MIME type
-  uploadedAt DateTime @default(now()) @map("uploaded_at")
+  uploadedAt DateTime @default(now())
 
   report OperativeReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 

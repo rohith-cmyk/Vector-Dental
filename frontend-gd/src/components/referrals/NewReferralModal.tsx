@@ -57,6 +57,7 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
   const [showSpecialistSelector, setShowSpecialistSelector] = useState(false)
   const [specialistSearchQuery, setSpecialistSearchQuery] = useState('')
   const [specialistDropdownValue, setSpecialistDropdownValue] = useState('')
+  const [specialistSpecialtyFilter, setSpecialistSpecialtyFilter] = useState('')
 
   const [formData, setFormData] = useState<FormData>({
     referringDoctorFirstName: user?.name?.split(' ')[0] || '',
@@ -224,6 +225,18 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
         : specialist.name,
     })),
   ]
+  const specialtyOptions = [
+    { value: '', label: 'All specialties' },
+    ...Array.from(
+      new Set(
+        specialists
+          .map((specialist) => specialist.specialistProfile?.specialty?.trim())
+          .filter(Boolean) as string[]
+      )
+    )
+      .sort((a, b) => a.localeCompare(b))
+      .map((specialty) => ({ value: specialty, label: specialty })),
+  ]
 
   return (
     <div className="space-y-10">
@@ -339,9 +352,9 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                   />
                 </div>
                 <Select
-                  value={specialistDropdownValue}
-                  onChange={(e) => setSpecialistDropdownValue(e.target.value)}
-                  options={specialistOptions}
+                  value={specialistSpecialtyFilter}
+                  onChange={(e) => setSpecialistSpecialtyFilter(e.target.value)}
+                  options={specialtyOptions}
                 />
               </div>
               <div className="overflow-y-auto flex-1 space-y-2 max-h-52">
@@ -360,7 +373,9 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                       (specialist.specialistProfile?.specialty || '').toLowerCase().includes(query)
                     )
                     .filter((specialist) =>
-                      specialistDropdownValue ? specialist.id === specialistDropdownValue : true
+                      specialistSpecialtyFilter
+                        ? specialist.specialistProfile?.specialty === specialistSpecialtyFilter
+                        : true
                     )
 
                   if (filteredSpecialists.length === 0) {
@@ -379,6 +394,7 @@ export function NewReferralForm({ onCancel, onSuccess }: NewReferralFormProps) {
                         handleChange('specialistUserId', specialist.id)
                         setSpecialistSearchQuery('')
                         setSpecialistDropdownValue('')
+                        setSpecialistSpecialtyFilter('')
                         setShowSpecialistSelector(false)
                         if (errors.specialistUserId) {
                           setErrors(prev => ({ ...prev, specialistUserId: '' }))

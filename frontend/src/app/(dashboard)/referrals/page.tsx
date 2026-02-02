@@ -251,6 +251,7 @@ export default function ReferralsPage() {
   const [opsComment, setOpsComment] = useState('')
   const [opsFiles, setOpsFiles] = useState<File[]>([])
   const [isSendingOps, setIsSendingOps] = useState(false)
+  const [opsSuccessMessage, setOpsSuccessMessage] = useState('')
 
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
@@ -458,6 +459,7 @@ export default function ReferralsPage() {
     setOpsReferral(referral)
     setOpsComment(referral.notes || '')
     setOpsFiles([])
+    setOpsSuccessMessage('')
     setIsOpsModalOpen(true)
   }
 
@@ -466,6 +468,7 @@ export default function ReferralsPage() {
     setOpsReferral(null)
     setOpsComment('')
     setOpsFiles([])
+    setOpsSuccessMessage('')
   }
 
   const handleSendOps = async () => {
@@ -476,8 +479,7 @@ export default function ReferralsPage() {
         comment: opsComment,
         files: opsFiles,
       })
-      alert('Ops report sent successfully.')
-      closeOpsModal()
+      setOpsSuccessMessage('Ops report sent successfully.')
     } finally {
       setIsSendingOps(false)
     }
@@ -886,6 +888,11 @@ export default function ReferralsPage() {
         >
           {opsReferral && (
             <div className="space-y-6">
+              {opsSuccessMessage && (
+                <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  {opsSuccessMessage}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="text-xs text-neutral-400">Patient Name</div>

@@ -31,6 +31,7 @@ export function Sidebar() {
             className="h-14 w-14 object-contain"
           />
           <span className="text-md font-bold text-neutral-700 leading-normal">Vector Dental</span>
+          <span className="text-xs text-neutral-400">Specialist Portal</span>
         </div>
         
         {/* Navigation */}

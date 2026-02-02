@@ -365,11 +365,14 @@ export async function submitOperativeReport(req: Request, res: Response, next: N
       throw errors.notFound('Referral not found')
     }
 
+    const trimmedComment = comment?.trim() || ''
     const report = await prisma.operativeReport.create({
       data: {
         referralId: referral.id,
         createdById: req.user!.userId,
-        comment: comment?.trim() || null,
+        findings: trimmedComment || 'Ops report submitted',
+        treatmentPlan: trimmedComment || 'See attachments',
+        comment: trimmedComment || null,
       },
     })
 
