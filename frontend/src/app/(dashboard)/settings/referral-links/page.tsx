@@ -64,6 +64,25 @@ function CreateLinkModal({ isOpen, onClose, onSuccess }: CreateLinkModalProps) {
 
   const handleCopyUrl = () => {
     if (createdLink) {
+      // Fallback for non-HTTPS environments
+      if (!navigator.clipboard) {
+        const textArea = document.createElement('textarea')
+        textArea.value = createdLink.referralUrl
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.select()
+        try {
+          document.execCommand('copy')
+          setIsCopied(true)
+          setTimeout(() => setIsCopied(false), 2000)
+        } catch (err) {
+          console.error('Failed to copy:', err)
+        }
+        document.body.removeChild(textArea)
+        return
+      }
+
       navigator.clipboard.writeText(createdLink.referralUrl)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
@@ -299,6 +318,25 @@ export default function ReferralLinksPage() {
   }
 
   const handleCopyUrl = (url: string, id: string) => {
+    // Fallback for non-HTTPS environments
+    if (!navigator.clipboard) {
+      const textArea = document.createElement('textarea')
+      textArea.value = url
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        setCopiedId(id)
+        setTimeout(() => setCopiedId(null), 2000)
+      } catch (err) {
+        console.error('Failed to copy:', err)
+      }
+      document.body.removeChild(textArea)
+      return
+    }
+
     navigator.clipboard.writeText(url)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
