@@ -26,7 +26,7 @@ export function OverviewMetrics({
           <div className="flex items-center justify-between">
             <div>
               <div className="text-3xl font-bold text-emerald-600">{dailyAverage.toFixed(2)}</div>
-              <div className="text-sm text-neutral-500 mt-1">Daily Average Appointments</div>
+              <div className="text-sm text-neutral-500 mt-1">Daily Average Referrals</div>
             </div>
             <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">
               <CheckSquare className="w-5 h-5 text-gray-400" strokeWidth={1.5} />

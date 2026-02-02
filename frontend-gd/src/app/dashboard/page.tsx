@@ -376,7 +376,7 @@ export default function DashboardPage() {
     const completedReferrals = effectiveStats.completed || 0
     const baseTotal = totalReferrals || 1
     const processFlowData = [
-        { label: 'Referral Sent', count: totalReferrals, percentage: Math.round((totalReferrals / baseTotal) * 100) },
+        { label: 'Referrals Sent', footerLabel: 'Referrals Sent', count: totalReferrals, percentage: Math.round((totalReferrals / baseTotal) * 100) },
         { label: 'Accepted', count: acceptedReferrals, percentage: Math.round((acceptedReferrals / baseTotal) * 100) },
         { label: 'Completed', count: completedReferrals, percentage: Math.round((completedReferrals / baseTotal) * 100) },
     ]
