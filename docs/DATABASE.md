@@ -1,6 +1,6 @@
 # 🗄️ Database Guide
 
-Complete guide for managing and verifying the PostgreSQL database for the Dental Referral Management System.
+Complete guide for managing and verifying the PostgreSQL database for Vector Dental.
 
 ---
 

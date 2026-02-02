@@ -1,6 +1,6 @@
 # Setup Guide
 
-This guide will help you set up the Dental Referral Management System for local development.
+This guide will help you set up Vector Dental for local development.
 
 ## Prerequisites
 
@@ -89,7 +89,7 @@ Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_APP_NAME=Dental Referral System
+NEXT_PUBLIC_APP_NAME=Vector Dental
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 

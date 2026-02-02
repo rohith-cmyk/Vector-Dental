@@ -22,7 +22,7 @@ router.use('/referral-link', referralLinkRoutes) // Clinic referral link managem
 router.use('/referral-links', magicReferralLinkRoutes) // Referral link management (token-based)
 router.use('/notifications', notificationsRoutes) // Notifications
 router.use('/specialist-profiles', specialistProfilesRoutes) // Specialist profiles (clinic staff)
-router.use('/gd', gdRoutes) // GD Platform routes
+router.use('/gd', gdRoutes) // Vector Dental GD routes
 
 // Health check
 router.get('/health', (_req, res) => {

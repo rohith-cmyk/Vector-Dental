@@ -1,8 +1,8 @@
-# Specialist Platform - Complete Feature Documentation
+# Vector Dental - Complete Feature Documentation
 
 ## Overview
 
-The **Dental Referral Management System** is a comprehensive platform designed primarily for **dental specialists** to efficiently manage incoming patient referrals from general practitioners (GPs) and other referring clinics. The platform provides a two-way referral system with robust tracking, communication, and management capabilities.
+**Vector Dental** is a comprehensive platform designed primarily for **dental specialists** to efficiently manage incoming patient referrals from general practitioners (GPs) and other referring clinics. The platform provides a two-way referral system with robust tracking, communication, and management capabilities.
 
 ---
 

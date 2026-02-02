@@ -1,6 +1,6 @@
 # Style Guide
 
-This document outlines the design system and styling conventions used throughout the Dental Referral application.
+This document outlines the design system and styling conventions used throughout Vector Dental.
 
 ## Color Palette
 

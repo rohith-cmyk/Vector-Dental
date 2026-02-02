@@ -1,5 +1,5 @@
 // App Configuration
-export const APP_NAME = 'Dental Referral System'
+export const APP_NAME = 'Vector Dental'
 export const APP_DESCRIPTION = 'A CRM tool for managing dental and clinical referrals'
 
 // Development Mode - Set NEXT_PUBLIC_USE_MOCK_DATA=true to use mock data

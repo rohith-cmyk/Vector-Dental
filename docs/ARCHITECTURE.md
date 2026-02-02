@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-The Dental Referral Management System follows a modern **client-server architecture** with clear separation of concerns.
+Vector Dental follows a modern **client-server architecture** with clear separation of concerns.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

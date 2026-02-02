@@ -72,7 +72,7 @@ function LoginForm() {
             className="h-16 w-16 mx-auto mb-4"
           />
           <h1 className="text-2xl font-semibold text-gray-900">Welcome Back</h1>
-          <p className="text-sm text-gray-600 mt-2">Sign in to your dental referral account</p>
+          <p className="text-sm text-gray-600 mt-2">Sign in to your Vector Dental account</p>
         </div>
 
         {/* Success Message from Signup */}

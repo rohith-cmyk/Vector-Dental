@@ -58,7 +58,7 @@ export default function CompleteSignupPage() {
         <CardContent className="p-8">
           <div className="text-center mb-8">
             <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900">Complete Your GD Profile</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Complete Your Vector Dental Profile</h1>
             <p className="text-gray-600 mt-2">Add your practice details to continue</p>
           </div>
 

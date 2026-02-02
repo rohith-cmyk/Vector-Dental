@@ -1,4 +1,4 @@
-# Dental Referral Management System
+# Vector Dental
 
 A comprehensive CRM tool for managing dental and clinical referrals, enabling clinics to efficiently track patient referrals to specialists.
 

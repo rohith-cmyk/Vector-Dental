@@ -30,7 +30,7 @@ export function Sidebar() {
             alt="Logo" 
             className="h-14 w-14 object-contain"
           />
-          <span className="text-md font-bold text-neutral-700 leading-normal">Dental Referral</span>
+          <span className="text-md font-bold text-neutral-700 leading-normal">Vector Dental</span>
         </div>
         
         {/* Navigation */}

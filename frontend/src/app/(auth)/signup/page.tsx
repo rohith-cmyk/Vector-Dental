@@ -105,7 +105,7 @@ export default function SignupPage() {
               className="h-16 w-16 mx-auto mb-4"
             />
             <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-            <p className="text-gray-600 mt-2">Start managing your dental referrals</p>
+            <p className="text-gray-600 mt-2">Start managing referrals in Vector Dental</p>
           </div>
 
           {/* Success Message */}

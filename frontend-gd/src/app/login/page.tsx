@@ -48,7 +48,7 @@ export default function LoginPage() {
                     <div className="text-center mb-8">
                         <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4" />
                         <h1 className="text-2xl font-semibold text-gray-900">Welcome Back</h1>
-                        <p className="text-sm text-gray-600 mt-2">Sign in to your GD account</p>
+                        <p className="text-sm text-gray-600 mt-2">Sign in to your Vector Dental account</p>
                     </div>
 
                     {error && (
