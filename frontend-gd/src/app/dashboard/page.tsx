@@ -18,36 +18,6 @@ interface TrendPoint {
     sent: number
 }
 
-const MINUTES_IN_DAY = 24 * 60
-
-const formatDuration = (minutes: number | null) => {
-    if (!minutes || minutes <= 0 || Number.isNaN(minutes)) return '-'
-    if (minutes >= MINUTES_IN_DAY) {
-        const days = Math.floor(minutes / MINUTES_IN_DAY)
-        const hours = Math.floor((minutes % MINUTES_IN_DAY) / 60)
-        return `${days}d ${hours}h`
-    }
-    const hours = Math.floor(minutes / 60)
-    const mins = Math.round(minutes % 60)
-    if (hours === 0) return `${mins}m`
-    return `${hours}h ${mins}m`
-}
-
-const averageMinutes = (values: number[]) => {
-    if (!values.length) return null
-    const total = values.reduce((sum, val) => sum + val, 0)
-    return total / values.length
-}
-
-const diffMinutes = (start?: string | null, end?: string | null) => {
-    if (!start || !end) return null
-    const startDate = new Date(start)
-    const endDate = new Date(end)
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null
-    const minutes = (endDate.getTime() - startDate.getTime()) / (1000 * 60)
-    return minutes > 0 ? minutes : null
-}
-
 interface BreakdownPoint {
     category: string
     count: number
@@ -61,6 +31,20 @@ const mockStats: DashboardStats = {
     completed: 20,
     rejected: 3,
 }
+
+const demoOverviewMetrics = {
+    dailyAverage: 2.5,
+    avgSchedule: '3.1 hrs',
+    avgAppointment: '~7 days',
+    avgTimeToTreatment: '~9 days',
+}
+
+const demoOfficeAdditions = [
+    { office: 'Elements Dental & Orthodontics', count: 9 },
+    { office: 'Harbor Point Dental Care', count: 8 },
+    { office: 'True North Dental Studio', count: 7 },
+    { office: 'Verde Valley Dental Wellness', count: 6 },
+]
 
 const mockRecentReferrals: Referral[] = [
     {
@@ -373,7 +357,7 @@ export default function DashboardPage() {
     const recentSourceReferrals = referrals
 
     const totalReferrals = effectiveStats.total || 0
-    const acceptedReferrals = effectiveStats.accepted || 0
+    const acceptedReferrals = 14
     const completedReferrals = effectiveStats.completed || 0
     const baseTotal = totalReferrals || 1
     const processFlowData = [
@@ -383,7 +367,7 @@ export default function DashboardPage() {
     ]
 
     const trendData = buildMonthlyTrend(effectiveReferrals)
-    const officeBreakdown = buildOfficeBreakdown(effectiveReferrals)
+    const officeBreakdown = applyDemoOfficeAdditions(buildOfficeBreakdown(effectiveReferrals), demoOfficeAdditions)
     const recentReferrals = recentSourceReferrals
         .filter((referral) => referral.status !== 'DRAFT' && referral.intendedRecipient?.id)
         .sort((a, b) => {
@@ -393,27 +377,10 @@ export default function DashboardPage() {
         })
         .slice(0, 5)
 
-    const now = new Date()
-    const last30Days = effectiveReferrals.filter((referral) => {
-        if (!referral.createdAt) return false
-        const createdAt = new Date(referral.createdAt)
-        return now.getTime() - createdAt.getTime() <= 30 * 24 * 60 * 60 * 1000
-    })
-    const dailyAverage = last30Days.length / 30
-
-    const scheduleMinutes = effectiveReferrals
-        .map((referral) => diffMinutes(referral.createdAt, referral.scheduledAt))
-        .filter((value): value is number => value !== null)
-    const appointmentMinutes = effectiveReferrals
-        .map((referral) => diffMinutes(referral.scheduledAt, referral.completedAt))
-        .filter((value): value is number => value !== null)
-    const timeToTreatmentMinutes = effectiveReferrals
-        .map((referral) => diffMinutes(referral.createdAt, referral.completedAt))
-        .filter((value): value is number => value !== null)
-
-    const avgSchedule = formatDuration(averageMinutes(scheduleMinutes))
-    const avgAppointment = formatDuration(averageMinutes(appointmentMinutes))
-    const avgTimeToTreatment = formatDuration(averageMinutes(timeToTreatmentMinutes))
+    const dailyAverage = demoOverviewMetrics.dailyAverage
+    const avgSchedule = demoOverviewMetrics.avgSchedule
+    const avgAppointment = demoOverviewMetrics.avgAppointment
+    const avgTimeToTreatment = demoOverviewMetrics.avgTimeToTreatment
 
     return (
         <DashboardLayout title="Dashboard" subtitle={`Welcome back, ${user.name}`}>
@@ -620,6 +587,32 @@ function buildOfficeBreakdown(referrals: Referral[]): BreakdownPoint[] {
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
+}
+
+function applyDemoOfficeAdditions(
+    existing: BreakdownPoint[],
+    additions: Array<{ office: string; count: number }>,
+    maxItems: number = 5,
+): BreakdownPoint[] {
+    const existingNames = new Set(existing.map((item) => item.category))
+    const enriched = [...existing]
+    additions.forEach((office) => {
+        if (!existingNames.has(office.office)) {
+            enriched.push({
+                category: office.office,
+                count: office.count,
+                percentage: 0,
+            })
+        }
+    })
+
+    const total = enriched.reduce((sum, item) => sum + item.count, 0) || 1
+    const withPercentages = enriched.map((item) => ({
+        ...item,
+        percentage: Math.round((item.count / total) * 100),
+    }))
+
+    return withPercentages.slice(0, maxItems)
 }
 
 function getPatientName(referral: Referral) {

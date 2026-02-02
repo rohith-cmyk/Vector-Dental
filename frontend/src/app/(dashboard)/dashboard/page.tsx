@@ -187,11 +187,15 @@ const mockDashboardStats: DashboardStats = {
     { specialty: 'General Dentistry', count: 2, percentage: 10 },
   ],
   referralsByOffice: [
-    { office: 'Sunset Dental Clinic', count: 5, percentage: 25 },
-    { office: 'Riverside Family Dentistry', count: 4, percentage: 20 },
-    { office: 'Mountain View Dental', count: 3, percentage: 15 },
-    { office: 'Downtown Dental Center', count: 4, percentage: 20 },
-    { office: 'Northside Dental Practice', count: 4, percentage: 20 },
+    { office: 'Lakeside Dental Arts', count: 16, percentage: 16 },
+    { office: 'Summit Family Dentistry', count: 12, percentage: 12 },
+    { office: 'The Modern Dental Studio', count: 10, percentage: 10 },
+    { office: 'Cornerstone Dental Health', count: 9, percentage: 9 },
+    { office: 'Sunset Dental Clinic', count: 15, percentage: 15 },
+    { office: 'Riverside Family Dentistry', count: 12, percentage: 12 },
+    { office: 'Mountain View Dental', count: 8, percentage: 8 },
+    { office: 'Downtown Dental Center', count: 10, percentage: 10 },
+    { office: 'Northside Dental Practice', count: 8, percentage: 8 },
   ],
   referralProcessFlow: [
     { label: 'Referrals\nReceived', footerLabel: 'Received', count: 47, percentage: 100 },
@@ -199,12 +203,26 @@ const mockDashboardStats: DashboardStats = {
     { label: 'Completed', count: 12, percentage: 26 },
   ],
   overviewMetrics: {
-    dailyAverage: 2.5,
-    avgSchedule: '2h 34m',
-    avgAppointment: '3d 12h',
-    avgTimeToTreatment: '5d 8h',
+    dailyAverage: 3.5,
+    avgSchedule: '3.1 hrs',
+    avgAppointment: '~4 days',
+    avgTimeToTreatment: '~8 days',
   },
 }
+
+const demoOverviewMetrics = {
+  dailyAverage: 3.5,
+  avgSchedule: '3.1 hrs',
+  avgAppointment: '~4 days',
+  avgTimeToTreatment: '~8 days',
+}
+
+const demoOfficeAdditions = [
+  { office: 'Lakeside Dental Arts', count: 12 },
+  { office: 'Summit Family Dentistry', count: 10 },
+  { office: 'The Modern Dental Studio', count: 9 },
+  { office: 'Cornerstone Dental Health', count: 8 },
+]
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -330,7 +348,9 @@ export default function DashboardPage() {
   ]
   const referralTrendsData = fallbackReferralTrends
 
-  const processFlowData = (stats.referralProcessFlow || []).map((step, index) => {
+  const baseProcessFlow = stats.referralProcessFlow || []
+  const baseProcessCount = baseProcessFlow[0]?.count || 0
+  const processFlowData = baseProcessFlow.map((step, index) => {
     if (index === 0) {
       return {
         ...step,
@@ -338,8 +358,24 @@ export default function DashboardPage() {
         footerLabel: 'Received',
       }
     }
+    if (index === 1) {
+      return {
+        ...step,
+        count: 15,
+        percentage: baseProcessCount > 0 ? Math.round((15 / baseProcessCount) * 100) : step.percentage
+      }
+    }
     return step
   })
+
+  const officeBreakdown = applyDemoOfficeAdditions(
+    (stats.referralsByOffice || []).map(item => ({
+      category: item.office,
+      count: item.count,
+      percentage: item.percentage
+    })),
+    demoOfficeAdditions
+  )
 
   return (
     <DashboardLayout
@@ -377,10 +413,10 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <OverviewMetrics
-              dailyAverage={stats.overviewMetrics?.dailyAverage || 0}
-              avgSchedule={stats.overviewMetrics?.avgSchedule || '-'}
-              avgAppointment={stats.overviewMetrics?.avgAppointment || '-'}
-              avgTimeToTreatment={stats.overviewMetrics?.avgTimeToTreatment || '-'}
+              dailyAverage={demoOverviewMetrics.dailyAverage}
+              avgSchedule={demoOverviewMetrics.avgSchedule}
+              avgAppointment={demoOverviewMetrics.avgAppointment}
+              avgTimeToTreatment={demoOverviewMetrics.avgTimeToTreatment}
             />
           </div>
           <div className="lg:col-span-2">
@@ -401,14 +437,7 @@ export default function DashboardPage() {
                 <ReferralTrendsChart data={referralTrendsData} showOutgoing={false} />
               </div>
               <div className="lg:col-span-1">
-                <BreakdownChart
-                  data={(stats.referralsByOffice || []).map(item => ({
-                    category: item.office,
-                    count: item.count,
-                    percentage: item.percentage
-                  }))}
-                  title="By Office"
-                />
+                <BreakdownChart data={officeBreakdown} title="By Office" />
               </div>
             </div>
           </div>
@@ -450,5 +479,32 @@ export default function DashboardPage() {
       />
     </DashboardLayout>
   )
+}
+
+function applyDemoOfficeAdditions(
+  existing: Array<{ category: string; count: number; percentage: number }>,
+  additions: Array<{ office: string; count: number }>,
+  maxItems: number = 5
+) {
+  const existingNames = new Set(existing.map(item => item.category))
+  const enriched = [...existing]
+
+  additions.forEach(office => {
+    if (!existingNames.has(office.office)) {
+      enriched.push({
+        category: office.office,
+        count: office.count,
+        percentage: 0
+      })
+    }
+  })
+
+  const total = enriched.reduce((sum, item) => sum + item.count, 0) || 1
+  const withPercentages = enriched.map(item => ({
+    ...item,
+    percentage: Math.round((item.count / total) * 100)
+  }))
+
+  return withPercentages.slice(0, maxItems)
 }
 
