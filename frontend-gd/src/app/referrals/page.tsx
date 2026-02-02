@@ -477,7 +477,7 @@ function ReferralsPageContent() {
           <div className="relative inline-flex items-center rounded-full border border-black/10 bg-white p-1 shadow-sm">
             {view === 'list' && (
               <span
-                className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full border border-emerald-200 bg-emerald-50 transition-transform duration-300 ${activeTab === 'draft' ? 'translate-x-full' : ''
+                className={`absolute inset-y-1 rounded-full border border-emerald-200 bg-emerald-50 transition-all duration-300 ${activeTab === 'draft' ? 'left-[calc(50%+2px)] right-1' : 'left-1 right-[calc(50%+2px)]'
                   }`}
               />
             )}

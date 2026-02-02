@@ -17,7 +17,7 @@ function normalizePhoneE164(phone: string): string {
 }
 
 export async function sendSms(to: string, body: string): Promise<void> {
-  if (!config.twilioAccountSid || !config.twilioAuthToken || !config.twilioFromNumber) {
+  if (!config.twilioAccountSid || !config.twilioAuthToken || !config.twilioPhoneNumber) {
     throw errors.internal('Twilio configuration is missing')
   }
 
@@ -25,7 +25,7 @@ export async function sendSms(to: string, body: string): Promise<void> {
   const message = await client.messages.create({
     body,
     to: normalizePhoneE164(to),
-    from: config.twilioFromNumber,
+    from: config.twilioPhoneNumber,
   })
   console.log('SMS sent:', message.sid)
 }

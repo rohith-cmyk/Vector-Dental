@@ -70,7 +70,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
   if (resend) {
     try {
       await resend.emails.send({
-        from: options.from || config.emailFrom || 'Vector Dental <onboarding@resend.dev>',
+        from: options.from || config.smtpFrom || 'Vector Dental <onboarding@resend.dev>',
         to: [options.to],
         subject: options.subject,
         html: options.html || `<pre>${options.body}</pre>`,
@@ -92,7 +92,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
 
   try {
     await smtpTransporter.sendMail({
-      from: options.from || config.emailFrom || config.smtpUser,
+      from: options.from || config.smtpFrom || config.smtpUser,
       to: options.to,
       subject: options.subject,
       text: options.body,

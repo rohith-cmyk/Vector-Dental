@@ -55,7 +55,7 @@ export function ContactsList({ contacts }: ContactsListProps) {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {contacts.map((contact) => (
-                <tr key={contact.id} className="hover:bg-gray-100 transition-colors">
+                <tr key={contact.id} className="cursor-pointer transition-all hover:bg-slate-200 hover:shadow-sm">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center">

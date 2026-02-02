@@ -91,6 +91,19 @@ export async function getAllReferrals(req: Request, res: Response, next: NextFun
         take,
         include: {
           contact: true,
+          intendedRecipient: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              clinic: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
+            }
+          },
           files: true,
           clinic: true, // Include sending clinic info
         },
@@ -130,6 +143,19 @@ export async function getReferralById(req: Request, res: Response, next: NextFun
       },
       include: {
         contact: true,
+        intendedRecipient: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            clinic: {
+              select: {
+                id: true,
+                name: true,
+              }
+            }
+          }
+        },
         files: true,
         clinic: true,
       },
@@ -511,7 +537,7 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
     // Build timeline stages
     const timeline = TIMELINE_STAGES.map((stage) => {
       const stageIndex = TIMELINE_STAGES.findIndex((s) => s.key === stage.key)
-      
+
       return {
         key: stage.key,
         label: stage.label,
@@ -525,10 +551,10 @@ export async function getReferralStatusByToken(req: Request, res: Response, next
 
     const latestOpsReport = referral.referralLinkId
       ? await prisma.operativeReport.findFirst({
-          where: { referralId: referral.id },
-          orderBy: { createdAt: 'desc' },
-          include: { files: true },
-        })
+        where: { referralId: referral.id },
+        orderBy: { createdAt: 'desc' },
+        include: { files: true },
+      })
       : null
 
     res.json({

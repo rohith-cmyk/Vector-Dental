@@ -151,7 +151,11 @@ export function ReferralDetailsModal({ isOpen, onClose, referral, onStatusUpdate
     // Get clinic name and doctor - use new fields if available
     const clinicName = displayReferral.gpClinicName || displayReferral.fromClinicName || 'Unknown Clinic'
     const doctorName = displayReferral.submittedByName || displayReferral.referringDentist
-    const preferredDoctor = displayReferral.contact?.name || 'Any (First Available)'
+
+    // Get preferred doctor - check contact first, then intendedRecipient (for GD platform referrals), then fallback
+    const preferredDoctor = displayReferral.contact?.name ||
+        displayReferral.intendedRecipient?.name ||
+        (displayReferral.toContactId ? 'Assigned Doctor' : 'Any (First Available)')
     const clinicInfo = displayReferral.clinic
 
     return (

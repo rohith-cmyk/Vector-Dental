@@ -97,6 +97,12 @@ export interface Referral {
   toContactId?: string
   toClinicId?: string
   contact?: Contact
+  intendedRecipient?: {
+    id: string
+    name: string
+    email: string
+    clinic?: Clinic
+  }
   clinic?: Clinic
 
   // For INCOMING (you receive)
@@ -277,7 +283,7 @@ export interface DashboardStats {
     count: number
     percentage: number
   }>
-  
+
   // Overview metrics
   overviewMetrics?: {
     dailyAverage: number
@@ -285,7 +291,7 @@ export interface DashboardStats {
     avgAppointment: string
     avgTimeToTreatment: string
   }
-  
+
   // Recent referrals
   recentIncoming: Referral[]
   recentOutgoing: Referral[]
