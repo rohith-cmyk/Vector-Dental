@@ -51,6 +51,8 @@ export async function getAllReferrals(req: Request, res: Response, next: NextFun
           referralType: 'INCOMING'
         }
       ]
+      // Exclude DRAFT referrals - specialists should only see submitted referrals
+      where.status = { not: 'DRAFT' }
     } else {
       // Default or 'sent': Outgoing referrals
       // Sent BY this clinic (fromClinicId = clinicId AND referralType = OUTGOING)
