@@ -194,7 +194,7 @@ const mockDashboardStats: DashboardStats = {
     { office: 'Northside Dental Practice', count: 4, percentage: 20 },
   ],
   referralProcessFlow: [
-    { label: 'Referred', count: 47, percentage: 100 },
+    { label: 'Referrals\nReceived', footerLabel: 'Received', count: 47, percentage: 100 },
     { label: 'Scheduled', count: 32, percentage: 68 },
     { label: 'Completed', count: 12, percentage: 26 },
   ],
@@ -213,6 +213,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [processFlowRange, setProcessFlowRange] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
 
   useEffect(() => {
     // Initial load - show loading
@@ -329,6 +330,17 @@ export default function DashboardPage() {
   ]
   const referralTrendsData = fallbackReferralTrends
 
+  const processFlowData = (stats.referralProcessFlow || []).map((step, index) => {
+    if (index === 0) {
+      return {
+        ...step,
+        label: 'Referrals\nReceived',
+        footerLabel: 'Received',
+      }
+    }
+    return step
+  })
+
   return (
     <DashboardLayout
       title="Dashboard"
@@ -372,7 +384,11 @@ export default function DashboardPage() {
             />
           </div>
           <div className="lg:col-span-2">
-            <ReferralProcessFlowChart data={stats.referralProcessFlow || []} />
+            <ReferralProcessFlowChart
+              data={processFlowData}
+              period={processFlowRange}
+              onPeriodChange={setProcessFlowRange}
+            />
           </div>
         </div>
 

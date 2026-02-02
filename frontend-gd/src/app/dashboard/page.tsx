@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { dashboardService, referralService } from '@/services/api'
 import type { DashboardStats, Referral } from '@/types'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardContent, LoadingState } from '@/components/ui'
+import { Card, CardContent, LoadingState, StatCard } from '@/components/ui'
 import { ArrowUpRight, CheckCircle, Clock, XCircle, CheckCircle2 } from 'lucide-react'
 import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcessFlowChart'
 import { OverviewMetrics } from '@/components/dashboard/OverviewMetrics'
@@ -320,6 +320,7 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [referrals, setReferrals] = useState<Referral[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [processFlowRange, setProcessFlowRange] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -417,34 +418,27 @@ export default function DashboardPage() {
     return (
         <DashboardLayout title="Dashboard" subtitle={`Welcome back, ${user.name}`}>
             <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <Card>
-                        <CardContent className="py-6">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-400">Total Referrals</p>
-                                <ArrowUpRight className="h-5 w-5 text-neutral-400" />
-                            </div>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.total || 0}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="py-6">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-400">Pending Action</p>
-                                <Clock className="h-5 w-5 text-neutral-400" />
-                            </div>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.pending || 0}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="py-6">
-                            <div className="flex items-center justify-between">
-                                <p className="text-sm font-medium text-neutral-400">Completed</p>
-                                <CheckCircle2 className="h-5 w-5 text-neutral-400" />
-                            </div>
-                            <p className="text-3xl font-bold text-neutral-900 mt-2">{effectiveStats.completed || 0}</p>
-                        </CardContent>
-                    </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <StatCard
+                        title="Total Referrals"
+                        value={effectiveStats.total || 0}
+                        icon={<ArrowUpRight className="h-5 w-5" />}
+                        className="hover:shadow-lg transition-all duration-200 border-gray-200/60"
+                    />
+                    <StatCard
+                        title="Pending Action"
+                        value={effectiveStats.pending || 0}
+                        icon={<Clock className="h-5 w-5" />}
+                        className={`hover:shadow-lg transition-all duration-200 border-gray-200/60 ${
+                            (effectiveStats.pending || 0) > 0 ? 'ring-1 ring-amber-200 bg-amber-50/30' : ''
+                        }`}
+                    />
+                    <StatCard
+                        title="Completed"
+                        value={effectiveStats.completed || 0}
+                        icon={<CheckCircle2 className="h-5 w-5" />}
+                        className="hover:shadow-lg transition-all duration-200 border-gray-200/60"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -455,7 +449,11 @@ export default function DashboardPage() {
                         avgTimeToTreatment={avgTimeToTreatment}
                     />
                     <div className="lg:col-span-2">
-                        <ReferralProcessFlowChart data={processFlowData} />
+                        <ReferralProcessFlowChart
+                            data={processFlowData}
+                            period={processFlowRange}
+                            onPeriodChange={setProcessFlowRange}
+                        />
                     </div>
                 </div>
 

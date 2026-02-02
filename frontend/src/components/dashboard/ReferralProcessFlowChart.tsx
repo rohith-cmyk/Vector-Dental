@@ -6,20 +6,39 @@ interface ProcessStep {
   label: string
   count: number
   percentage: number
+  footerLabel?: string
 }
+
+type TimeRange = 'weekly' | 'monthly' | 'yearly'
 
 interface ReferralProcessFlowChartProps {
   data: ProcessStep[]
+  period: TimeRange
+  onPeriodChange: (period: TimeRange) => void
 }
 
-export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps) {
+const periodLabelMap: Record<TimeRange, string> = {
+  weekly: 'This Week',
+  monthly: 'This Month',
+  yearly: 'This Year',
+}
+
+export function ReferralProcessFlowChart({ data, period, onPeriodChange }: ReferralProcessFlowChartProps) {
   if (!data || data.length === 0) {
     return (
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Referral Process Flow</h3>
-            <span className="text-sm text-neutral-500">This Month</span>
+            <select
+              value={period}
+              onChange={(event) => onPeriodChange(event.target.value as TimeRange)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
           </div>
           <div className="flex items-center justify-center text-neutral-500" style={{ minHeight: 250 }}>
             No data available
@@ -31,10 +50,11 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
 
   // Calculate dimensions
   const width = 600
-  const height = 250
+  const height = 260
+  const labelPaddingBottom = 70
   const nodeWidth = 120
   const nodePadding = 80
-  const maxCount = Math.max(...data.map(d => d.count))
+  const maxCount = Math.max(...data.map(d => d.count), 1)
 
   // Colors for each stage - incrementing saturations of emerald
   const colors = [
@@ -46,11 +66,9 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
   // Calculate node positions and heights
   const nodes = data.map((step, index) => {
     const x = index * (nodeWidth + nodePadding) + 40
-  const minNodeHeight = 80
-  const nodeHeight = Math.max(
-    minNodeHeight,
-    (step.count / maxCount) * 180 + 40 // Scale height based on count
-  )
+    const minNodeHeight = 80
+    const proportion = step.percentage > 0 ? Math.min(step.percentage, 100) / 100 : step.count / maxCount
+    const nodeHeight = Math.max(minNodeHeight, minNodeHeight + proportion * 140)
     const y = (height - nodeHeight) / 2
     return { ...step, x, y, height: nodeHeight, color: colors[index % colors.length] }
   })
@@ -79,16 +97,26 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
   }
 
   return (
-    <Card>
-      <CardContent className="p-6">
+    <Card className="h-full">
+      <CardContent className="p-6 h-full">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">Referral Process Flow</h3>
-          <span className="text-sm text-neutral-500">This Month</span>
+          <div className="flex items-center gap-3">
+            <select
+              value={period}
+              onChange={(event) => onPeriodChange(event.target.value as TimeRange)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
         </div>
 
         {/* Sankey Diagram */}
         <div className="w-full overflow-x-auto">
-          <svg width={width} height={height} className="mx-auto">
+          <svg width={width} height={height + labelPaddingBottom} className="mx-auto">
             <defs>
               {/* Gradient definitions - incrementing emerald saturations */}
               <linearGradient id="emerald-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -120,7 +148,7 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
             })}
 
             {/* Draw nodes */}
-            {nodes.map((node, index) => (
+            {nodes.map((node) => (
               <g key={node.label}>
                 {/* Node rectangle */}
                 <rect
@@ -134,53 +162,58 @@ export function ReferralProcessFlowChart({ data }: ReferralProcessFlowChartProps
                 />
                 
                 {/* Node label */}
-                <text
-                  x={node.x + nodeWidth / 2}
-                  y={node.y + node.height / 2 - 12}
-                  textAnchor="middle"
-                  className="fill-white font-medium text-sm"
-                >
-                  {node.label}
-                </text>
+                {(() => {
+                  const lines = node.label.split('\n')
+                  const lineHeight = 14
+                  const startY = node.y + node.height / 2 - (lines.length - 1) * lineHeight / 2 - 18
+                  return (
+                    <text
+                      x={node.x + nodeWidth / 2}
+                      y={startY}
+                      textAnchor="middle"
+                      className="fill-white font-medium text-sm"
+                    >
+                      {lines.map((line, idx) => (
+                        <tspan key={`${node.label}-${idx}`} x={node.x + nodeWidth / 2} dy={idx === 0 ? 0 : lineHeight}>
+                          {line}
+                        </tspan>
+                      ))}
+                    </text>
+                  )
+                })()}
                 
                 {/* Node count */}
                 <text
                   x={node.x + nodeWidth / 2}
-                  y={node.y + node.height / 2 + 16}
+                  y={node.y + node.height / 2 + 24}
                   textAnchor="middle"
                   className="fill-white font-semibold text-2xl"
                 >
                   {node.count}
                 </text>
                 
-                {/* Percentage below node */}
+                {/* Label + percentage below node */}
                 <text
                   x={node.x + nodeWidth / 2}
                   y={node.y + node.height + 20}
                   textAnchor="middle"
-                  className="fill-gray-600 text-xs"
+                  className="fill-gray-600 text-xs font-medium"
                 >
-                  {node.percentage}%
+                  {node.footerLabel ?? node.label}
+                </text>
+                <text
+                  x={node.x + nodeWidth / 2}
+                  y={node.y + node.height + 36}
+                  textAnchor="middle"
+                  className="fill-gray-400 text-[11px]"
+                >
+                  {node.percentage}% of total
                 </text>
               </g>
             ))}
           </svg>
         </div>
 
-        {/* Summary Stats */}
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <div className="grid grid-cols-3 gap-4">
-            {data.map((step, index) => {
-              const color = colors[index % colors.length]
-              return (
-                <div key={`stat-${step.label}`} className="text-center">
-                  <div className="text-xs text-neutral-500 mt-1">{step.label}</div>
-                  <div className="text-xs text-neutral-400 mt-0.5">{step.percentage}% of total</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
       </CardContent>
     </Card>
   )

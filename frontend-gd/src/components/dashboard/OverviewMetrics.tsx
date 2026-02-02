@@ -15,7 +15,7 @@ export function OverviewMetrics({
   avgTimeToTreatment,
 }: OverviewMetricsProps) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Overview</h3>
 
