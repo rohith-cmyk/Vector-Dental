@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowUpRight, Eye, Search } from 'lucide-react'
+import { ArrowUpRight, Eye, Pencil, Search } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout'
 import { Badge, Card, CardContent, LoadingState } from '@/components/ui'
 import { NewReferralForm } from '@/components/referrals/NewReferralModal'
@@ -474,42 +474,39 @@ function ReferralsPageContent() {
     <DashboardLayout title="Referrals" subtitle="Track referrals you have sent">
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4">
-          <div className="relative inline-flex items-center rounded-full border border-black/10 bg-white p-1 shadow-sm">
-            {view === 'list' && (
-              <span
-                className={`absolute inset-y-1 rounded-full border border-emerald-200 bg-emerald-50 transition-all duration-300 ${activeTab === 'draft' ? 'left-[calc(50%+2px)] right-1' : 'left-1 right-[calc(50%+2px)]'
+          <div className="bg-white border border-black/10 rounded-2xl p-1.5 max-w-fit shadow-sm">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('sent')
+                  setStatusFilter('all')
+                  setView('list')
+                }}
+                className={`flex w-fit items-center gap-2 py-3 px-6 rounded-xl border font-semibold text-sm transition-all duration-200 justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${view === 'list' && activeTab === 'sent'
+                  ? 'bg-emerald-50 text-emerald-700 shadow-md border-emerald-200'
+                  : 'text-neutral-500 bg-neutral-50/60 hover:bg-neutral-100 border-transparent hover:text-neutral-800 hover:shadow-sm'
                   }`}
-              />
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('sent')
-                setStatusFilter('all')
-                setView('list')
-              }}
-              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${view === 'list' && activeTab === 'sent'
-                ? 'text-emerald-700'
-                : 'text-neutral-500 hover:text-neutral-700'
-                }`}
-            >
-              <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
-              Sent
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('draft')
-                setStatusFilter('DRAFT')
-                setView('list')
-              }}
-              className={`relative z-10 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${view === 'list' && activeTab === 'draft'
-                ? 'text-emerald-700'
-                : 'text-neutral-500 hover:text-neutral-700'
-                }`}
-            >
-              Draft
-            </button>
+              >
+                <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+                Sent
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('draft')
+                  setStatusFilter('DRAFT')
+                  setView('list')
+                }}
+                className={`flex w-fit items-center gap-2 py-3 px-6 rounded-xl border font-semibold text-sm transition-all duration-200 justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 ${view === 'list' && activeTab === 'draft'
+                  ? 'bg-emerald-50 text-emerald-700 shadow-md border-emerald-200'
+                  : 'text-neutral-500 bg-neutral-50/60 hover:bg-neutral-100 border-transparent hover:text-neutral-800 hover:shadow-sm'
+                  }`}
+              >
+                <Pencil className="h-4 w-4" strokeWidth={1.5} />
+                Draft
+              </button>
+            </div>
           </div>
           {view === 'form' && (
             <button
