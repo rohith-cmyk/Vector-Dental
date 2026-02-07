@@ -7,7 +7,7 @@ import { FileUpload } from '@/components/referrals/FileUpload'
 import { ReferralReasonButtons } from '@/components/referrals/ReferralReasonButtons'
 import { InteractiveToothChart } from '@/components/referrals/InteractiveToothChart'
 import { api, API_URL } from '@/lib/api'
-import { CheckCircle, AlertCircle } from 'lucide-react'
+import { CheckCircle, AlertCircle, MapPin, Phone, Info } from 'lucide-react'
 
 interface LinkInfo {
   token: string
@@ -31,6 +31,7 @@ export default function ReferMagicPage() {
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [files, setFiles] = useState<File[]>([])
+  const [showAdditionalPatientInfo, setShowAdditionalPatientInfo] = useState(false)
   const [formData, setFormData] = useState({
     // GP/Submitter information
     gpClinicName: '',
@@ -43,6 +44,7 @@ export default function ReferMagicPage() {
     patientDob: '',
     patientPhone: '',
     insurance: '',
+    patientSmsOptInConfirmed: false,
     // Referral details
     reasonForReferral: [] as string[],
     customReason: '',
@@ -256,48 +258,65 @@ export default function ReferMagicPage() {
 
   // Referral form
   return (
-    <div className="min-h-screen bg-emerald-50/40 py-8 px-4">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          {linkInfo.clinicLogoUrl && (
-            <div className="mx-auto mb-4 h-20 w-20 rounded-full border border-emerald-100 bg-white flex items-center justify-center overflow-hidden">
-              <img
-                src={resolveLogoUrl(linkInfo.clinicLogoUrl)}
-                alt={`${linkInfo.clinicName} logo`}
-                className="h-full w-full object-contain"
-              />
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Clinic Header */}
+        <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="h-16 w-16 rounded-2xl border border-neutral-200 bg-white flex items-center justify-center overflow-hidden shadow-sm">
+              {linkInfo.clinicLogoUrl ? (
+                <img
+                  src={resolveLogoUrl(linkInfo.clinicLogoUrl)}
+                  alt={`${linkInfo.clinicName} logo`}
+                  className="h-10 w-10 object-contain"
+                />
+              ) : (
+                <div className="text-sm font-semibold text-gray-400">Logo</div>
+              )}
             </div>
-          )}
-          <h1 className="text-3xl font-bold text-gray-900">
-            Refer a patient to {linkInfo.clinicName}
-          </h1>
-          <div className="text-sm text-neutral-500 mt-3 space-y-1">
-            {linkInfo.clinicAddress && (
-              <div>
-                {linkInfo.clinicAddress}
-                {linkInfo.clinicPhone && ` • ${linkInfo.clinicPhone}`}
-              </div>
-            )}
-            {linkInfo.specialistName && (
-              <div>Specialist: {linkInfo.specialistName}</div>
-            )}
-            {linkInfo.specialty && (
-              <div>Specialty: {linkInfo.specialty}</div>
-            )}
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-gray-900">{linkInfo.clinicName}</h3>
+              {linkInfo.clinicAddress && (
+                <div className="flex items-center justify-center gap-2 text-gray-600 mt-1">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{linkInfo.clinicAddress}</span>
+                </div>
+              )}
+              {linkInfo.clinicPhone && (
+                <div className="flex items-center justify-center gap-2 text-gray-600 mt-1">
+                  <Phone className="w-4 h-4" />
+                  <span className="text-sm">{linkInfo.clinicPhone}</span>
+                </div>
+              )}
+              {(linkInfo.specialistName || linkInfo.specialty) && (
+                <div className="text-sm text-gray-500 mt-2">
+                  {linkInfo.specialistName && <span>Specialist: {linkInfo.specialistName}</span>}
+                  {linkInfo.specialistName && linkInfo.specialty && <span className="mx-2">•</span>}
+                  {linkInfo.specialty && <span>Specialty: {linkInfo.specialty}</span>}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Form */}
         <Card className="border border-gray-200">
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Your Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Referring Doctor */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-lg font-semibold text-gray-900">Referring doctor</h4>
+                  <div className="group relative">
+                    <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                    <div className="hidden group-hover:block absolute left-0 top-full mt-1 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                      Enter the clinic and referring dentist information
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Your Clinic Name"
+                    label="Clinic Name"
                     value={formData.gpClinicName}
                     onChange={(e) => handleChange('gpClinicName', e.target.value)}
                     error={errors.gpClinicName}
@@ -305,7 +324,7 @@ export default function ReferMagicPage() {
                     required
                   />
                   <Input
-                    label="Your Name"
+                    label="Referring Dentist"
                     value={formData.submittedByName}
                     onChange={(e) => handleChange('submittedByName', e.target.value)}
                     error={errors.submittedByName}
@@ -313,9 +332,9 @@ export default function ReferMagicPage() {
                     required
                   />
                 </div>
-                <div className="mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Your Email"
+                    label="Email"
                     type="email"
                     value={formData.submittedByEmail}
                     onChange={(e) => handleChange('submittedByEmail', e.target.value)}
@@ -323,10 +342,8 @@ export default function ReferMagicPage() {
                     placeholder="your.email@example.com"
                     required
                   />
-                </div>
-                <div className="mt-4">
                   <Input
-                    label="Your Phone (Optional)"
+                    label="Phone (Optional)"
                     type="tel"
                     value={formData.submittedByPhone}
                     onChange={(e) => handleChange('submittedByPhone', e.target.value)}
@@ -336,11 +353,11 @@ export default function ReferMagicPage() {
               </div>
 
               {/* Patient Information */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-gray-900">Patient information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Patient First Name"
+                    label="First Name"
                     value={formData.patientFirstName}
                     onChange={(e) => handleChange('patientFirstName', e.target.value)}
                     error={errors.patientFirstName}
@@ -348,7 +365,7 @@ export default function ReferMagicPage() {
                     required
                   />
                   <Input
-                    label="Patient Last Name"
+                    label="Last Name"
                     value={formData.patientLastName}
                     onChange={(e) => handleChange('patientLastName', e.target.value)}
                     error={errors.patientLastName}
@@ -356,81 +373,105 @@ export default function ReferMagicPage() {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="relative">
                   <Input
-                    label="Date of Birth (Optional)"
-                    type="date"
-                    value={formData.patientDob}
-                    onChange={(e) => handleChange('patientDob', e.target.value)}
-                  />
-                  <Input
-                    label="Insurance (Optional)"
-                    value={formData.insurance}
-                    onChange={(e) => handleChange('insurance', e.target.value)}
-                    placeholder="Insurance provider"
-                  />
-                </div>
-                <div className="mt-4">
-                  <Input
-                    label="Patient Phone (Optional)"
+                    label="Phone (Optional)"
                     type="tel"
                     value={formData.patientPhone}
                     onChange={(e) => handleChange('patientPhone', e.target.value)}
                     placeholder="(555) 123-4567"
                   />
+                  <div className="absolute right-3 top-9 group">
+                    <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                    <div className="hidden group-hover:block absolute right-0 top-full mt-1 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg z-10">
+                      Patient&apos;s contact phone number
+                    </div>
+                  </div>
                 </div>
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="patientSmsOptInConfirmed"
+                    checked={formData.patientSmsOptInConfirmed}
+                    onChange={(e) => handleChange('patientSmsOptInConfirmed', e.target.checked)}
+                    className="mt-1 w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                  />
+                  <label htmlFor="patientSmsOptInConfirmed" className="text-sm text-gray-700">
+                    I confirm the patient opted-in to receive SMS/text messages for this referral. Message and data rates may apply. Reply STOP to end.
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdditionalPatientInfo(!showAdditionalPatientInfo)}
+                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                >
+                  {showAdditionalPatientInfo ? '−' : '+'} Additional patient information
+                </button>
+                {showAdditionalPatientInfo && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 p-4 bg-gray-50 rounded-lg">
+                    <Input
+                      label="Date of Birth (Optional)"
+                      type="date"
+                      value={formData.patientDob}
+                      onChange={(e) => handleChange('patientDob', e.target.value)}
+                    />
+                    <Input
+                      label="Insurance (Optional)"
+                      value={formData.insurance}
+                      onChange={(e) => handleChange('insurance', e.target.value)}
+                      placeholder="Insurance provider"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Referral Details */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Referral Details</h3>
-                <ReferralReasonButtons
-                  selectedReasons={formData.reasonForReferral}
-                  customReason={formData.customReason}
-                  onReasonToggle={(reason) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      reasonForReferral: prev.reasonForReferral.includes(reason)
-                        ? prev.reasonForReferral.filter(item => item !== reason)
-                        : [...prev.reasonForReferral, reason]
-                    }))
-                    if (errors.reasonForReferral) {
-                      setErrors(prev => ({ ...prev, reasonForReferral: '' }))
-                    }
-                  }}
-                  onCustomReasonChange={(value) => handleChange('customReason', value)}
-                  error={errors.reasonForReferral}
-                  specialty={linkInfo.specialty}
-                  showPreferredDoctor={false}
-                />
-
-                <div className="mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="space-y-6">
+                  <ReferralReasonButtons
+                    selectedReasons={formData.reasonForReferral}
+                    customReason={formData.customReason}
+                    onReasonToggle={(reason) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        reasonForReferral: prev.reasonForReferral.includes(reason)
+                          ? prev.reasonForReferral.filter(item => item !== reason)
+                          : [...prev.reasonForReferral, reason]
+                      }))
+                      if (errors.reasonForReferral) {
+                        setErrors(prev => ({ ...prev, reasonForReferral: '' }))
+                      }
+                    }}
+                    onCustomReasonChange={(value) => handleChange('customReason', value)}
+                    error={errors.reasonForReferral}
+                    specialty={linkInfo.specialty}
+                    showPreferredDoctor={false}
+                  />
+                </div>
+                <div className="flex justify-center lg:justify-end">
                   <InteractiveToothChart
                     selectedTeeth={formData.selectedTeeth}
                     onTeethChange={handleTeethSelection}
                     variant="light"
-                    size="sm"
+                    className="scale-[0.95] origin-top"
                   />
                 </div>
+              </div>
 
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Additional Notes (Optional)
-                  </label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => handleChange('notes', e.target.value)}
-                    rows={3}
-                    maxLength={500}
-                    placeholder="Any additional information..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formData.notes?.length || 0}/500 characters
-                  </p>
-                </div>
+              {/* Attachments */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Attachments (Optional)
+                </label>
+                <FileUpload files={files} onFilesChange={setFiles} />
+                <p className="text-xs text-gray-500">
+                  Upload X-rays, photos, or other relevant patient documents. Max 10MB per file.
+                </p>
+              </div>
 
-                <div className="mt-4">
+              {/* Urgency + Notes */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Urgency
                   </label>
@@ -444,19 +485,26 @@ export default function ReferMagicPage() {
                     ]}
                   />
                 </div>
-              </div>
-
-              {/* File Upload */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Patient Documents (Optional)</h3>
-                <FileUpload files={files} onFilesChange={setFiles} />
-                <p className="text-xs text-gray-500 mt-2">
-                  Upload X-rays, photos, or other relevant patient documents. Max 10MB per file.
-                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => handleChange('notes', e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    placeholder="Additional notes or comments..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.notes?.length || 0}/500 characters
+                  </p>
+                </div>
               </div>
 
               {/* Submit */}
-              <div className="border-t border-gray-200 pt-6">
+              <div className="pt-4 border-t border-gray-200">
                 {errors.submit && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                     <p className="text-sm text-red-800">{errors.submit}</p>
@@ -471,10 +519,10 @@ export default function ReferMagicPage() {
                   type="submit"
                   variant="primary"
                   size="lg"
-                  className="w-full"
+                  className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
                   isLoading={isSubmitting}
                 >
-                  Submit Referral to {linkInfo.clinicName}
+                  Submit Referral
                 </Button>
               </div>
             </form>

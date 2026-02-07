@@ -29,6 +29,7 @@ interface FormData {
   patientEmail: string
   patientDob: string
   patientAddress: string
+  patientSmsOptInConfirmed: boolean
   textPatientCopy: boolean
 
   specialistUserId: string
@@ -82,6 +83,7 @@ export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialS
     patientEmail: '',
     patientDob: '',
     patientAddress: '',
+    patientSmsOptInConfirmed: false,
     textPatientCopy: false,
     specialistUserId: '',
     reasons: [],
@@ -257,6 +259,7 @@ export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialS
         patientEmail: '',
         patientDob: '',
         patientAddress: '',
+        patientSmsOptInConfirmed: false,
         textPatientCopy: false,
         specialistUserId: '',
         reasons: [],
@@ -588,6 +591,18 @@ export function NewReferralForm({ onCancel, onSuccess, initialReferral, initialS
                 Patient&apos;s contact phone number
               </div>
             </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              id="patientSmsOptInConfirmed"
+              checked={formData.patientSmsOptInConfirmed}
+              onChange={(e) => handleChange('patientSmsOptInConfirmed', e.target.checked)}
+              className="mt-1 w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+            />
+            <label htmlFor="patientSmsOptInConfirmed" className="text-sm text-gray-700">
+              I confirm the patient opted-in to receive SMS/text messages for this referral. Message and data rates may apply. Reply STOP to end.
+            </label>
           </div>
           <div className="flex items-center gap-2">
             <input
