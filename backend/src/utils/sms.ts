@@ -6,8 +6,8 @@ import twilio from 'twilio'
  * Normalize phone to E.164 format for Twilio
  * Supports US/Canada: (555) 123-4567, 555-123-4567, 5551234567, +1 555 123 4567
  */
-function normalizePhoneE164(phone: string): string {
-  const trimmed = (phone || '').trim()
+function normalizePhoneE164(phone: string | number | undefined | null): string {
+  const trimmed = String(phone ?? '').trim()
   if (!trimmed) {
     throw errors.badRequest('Phone number is required')
   }

@@ -165,6 +165,20 @@ The app will be available at http://localhost:3000
 3. Create a new account to test the application
 4. The backend API health check is available at http://localhost:5000/api/health
 
+### Specialist Portal Demo Login
+
+**Create the demo specialist first** (requires Supabase configured):
+
+```bash
+cd backend
+npm run create-dummy-specialist
+```
+
+Then log in at http://localhost:3000 with:
+
+- **Email:** `dummy.specialist@demo.com`
+- **Password:** `Demo12345!`
+
 ## Common Issues
 
 ### Database Connection Error

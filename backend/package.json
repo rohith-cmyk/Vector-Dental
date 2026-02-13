@@ -11,6 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
+    "create-dummy-specialist": "tsx scripts/create-dummy-specialist.ts",
+    "reset-dummy-specialist-password": "tsx scripts/reset-dummy-specialist-password.ts",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit"
   },

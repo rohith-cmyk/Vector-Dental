@@ -222,6 +222,8 @@ export async function createReferral(req: Request, res: Response) {
             status,
         } = req.body
 
+        console.log('[GD Referral] Received patientPhone:', patientPhone, 'type:', typeof patientPhone)
+
         // Validate required fields
         if (!specialistUserId || !patientFirstName || !patientLastName || !patientDob || !reason) {
             throw errors.badRequest('Missing required fields')
@@ -363,13 +365,15 @@ export async function createReferral(req: Request, res: Response) {
         })
 
         // Send confirmation SMS to patient (referral from GD portal)
-        if (patientPhone) {
+        const phoneToUse = typeof patientPhone === 'string' ? patientPhone.trim() : (patientPhone ? String(patientPhone).trim() : '')
+        if (phoneToUse) {
             const patientName = `${patientFirstName} ${patientLastName}`.trim()
             const specialistClinicName = specialist.clinic?.name || 'the specialist'
             const message =
                 `Hi ${patientName}, your referral has been submitted to ${specialistClinicName}. ` +
                 `We will contact you soon with next steps.`
-            await sendSmsSafe(patientPhone, message)
+            console.log('[SMS] Sending referral confirmation to:', phoneToUse)
+            await sendSmsSafe(phoneToUse, message)
         }
 
         // TODO: Send email notification to specialist
