@@ -7,7 +7,7 @@ import { dashboardService, referralService } from '@/services/api'
 import type { DashboardStats, Referral } from '@/types'
 import { DashboardLayout } from '@/components/layout'
 import { Card, CardContent, LoadingState, StatCard } from '@/components/ui'
-import { ArrowUpRight, CheckCircle, Clock, XCircle, CheckCircle2 } from 'lucide-react'
+import { ArrowUpRight, CheckCircle2, Clock } from 'lucide-react'
 import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcessFlowChart'
 import { OverviewMetrics } from '@/components/dashboard/OverviewMetrics'
 import { ReferralTrendsChart } from '@/components/dashboard/ReferralTrendsChart'
@@ -24,301 +24,14 @@ interface BreakdownPoint {
     percentage: number
 }
 
-const mockStats: DashboardStats = {
-    total: 70,
-    pending: 5,
-    accepted: 27,
-    completed: 20,
-    rejected: 3,
-}
-
-const demoOverviewMetrics = {
-    dailyAverage: 2.5,
-    avgSchedule: '3.1 hrs',
-    avgAppointment: '~7 days',
-    avgTimeToTreatment: '~9 days',
-}
-
-const demoOfficeAdditions = [
-    { office: 'Elements Dental & Orthodontics', count: 9 },
-    { office: 'Harbor Point Dental Care', count: 8 },
-    { office: 'True North Dental Studio', count: 7 },
-    { office: 'Verde Valley Dental Wellness', count: 6 },
-]
-
-const demoTrendData: TrendPoint[] = [
-    { month: 'Mar', sent: 3 },
-    { month: 'Apr', sent: 4 },
-    { month: 'May', sent: 2 },
-    { month: 'Jun', sent: 5 },
-    { month: 'Jul', sent: 4 },
-    { month: 'Aug', sent: 6 },
-    { month: 'Sep', sent: 5 },
-    { month: 'Oct', sent: 7 },
-    { month: 'Nov', sent: 6 },
-    { month: 'Dec', sent: 8 },
-    { month: 'Jan', sent: 9 },
-    { month: 'Feb', sent: 11 },
-]
-
-const mockRecentReferrals: Referral[] = [
-    {
-        id: 'mock-1',
-        patientFirstName: 'John',
-        patientLastName: 'Doe',
-        patientName: 'John Doe',
-        patientDob: '1986-06-12',
-        patientPhone: '(555) 555-0101',
-        patientEmail: 'john.doe@example.com',
-        insurance: null,
-        reason: 'Orthodontic evaluation for braces',
-        urgency: 'ROUTINE',
-        status: 'SENT',
-        selectedTeeth: [],
-        notes: 'Prefers morning appointments',
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-1',
-            name: 'Dr. Sarah Johnson',
-            email: 'sarah.johnson@ortho.com',
-            clinic: {
-                id: 'clinic-1',
-                name: 'Cuday Loyola',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-    {
-        id: 'mock-2',
-        patientFirstName: 'Peter',
-        patientLastName: 'Parker',
-        patientName: 'Peter Parker',
-        patientDob: '1992-07-22',
-        patientPhone: '(555) 555-0102',
-        patientEmail: 'peter.parker@example.com',
-        insurance: null,
-        reason: 'Oral surgery consultation',
-        urgency: 'URGENT',
-        status: 'ACCEPTED',
-        selectedTeeth: [],
-        notes: null,
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-2',
-            name: 'Dr. Michael Chen',
-            email: 'michael.chen@oralsurg.com',
-            clinic: {
-                id: 'clinic-2',
-                name: 'Cuday',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-    {
-        id: 'mock-3',
-        patientFirstName: 'Dylan',
-        patientLastName: 'Gerstenhaber',
-        patientName: 'Dylan Gerstenhaber',
-        patientDob: '1988-05-18',
-        patientPhone: '(555) 555-0103',
-        patientEmail: 'dylan.gerstenhaber@example.com',
-        insurance: null,
-        reason: 'Root canal treatment',
-        urgency: 'ROUTINE',
-        status: 'COMPLETED',
-        selectedTeeth: [],
-        notes: null,
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-3',
-            name: 'Dr. Emily Davis',
-            email: 'emily.davis@perio.com',
-            clinic: {
-                id: 'clinic-3',
-                name: 'Edgewater',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-    {
-        id: 'mock-4',
-        patientFirstName: 'Sophia',
-        patientLastName: 'Taylor',
-        patientName: 'Sophia Taylor',
-        patientDob: '2005-06-10',
-        patientPhone: '(555) 555-0104',
-        patientEmail: 'sophia.taylor@example.com',
-        insurance: null,
-        reason: 'Pediatric orthodontic consult',
-        urgency: 'ROUTINE',
-        status: 'REJECTED',
-        selectedTeeth: [],
-        notes: 'Family decided to reschedule',
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-4',
-            name: 'Dr. Amanda Garcia',
-            email: 'amanda.garcia@pediatric.com',
-            clinic: {
-                id: 'clinic-4',
-                name: 'Dylan',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-]
-
-const mockReferrals: Referral[] = [
-    ...mockRecentReferrals,
-    {
-        id: 'mock-5',
-        patientFirstName: 'Olivia',
-        patientLastName: 'Martinez',
-        patientName: 'Olivia Martinez',
-        patientDob: '1975-01-15',
-        patientPhone: '(555) 555-0105',
-        patientEmail: 'olivia.martinez@example.com',
-        insurance: null,
-        reason: 'Periodontal therapy consultation',
-        urgency: 'ROUTINE',
-        status: 'SENT',
-        selectedTeeth: [],
-        notes: null,
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-5',
-            name: 'Dr. Lisa Wong',
-            email: 'lisa.wong@perio.com',
-            clinic: {
-                id: 'clinic-5',
-                name: 'DePaul Dentals',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-    {
-        id: 'mock-6',
-        patientFirstName: 'James',
-        patientLastName: 'Anderson',
-        patientName: 'James Anderson',
-        patientDob: '1990-08-20',
-        patientPhone: '(555) 555-0106',
-        patientEmail: 'james.anderson@example.com',
-        insurance: null,
-        reason: 'Endodontic evaluation',
-        urgency: 'URGENT',
-        status: 'ACCEPTED',
-        selectedTeeth: [],
-        notes: null,
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-6',
-            name: 'Dr. Robert Smith',
-            email: 'robert.smith@endodontics.com',
-            clinic: {
-                id: 'clinic-6',
-                name: 'Edgewater',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-    {
-        id: 'mock-7',
-        patientFirstName: 'Emma',
-        patientLastName: 'Thompson',
-        patientName: 'Emma Thompson',
-        patientDob: '1995-11-12',
-        patientPhone: '(555) 555-0107',
-        patientEmail: 'emma.thompson@example.com',
-        insurance: null,
-        reason: 'Oral surgery consult',
-        urgency: 'EMERGENCY',
-        status: 'COMPLETED',
-        selectedTeeth: [],
-        notes: null,
-        appointmentDate: null,
-        appointmentNotes: null,
-        patientAttendedAt: null,
-        treatmentStartedAt: null,
-        treatmentCompletedAt: null,
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
-        intendedRecipient: {
-            id: 'spec-7',
-            name: 'Dr. Emily Davis',
-            email: 'emily.davis@oralsurg.com',
-            clinic: {
-                id: 'clinic-7',
-                name: 'Cuday Loyola',
-                address: null,
-                phone: null,
-                email: null,
-                logoUrl: null,
-            },
-        },
-    },
-]
-
 export default function DashboardPage() {
     const router = useRouter()
     const { user, isLoading: authLoading } = useAuth()
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [referrals, setReferrals] = useState<Referral[]>([])
+    const [recentReferrals, setRecentReferrals] = useState<Referral[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [processFlowRange, setProcessFlowRange] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
 
     useEffect(() => {
@@ -335,14 +48,18 @@ export default function DashboardPage() {
 
     const loadDashboardData = async () => {
         try {
-            const [statsResponse, referralsResponse] = await Promise.all([
+            setError(null)
+            const [dashboardResponse, referralsResponse] = await Promise.all([
                 dashboardService.getStats(),
                 referralService.getMyReferrals({ limit: 200 }),
             ])
-            setStats(statsResponse.data.stats)
+            const dash = dashboardResponse.data
+            setStats(dash.stats)
+            setRecentReferrals(dash.recentReferrals || [])
             setReferrals(getReferralsList(referralsResponse.data))
-        } catch (error) {
-            console.error('Failed to load dashboard data:', error)
+        } catch (err) {
+            console.error('Failed to load dashboard data:', err)
+            setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
         } finally {
             setIsLoading(false)
         }
@@ -360,31 +77,61 @@ export default function DashboardPage() {
 
     if (!user) return null
 
-    const hasRealStats =
-        !!stats &&
-        (stats.total > 0 ||
-            stats.pending > 0 ||
-            stats.accepted > 0 ||
-            stats.completed > 0 ||
-            stats.rejected > 0)
-    const effectiveStats = hasRealStats ? stats : mockStats
-    const effectiveReferrals = referrals.length > 0 ? referrals : mockReferrals
-    const recentSourceReferrals = referrals
+    if (error) {
+        return (
+            <DashboardLayout title="Dashboard" subtitle="Dashboard">
+                <div className="flex flex-col items-center justify-center min-h-[360px] space-y-4">
+                    <div className="text-sm text-neutral-500">{error}</div>
+                    <button
+                        onClick={() => { setError(null); setIsLoading(true); loadDashboardData(); }}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </DashboardLayout>
+        )
+    }
+
+    const effectiveStats = stats || {
+        total: 0,
+        pending: 0,
+        accepted: 0,
+        completed: 0,
+        rejected: 0,
+    }
 
     const totalReferrals = effectiveStats.total || 0
-    const acceptedReferrals = 14
+    const acceptedReferrals = effectiveStats.accepted || 0
     const completedReferrals = effectiveStats.completed || 0
     const baseTotal = totalReferrals || 1
+
     const processFlowData = [
-        { label: 'Referrals Sent', footerLabel: 'Referrals Sent', count: totalReferrals, percentage: Math.round((totalReferrals / baseTotal) * 100) },
-        { label: 'Accepted', count: acceptedReferrals, percentage: Math.round((acceptedReferrals / baseTotal) * 100) },
-        { label: 'Completed', count: completedReferrals, percentage: Math.round((completedReferrals / baseTotal) * 100) },
+        {
+            label: 'Referrals Sent',
+            footerLabel: 'Referrals Sent',
+            count: totalReferrals,
+            percentage: Math.round((totalReferrals / baseTotal) * 100),
+        },
+        {
+            label: 'Accepted',
+            footerLabel: 'Accepted',
+            count: acceptedReferrals,
+            percentage: Math.round((acceptedReferrals / baseTotal) * 100),
+        },
+        {
+            label: 'Completed',
+            footerLabel: 'Completed',
+            count: completedReferrals,
+            percentage: Math.round((completedReferrals / baseTotal) * 100),
+        },
     ]
 
-    const trendData = demoTrendData
-    const officeBreakdown = applyDemoOfficeAdditions(buildOfficeBreakdown(effectiveReferrals), demoOfficeAdditions)
-    const recentReferrals = recentSourceReferrals
-        .filter((referral) => referral.status !== 'DRAFT' && referral.intendedRecipient?.id)
+    const trendData = buildMonthlyTrend(referrals)
+    const officeBreakdown = buildOfficeBreakdown(referrals)
+
+    const recentTable = (recentReferrals.length > 0 ? recentReferrals : referrals)
+        .filter((r) => r.status !== 'DRAFT' && r.intendedRecipient?.id)
         .sort((a, b) => {
             const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
             const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
@@ -392,10 +139,9 @@ export default function DashboardPage() {
         })
         .slice(0, 5)
 
-    const dailyAverage = demoOverviewMetrics.dailyAverage
-    const avgSchedule = demoOverviewMetrics.avgSchedule
-    const avgAppointment = demoOverviewMetrics.avgAppointment
-    const avgTimeToTreatment = demoOverviewMetrics.avgTimeToTreatment
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+    const recentCount = referrals.filter((r) => new Date(r.createdAt || 0).getTime() >= thirtyDaysAgo).length
+    const dailyAverage = recentCount / 30
 
     return (
         <DashboardLayout title="Dashboard" subtitle={`Welcome back, ${user.name}`}>
@@ -426,9 +172,9 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <OverviewMetrics
                         dailyAverage={dailyAverage}
-                        avgSchedule={avgSchedule}
-                        avgAppointment={avgAppointment}
-                        avgTimeToTreatment={avgTimeToTreatment}
+                        avgSchedule="-"
+                        avgAppointment="-"
+                        avgTimeToTreatment="-"
                     />
                     <div className="lg:col-span-2">
                         <ReferralProcessFlowChart
@@ -480,14 +226,14 @@ export default function DashboardPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-black/5">
-                                            {recentReferrals.length === 0 ? (
+                                            {recentTable.length === 0 ? (
                                                 <tr>
                                                     <td colSpan={5} className="px-6 py-8 text-center text-sm text-neutral-400">
                                                         No recent sent referrals yet.
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                recentReferrals.map((referral) => (
+                                                recentTable.map((referral) => (
                                                     <tr
                                                         key={referral.id}
                                                         className="hover:bg-gray-100 transition-colors cursor-pointer"
@@ -515,14 +261,15 @@ export default function DashboardPage() {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${referral.status === 'COMPLETED'
-                                                                ? 'bg-green-100 text-green-500'
-                                                                : referral.status === 'ACCEPTED'
-                                                                    ? 'bg-blue-100 text-blue-500'
-                                                                    : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
-                                                                        ? 'bg-red-100 text-red-500'
-                                                                        : 'bg-yellow-100 text-yellow-500'
-                                                                }`}>
+                                                            <span className={`inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-bold tracking ${
+                                                                referral.status === 'COMPLETED'
+                                                                    ? 'bg-green-100 text-green-500'
+                                                                    : referral.status === 'ACCEPTED'
+                                                                        ? 'bg-blue-100 text-blue-500'
+                                                                        : referral.status === 'REJECTED' || referral.status === 'CANCELLED'
+                                                                            ? 'bg-red-100 text-red-500'
+                                                                            : 'bg-yellow-100 text-yellow-500'
+                                                            }`}>
                                                                 {(referral.status || '').toUpperCase()}
                                                             </span>
                                                         </td>
@@ -602,32 +349,6 @@ function buildOfficeBreakdown(referrals: Referral[]): BreakdownPoint[] {
         }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
-}
-
-function applyDemoOfficeAdditions(
-    existing: BreakdownPoint[],
-    additions: Array<{ office: string; count: number }>,
-    maxItems: number = 5,
-): BreakdownPoint[] {
-    const existingNames = new Set(existing.map((item) => item.category))
-    const enriched = [...existing]
-    additions.forEach((office) => {
-        if (!existingNames.has(office.office)) {
-            enriched.push({
-                category: office.office,
-                count: office.count,
-                percentage: 0,
-            })
-        }
-    })
-
-    const total = enriched.reduce((sum, item) => sum + item.count, 0) || 1
-    const withPercentages = enriched.map((item) => ({
-        ...item,
-        percentage: Math.round((item.count / total) * 100),
-    }))
-
-    return withPercentages.slice(0, maxItems)
 }
 
 function getPatientName(referral: Referral) {
