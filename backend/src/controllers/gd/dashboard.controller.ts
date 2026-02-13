@@ -95,6 +95,57 @@ export async function getDashboardStats(req: Request, res: Response) {
             }
         })
 
+        // Overview metrics (computed from outgoing referrals with scheduling data)
+        const allReferralsForMetrics = await prisma.referral.findMany({
+            where: baseWhere,
+            select: {
+                createdAt: true,
+                scheduledAt: true,
+                completedAt: true,
+            }
+        })
+
+        const formatDuration = (ms: number): string => {
+            const totalMinutes = Math.round(ms / (1000 * 60))
+            if (totalMinutes <= 0) return '0m'
+            const days = Math.floor(totalMinutes / (60 * 24))
+            const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
+            const minutes = totalMinutes % 60
+            if (days > 0) {
+                return `${days}d ${hours}h`
+            }
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`
+            }
+            return `${minutes}m`
+        }
+
+        const averageMs = (values: number[]): number | null => {
+            if (!values.length) return null
+            const total = values.reduce((sum, value) => sum + value, 0)
+            return total / values.length
+        }
+
+        const scheduleDurations = allReferralsForMetrics
+            .filter((row) => row.scheduledAt)
+            .map((row) => row.scheduledAt!.getTime() - row.createdAt.getTime())
+        const appointmentDurations = allReferralsForMetrics
+            .filter((row) => row.scheduledAt && row.completedAt)
+            .map((row) => row.completedAt!.getTime() - row.scheduledAt!.getTime())
+        const treatmentDurations = allReferralsForMetrics
+            .filter((row) => row.completedAt)
+            .map((row) => row.completedAt!.getTime() - row.createdAt.getTime())
+
+        const avgSchedule = averageMs(scheduleDurations)
+        const avgAppointment = averageMs(appointmentDurations)
+        const avgTimeToTreatment = averageMs(treatmentDurations)
+
+        const overviewMetrics = {
+            avgSchedule: avgSchedule === null ? '-' : formatDuration(avgSchedule),
+            avgAppointment: avgAppointment === null ? '-' : formatDuration(avgAppointment),
+            avgTimeToTreatment: avgTimeToTreatment === null ? '-' : formatDuration(avgTimeToTreatment),
+        }
+
         res.json({
             success: true,
             data: {
@@ -106,6 +157,7 @@ export async function getDashboardStats(req: Request, res: Response) {
                     rejected: rejectedReferrals,
                 },
                 recentReferrals,
+                overviewMetrics,
             }
         })
     } catch (error: any) {

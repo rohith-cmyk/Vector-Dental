@@ -30,6 +30,7 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [referrals, setReferrals] = useState<Referral[]>([])
     const [recentReferrals, setRecentReferrals] = useState<Referral[]>([])
+    const [overviewMetrics, setOverviewMetrics] = useState<{ avgSchedule: string; avgAppointment: string; avgTimeToTreatment: string } | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [processFlowRange, setProcessFlowRange] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
@@ -56,6 +57,7 @@ export default function DashboardPage() {
             const dash = dashboardResponse.data
             setStats(dash.stats)
             setRecentReferrals(dash.recentReferrals || [])
+            setOverviewMetrics(dash.overviewMetrics || null)
             setReferrals(getReferralsList(referralsResponse.data))
         } catch (err) {
             console.error('Failed to load dashboard data:', err)
@@ -142,6 +144,10 @@ export default function DashboardPage() {
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
     const recentCount = referrals.filter((r) => new Date(r.createdAt || 0).getTime() >= thirtyDaysAgo).length
     const dailyAverage = recentCount / 30
+
+    const avgSchedule = overviewMetrics?.avgSchedule ?? '-'
+    const avgAppointment = overviewMetrics?.avgAppointment ?? '-'
+    const avgTimeToTreatment = overviewMetrics?.avgTimeToTreatment ?? '-'
 
     return (
         <DashboardLayout title="Dashboard" subtitle={`Welcome back, ${user.name}`}>
