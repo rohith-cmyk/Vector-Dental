@@ -3,7 +3,7 @@ import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
 import { generateShareToken, verifyAccessCode } from '../utils/tokens'
 import { sendEmail } from '../utils/email'
-import { sendSms } from '../utils/sms'
+import { sendSmsSafe } from '../utils/sms'
 import { config } from '../config/env'
 import { uploadFile } from '../utils/storage'
 
@@ -349,11 +349,7 @@ export async function updateReferralStatus(req: Request, res: Response, next: Ne
       const message =
         `Hi ${patientName}, your appointment has been scheduled with ${clinicName}. ` +
         `We will contact you soon with the appointment details.`
-      try {
-        await sendSms(referral.patientPhone, message)
-      } catch (smsError) {
-        console.warn('Failed to send appointment SMS:', smsError)
-      }
+      await sendSmsSafe(referral.patientPhone, message)
     }
 
     res.json({

@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-Vector Dental follows a modern **client-server architecture** with clear separation of concerns.
+Vector Referral follows a modern **client-server architecture** with clear separation of concerns.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

@@ -22,7 +22,6 @@ function LoginForm() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
-  const [oauthLoading, setOauthLoading] = useState(false)
   const [generalError, setGeneralError] = useState('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,16 +50,6 @@ function LoginForm() {
     }
   }
 
-  const handleGoogleLogin = async () => {
-    try {
-      setOauthLoading(true)
-      await authService.loginWithGoogle()
-    } catch (error: any) {
-      setGeneralError(error.message || 'Google login failed')
-      setOauthLoading(false)
-    }
-  }
-
   return (
     <Card className="w-full max-w-md border border-gray-200 shadow-sm">
       <CardContent className="p-8">
@@ -72,7 +61,7 @@ function LoginForm() {
             className="h-16 w-16 mx-auto mb-4"
           />
           <h1 className="text-2xl font-semibold text-gray-900">Welcome Back</h1>
-          <p className="text-sm text-gray-600 mt-2">Sign in to your Vector Dental account</p>
+          <p className="text-sm text-gray-600 mt-2">Sign in to your Vector Referral account</p>
         </div>
 
         {/* Success Message from Signup */}
@@ -91,26 +80,6 @@ function LoginForm() {
             <p className="text-sm text-red-600">{generalError}</p>
           </div>
         )}
-
-        {/* OAuth */}
-        <div className="space-y-4">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            className="w-full"
-            onClick={handleGoogleLogin}
-            isLoading={oauthLoading}
-          >
-            Continue with Google
-          </Button>
-
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-200" />
-            <span className="text-xs text-gray-500">or</span>
-            <div className="h-px flex-1 bg-gray-200" />
-          </div>
-        </div>
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -141,7 +110,7 @@ function LoginForm() {
               <input type="checkbox" className="mr-2 rounded border-gray-300" />
               <span className="text-gray-600">Remember me</span>
             </label>
-            <Link href="/forgot-password" className="text-brand-600 hover:text-brand-700">
+            <Link href="/forgot-password" className="text-emerald-600 hover:text-emerald-700">
               Forgot password?
             </Link>
           </div>
@@ -150,7 +119,7 @@ function LoginForm() {
             type="submit"
             variant="primary"
             size="lg"
-            className="w-full"
+            className="w-full bg-emerald-500 hover:bg-emerald-600"
             isLoading={isLoading}
           >
             Sign In
@@ -160,7 +129,7 @@ function LoginForm() {
         {/* Signup Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium text-brand-600 hover:text-brand-700">
+          <Link href="/signup" className="font-medium text-emerald-600 hover:text-emerald-700">
             Sign up for free
           </Link>
         </p>
@@ -171,7 +140,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <Suspense fallback={<div>Loading...</div>}>
         <LoginForm />
       </Suspense>

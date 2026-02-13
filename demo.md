@@ -1,4 +1,4 @@
-# Vector Dental Platform Demo Notes
+# Vector Referral Platform Demo Notes
 
 This document is a quick, clear explanation of the platform for demos and
 stakeholders. It summarizes the product, the tech stack, how systems connect,
@@ -7,7 +7,7 @@ specialists.
 
 ## Platform Overview
 
-Vector Dental is a referral CRM for dental clinics. It helps General Dentists
+Vector Referral is a referral CRM for dental clinics. It helps General Dentists
 (GDs) create, track, and manage patient referrals to specialists, while
 maintaining a clean contact directory and referral history for each clinic.
 

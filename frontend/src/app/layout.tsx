@@ -5,7 +5,7 @@ import '@/styles/globals.css'
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Vector Dental - Specialist',
+  title: 'Vector Referral - Specialist',
   description: 'A CRM tool for managing dental and clinical referrals',
 }
 

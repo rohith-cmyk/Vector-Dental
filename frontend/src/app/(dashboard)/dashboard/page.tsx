@@ -504,7 +504,5 @@ function applyDemoOfficeAdditions(
     ...item,
     percentage: Math.round((item.count / total) * 100)
   }))
-
   return withPercentages.slice(0, maxItems)
 }
-

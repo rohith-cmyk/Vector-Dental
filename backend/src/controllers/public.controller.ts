@@ -5,7 +5,7 @@ import { errors } from '../utils/errors'
 import { verifyAccessCode, generateStatusToken, generateAccessCode, hashAccessCode } from '../utils/tokens'
 import { uploadFile } from '../utils/storage'
 import { sendEmail } from '../utils/email'
-import { sendSms } from '../utils/sms'
+import { sendSmsSafe } from '../utils/sms'
 import { sendInitialSchedulingNotice, scheduleSchedulingReminders } from '../utils/patient-scheduling'
 
 /**
@@ -142,11 +142,7 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
       const message =
         `Hi ${patientName}, your referral has been submitted to ${clinicName}. ` +
         `We will contact you soon with next steps.`
-      try {
-        await sendSms(patientPhone, message)
-      } catch (smsError) {
-        console.warn('Failed to send referral submission SMS:', smsError)
-      }
+      await sendSmsSafe(patientPhone, message)
     }
 
     // Send status tracking link to referring clinic
@@ -484,6 +480,15 @@ export async function submitReferral(
       patientFirstName && patientLastName
         ? `${patientFirstName} ${patientLastName}`
         : patientFirstName || patientLastName || referral.patientName
+
+    // Send confirmation SMS to patient (referral form from specialist)
+    if (patientPhone) {
+      const clinicName = referralLink.specialist.clinic.name || 'the clinic'
+      const message =
+        `Hi ${patientDisplayName}, your referral has been submitted to ${clinicName}. ` +
+        `We will contact you soon with next steps.`
+      await sendSmsSafe(patientPhone, message)
+    }
 
     await sendInitialSchedulingNotice({
       referralId: referral.id,

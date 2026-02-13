@@ -1,5 +1,5 @@
 import { sendEmail } from './email'
-import { sendSms } from './sms'
+import { sendSmsSafe } from './sms'
 
 type PatientContact = {
   referralId: string
@@ -87,11 +87,7 @@ const sendSchedulingNotice = async (
   const message = buildSchedulingMessage(contact.name, specialist, isReminder, reminderNumber)
 
   if (contact.phone) {
-    try {
-      await sendSms(contact.phone, message)
-    } catch (smsError) {
-      console.warn('Failed to send scheduling SMS:', smsError)
-    }
+    await sendSmsSafe(contact.phone, message)
   }
 
   if (contact.email) {

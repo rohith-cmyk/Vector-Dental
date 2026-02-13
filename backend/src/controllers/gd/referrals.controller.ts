@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { prisma } from '../../config/database'
 import { errors } from '../../utils/errors'
 import { uploadFile } from '../../utils/storage'
+import { sendSmsSafe } from '../../utils/sms'
 import crypto from 'crypto'
 
 /**
@@ -360,6 +361,16 @@ export async function createReferral(req: Request, res: Response) {
                 message: `New referral from ${gdUser.clinic.name} for ${patientFirstName} ${patientLastName}`
             }
         })
+
+        // Send confirmation SMS to patient (referral from GD portal)
+        if (patientPhone) {
+            const patientName = `${patientFirstName} ${patientLastName}`.trim()
+            const specialistClinicName = specialist.clinic?.name || 'the specialist'
+            const message =
+                `Hi ${patientName}, your referral has been submitted to ${specialistClinicName}. ` +
+                `We will contact you soon with next steps.`
+            await sendSmsSafe(patientPhone, message)
+        }
 
         // TODO: Send email notification to specialist
 

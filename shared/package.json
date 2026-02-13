@@ -1,7 +1,7 @@
 {
   "name": "dental-referral-shared",
   "version": "1.0.0",
-  "description": "Shared types and utilities for Vector Dental",
+  "description": "Shared types and utilities for Vector Referral",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

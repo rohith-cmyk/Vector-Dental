@@ -1,4 +1,4 @@
-// Prisma Schema for Vector Dental
+// Prisma Schema for Vector Referral
 
 generator client {
   provider = "prisma-client-js"

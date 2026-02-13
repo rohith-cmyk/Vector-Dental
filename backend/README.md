@@ -1,6 +1,6 @@
-# Vector Dental Backend
+# Vector Referral Backend
 
-Express.js + TypeScript + Supabase (PostgreSQL) + Prisma backend API for Vector Dental.
+Express.js + TypeScript + Supabase (PostgreSQL) + Prisma backend API for Vector Referral.
 
 ## Tech Stack
 

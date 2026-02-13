@@ -1,5 +1,5 @@
 /**
- * Shared types for Vector Dental
+ * Shared types for Vector Referral
  * These can be used by both frontend and backend
  */
 

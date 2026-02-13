@@ -1,8 +1,8 @@
-# Vector Dental - Complete Feature Documentation
+# Vector Referral - Complete Feature Documentation
 
 ## Overview
 
-**Vector Dental** is a comprehensive platform designed primarily for **dental specialists** to efficiently manage incoming patient referrals from general practitioners (GPs) and other referring clinics. The platform provides a two-way referral system with robust tracking, communication, and management capabilities.
+**Vector Referral** is a comprehensive platform designed primarily for **dental specialists** to efficiently manage incoming patient referrals from general practitioners (GPs) and other referring clinics. The platform provides a two-way referral system with robust tracking, communication, and management capabilities.
 
 ---
 

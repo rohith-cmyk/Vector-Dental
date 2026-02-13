@@ -6,7 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Vector Dental - GD",
+  title: "Vector Referral - GD",
   description: "Send and track patient referrals to specialists",
 };
 

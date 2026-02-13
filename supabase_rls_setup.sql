@@ -1,6 +1,6 @@
 -- ============================================================
 -- SUPABASE ROW LEVEL SECURITY (RLS) SETUP
--- Vector Dental
+-- Vector Referral
 -- ============================================================
 -- 
 -- This script enables Row Level Security on all tables to prevent

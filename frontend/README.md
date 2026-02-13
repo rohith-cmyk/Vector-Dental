@@ -1,6 +1,6 @@
-# Vector Dental Frontend
+# Vector Referral Frontend
 
-Modern Next.js 14 frontend application for Vector Dental.
+Modern Next.js 14 frontend application for Vector Referral.
 
 ## Tech Stack
 

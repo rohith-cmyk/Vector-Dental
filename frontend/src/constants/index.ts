@@ -1,5 +1,5 @@
 // App Configuration
-export const APP_NAME = 'Vector Dental'
+export const APP_NAME = 'Vector Referral'
 export const APP_DESCRIPTION = 'A CRM tool for managing dental and clinical referrals'
 
 // Development Mode - Set NEXT_PUBLIC_USE_MOCK_DATA=true to use mock data
@@ -7,6 +7,9 @@ export const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true'
 
 // API Configuration
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+// GD Portal URL - for routing General Dentists to the appropriate signup
+export const GD_PORTAL_URL = process.env.NEXT_PUBLIC_GD_PORTAL_URL || 'http://localhost:3001'
 
 // Pagination
 export const DEFAULT_PAGE_SIZE = 10

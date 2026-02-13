@@ -1,6 +1,6 @@
 # Setup Guide
 
-This guide will help you set up Vector Dental for local development.
+This guide will help you set up Vector Referral for local development.
 
 ## Prerequisites
 
@@ -73,9 +73,16 @@ JWT_EXPIRES_IN=7d
 
 # CORS Configuration
 CORS_ORIGIN=http://localhost:3000
+
+# SMS (Twilio) - for patient referral confirmations
+TWILIO_ACCOUNT_SID=your_account_sid
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
 ```
 
 **Important:** Replace `YOUR_USERNAME` and `YOUR_PASSWORD` with your actual PostgreSQL credentials.
+
+**SMS (Twilio):** For patient SMS notifications when referrals are submitted, add your Twilio credentials. Get them from [twilio.com/console](https://console.twilio.com). Use your Twilio phone number in E.164 format (e.g. `+15017122661`). If not configured, referrals still succeed but no SMS is sent.
 
 #### Frontend Configuration
 
@@ -89,8 +96,10 @@ Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_APP_NAME=Vector Dental
+NEXT_PUBLIC_APP_NAME=Vector Referral
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+# GD Portal URL (for routing General Dentists from signup wizard; run frontend-gd with --port 3001)
+NEXT_PUBLIC_GD_PORTAL_URL=http://localhost:3001
 ```
 
 ### 3. Run Database Migrations

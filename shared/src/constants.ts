@@ -1,5 +1,5 @@
 /**
- * Shared constants for Vector Dental
+ * Shared constants for Vector Referral
  */
 
 // Pagination
