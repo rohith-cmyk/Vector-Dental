@@ -7,7 +7,7 @@ import { DashboardLayout } from '@/components/layout'
 import { FilterSidebar } from '@/components/specialists/FilterSidebar'
 import { SpecialistCard } from '@/components/specialists/SpecialistCard'
 import { SpecialistDetailModal } from '@/components/specialists/SpecialistDetailModal'
-import { Modal, Input, Select, Button, LoadingState } from '@/components/ui'
+import { Modal, Input, Select, Button } from '@/components/ui'
 import { Plus } from 'lucide-react'
 import { MOCK_SPECIALISTS } from '@/data/mockSpecialists'
 import type { SpecialistProfile, InsuranceProvider } from '@/types/specialists'
@@ -207,8 +207,9 @@ export default function DoctorNetworkPage() {
   if (isLoading || !user) {
     return (
       <DashboardLayout title="Specialist Directory" subtitle="Loading doctor directory">
-        <div className="flex items-center justify-center min-h-[360px]">
-          <div className="text-sm text-neutral-500">Loading...</div>
+        <div className="flex flex-col items-center justify-center min-h-[360px] gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+          <p className="text-sm text-neutral-500">Loading...</p>
         </div>
       </DashboardLayout>
     )
@@ -290,8 +291,9 @@ export default function DoctorNetworkPage() {
                   }}
                   className="bg-white rounded-3xl border border-neutral-100 p-12"
                 >
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <LoadingState title="Loading specialists..." />
+                  <div className="flex flex-col items-center justify-center text-center gap-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+                    <p className="text-sm text-neutral-500">Loading specialists...</p>
                   </div>
                 </motion.div>
               ) : filteredSpecialists.length === 0 ? (

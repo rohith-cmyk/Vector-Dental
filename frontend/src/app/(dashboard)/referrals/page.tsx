@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout'
-import { Button, Card, CardContent, Badge, Select, Tabs, LoadingState, Modal } from '@/components/ui'
+import { Button, Card, CardContent, Badge, Select, Tabs, Modal } from '@/components/ui'
 import { NewReferralModal } from '@/components/referrals/NewReferralModal'
 import { ReferralDetailsModal } from '@/components/referrals/ReferralDetailsModal'
 import { FileUpload } from '@/components/referrals/FileUpload'
@@ -571,7 +571,10 @@ export default function ReferralsPage() {
               <Card>
                 <CardContent className="p-0">
                   {loading ? (
-                    <LoadingState className="h-64" title="Loading referrals..." />
+                    <div className="flex flex-col items-center justify-center h-64 gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+                      <p className="text-sm text-neutral-500">Loading referrals...</p>
+                    </div>
                   ) : referrals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-neutral-500">
                       <p>No referrals found</p>

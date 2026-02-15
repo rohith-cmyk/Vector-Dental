@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { dashboardService, referralService } from '@/services/api'
 import type { DashboardStats, Referral } from '@/types'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardContent, LoadingState, StatCard } from '@/components/ui'
+import { Card, CardContent, StatCard } from '@/components/ui'
 import { ArrowUpRight, CheckCircle2, Clock } from 'lucide-react'
 import { ReferralProcessFlowChart } from '@/components/dashboard/ReferralProcessFlowChart'
 import { OverviewMetrics } from '@/components/dashboard/OverviewMetrics'
@@ -70,8 +70,10 @@ export default function DashboardPage() {
     if (authLoading || isLoading) {
         return (
             <DashboardLayout title="Dashboard" subtitle="Loading your activity">
-                <div className="flex items-center justify-center min-h-[360px]">
-                    <LoadingState title="Loading dashboard..." subtitle="Fetching your latest updates" />
+                <div className="flex flex-col items-center justify-center min-h-[360px] gap-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+                    <p className="text-sm font-medium text-gray-700">Loading dashboard...</p>
+                    <p className="text-xs text-gray-500">Fetching your latest updates</p>
                 </div>
             </DashboardLayout>
         )

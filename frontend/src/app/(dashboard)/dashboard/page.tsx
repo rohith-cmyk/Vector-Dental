@@ -83,8 +83,9 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <DashboardLayout title="Dashboard">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-sm text-neutral-500">Loading dashboard...</div>
+        <div className="flex flex-col items-center justify-center h-64 gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+          <p className="text-sm text-neutral-500">Loading dashboard...</p>
         </div>
       </DashboardLayout>
     )

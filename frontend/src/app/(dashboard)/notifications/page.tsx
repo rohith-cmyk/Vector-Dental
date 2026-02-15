@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardContent, Badge, Button, LoadingState } from '@/components/ui'
+import { Card, CardContent, Badge, Button } from '@/components/ui'
 import { Bell, CheckCheck, Trash2, ArrowDownLeft, CheckCircle, XCircle } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 import { notificationsService } from '@/services/notifications.service'
@@ -173,11 +173,11 @@ export default function NotificationsPage() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <LoadingState
-                className="py-12"
-                title="Loading notifications..."
-                subtitle="Checking for new updates"
-              />
+              <div className="flex flex-col items-center justify-center py-12 gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+                <p className="text-sm font-medium text-gray-700">Loading notifications...</p>
+                <p className="text-xs text-gray-500">Checking for new updates</p>
+              </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <p className="text-red-500 mb-2">{error}</p>

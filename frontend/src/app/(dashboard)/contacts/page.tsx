@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Button, Card, CardContent, Badge, LoadingState } from '@/components/ui'
+import { Button, Card, CardContent, Badge } from '@/components/ui'
 import { referralsService } from '@/services/referrals.service'
 import { getCachedData, setCachedData } from '@/lib/cache'
 import { formatPhoneNumber } from '@/lib/utils'
@@ -118,7 +118,10 @@ export default function ContactsPage() {
         </div>
 
         {loading ? (
-          <LoadingState title="Loading referrals..." />
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+            <p className="text-sm text-neutral-500">Loading referrals...</p>
+          </div>
         ) : filteredClinics.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-neutral-500">

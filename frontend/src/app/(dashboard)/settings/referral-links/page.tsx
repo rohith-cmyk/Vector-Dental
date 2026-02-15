@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout'
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, LoadingState, Modal, Select } from '@/components/ui'
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Modal, Select } from '@/components/ui'
 import {
   Copy,
   ExternalLink,
@@ -346,8 +346,9 @@ export default function ReferralLinksPage() {
   if (loading) {
     return (
       <DashboardLayout title="Referral Links">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-sm text-neutral-500">Loading referral links...</div>
+        <div className="flex flex-col items-center justify-center h-64 gap-2">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+          <p className="text-sm text-neutral-500">Loading referral links...</p>
         </div>
       </DashboardLayout>
     )

@@ -219,8 +219,11 @@ export default function SpecialistProfilesSettingsPage() {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-8 text-center text-sm text-neutral-400">
-                        Loading specialists...
+                      <td colSpan={4} className="px-6 py-8">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
+                          <p className="text-sm text-neutral-500">Loading specialists...</p>
+                        </div>
                       </td>
                     </tr>
                   ) : sortedProfiles.length === 0 ? (
