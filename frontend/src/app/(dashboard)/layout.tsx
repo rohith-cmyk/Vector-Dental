@@ -31,6 +31,16 @@ export default function DashboardLayout({
     }
 
     checkAuth()
+
+    // Keep auth_token in sync when Supabase auto-refreshes (e.g. token renewal)
+    const { data: authListener } = authService.onAuthStateChange((_event, session) => {
+      if (session?.access_token) {
+        localStorage.setItem('auth_token', session.access_token)
+        api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+      }
+    })
+
+    return () => authListener?.unsubscribe?.()
   }, [router])
 
   if (checkingAuth) {

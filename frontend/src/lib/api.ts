@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
+import { supabase } from '@/lib/supabase'
 
 // Get API URL - always use full URL to avoid proxy issues
 const getApiUrl = () => {
@@ -71,22 +72,45 @@ api.interceptors.request.use(
 )
 
 /**
- * Response interceptor for error handling
+ * Response interceptor: on 401, try to refresh Supabase session before redirecting
  */
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token')
-      }
-      delete api.defaults.headers.common['Authorization']
-      console.warn('API authentication required - clearing session')
+  async (error: AxiosError) => {
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean }
 
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      // Skip refresh for auth endpoints (login, signup) - 401 means bad credentials
+      const url = String(originalRequest?.url || '')
+      const isAuthEndpoint = url.includes('auth/login') || url.includes('auth/signup')
+
+      if (!isAuthEndpoint && originalRequest && !originalRequest._retry) {
+        originalRequest._retry = true
+
+        try {
+          const { data: { session }, error: refreshError } = await supabase.auth.refreshSession()
+
+          if (!refreshError && session?.access_token) {
+            localStorage.setItem('auth_token', session.access_token)
+            api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+            originalRequest.headers.Authorization = `Bearer ${session.access_token}`
+            return api(originalRequest)
+          }
+        } catch {
+          // Refresh failed - fall through to clear and redirect
+        }
+      }
+
+      // Refresh failed or auth endpoint - clear session and redirect
+      localStorage.removeItem('auth_token')
+      delete api.defaults.headers.common['Authorization']
+      console.warn('Session expired - redirecting to login')
+
+      if (window.location.pathname !== '/login') {
         window.location.href = '/login'
       }
     }
+
     return Promise.reject(error)
   }
 )
