@@ -393,7 +393,13 @@ export default function ReferMagicPage() {
                     type="checkbox"
                     id="patientSmsOptInConfirmed"
                     checked={formData.patientSmsOptInConfirmed}
-                    onChange={(e) => handleChange('patientSmsOptInConfirmed', e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked
+                      setFormData(prev => ({ ...prev, patientSmsOptInConfirmed: checked }))
+                      if (errors.patientSmsOptInConfirmed) {
+                        setErrors(prev => ({ ...prev, patientSmsOptInConfirmed: '' }))
+                      }
+                    }}
                     className="mt-1 w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
                   />
                   <label htmlFor="patientSmsOptInConfirmed" className="text-sm text-gray-700">
