@@ -40,6 +40,26 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
 }
 
 /**
+ * Optional authentication - does not require token; attaches user if valid token present
+ * Used for feedback and other endpoints that work for both authenticated and anonymous users
+ */
+export function optionalAuthenticate(req: Request, _res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next()
+  }
+
+  try {
+    const token = authHeader.substring(7)
+    const payload = verifyToken(token)
+    req.user = payload
+  } catch {
+    // Ignore - continue without user
+  }
+  next()
+}
+
+/**
  * Role-based authorization middleware
  */
 export function authorize(...roles: string[]) {

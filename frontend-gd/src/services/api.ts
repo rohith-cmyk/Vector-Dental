@@ -37,7 +37,11 @@ export const authService = {
 
 // Dashboard Services
 export const dashboardService = {
-    async getStats(): Promise<ApiResponse<{ stats: DashboardStats; recentReferrals: Referral[] }>> {
+    async getStats(): Promise<ApiResponse<{
+        stats: DashboardStats
+        recentReferrals: Referral[]
+        overviewMetrics?: { avgSchedule: string; avgAppointment: string; avgTimeToTreatment: string }
+    }>> {
         const response = await api.get('/dashboard/stats')
         return response.data
     },

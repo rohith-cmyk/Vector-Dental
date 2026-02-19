@@ -31,6 +31,7 @@ export const config = {
   // File Upload
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'),
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
+  supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET || 'referral-files',
 
   // Email (SMTP)
   smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',

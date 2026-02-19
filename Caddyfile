@@ -1,0 +1,44 @@
+# Caddy Reverse Proxy - Dental Referral
+# Domains are set via environment variables for flexibility
+# Local: api.localhost, app.localhost, gd.localhost
+# Production: api.yourdomain.com, app.yourdomain.com, gd.yourdomain.com
+#
+# Local HTTPS: Caddy uses "tls internal" (auto self-signed certs) - works out of the box
+# For trusted certs (no browser warning): run ./scripts/generate-certs.sh (requires mkcert)
+
+{
+	admin off
+}
+
+# Backend API
+{$API_DOMAIN} {
+	tls internal
+	reverse_proxy backend:4000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+# Specialist Portal
+{$APP_DOMAIN} {
+	tls internal
+	reverse_proxy frontend:3000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+# GD Portal (General Dentist)
+{$GD_DOMAIN} {
+	tls internal
+	reverse_proxy frontend-gd:3001 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

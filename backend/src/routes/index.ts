@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import * as healthController from '../controllers/health.controller'
 import authRoutes from './auth.routes'
 import contactsRoutes from './contacts.routes'
 import referralsRoutes from './referrals.routes'
@@ -9,11 +10,13 @@ import magicReferralLinkRoutes from './magic-referral-link.routes'
 import notificationsRoutes from './notifications.routes'
 import gdRoutes from './gd'
 import specialistProfilesRoutes from './specialist-profiles.routes'
+import feedbackRoutes from './feedback.routes'
 
 const router = Router()
 
 // Mount routes
 router.use('/auth', authRoutes)
+router.use('/feedback', feedbackRoutes)
 router.use('/contacts', contactsRoutes)
 router.use('/referrals', referralsRoutes)
 router.use('/dashboard', dashboardRoutes)
@@ -24,14 +27,8 @@ router.use('/notifications', notificationsRoutes) // Notifications
 router.use('/specialist-profiles', specialistProfilesRoutes) // Specialist profiles (clinic staff)
 router.use('/gd', gdRoutes) // Vector Referral GD routes
 
-// Health check
-router.get('/health', (_req, res) => {
-  res.json({
-    success: true,
-    message: 'API is running',
-    timestamp: new Date().toISOString(),
-  })
-})
+// Health check (DB connectivity, used by load balancers / k8s / Docker)
+router.get('/health', healthController.getHealth)
 
 export default router
 

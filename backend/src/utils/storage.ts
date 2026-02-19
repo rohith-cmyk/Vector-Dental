@@ -4,7 +4,7 @@ import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import crypto from 'crypto'
 
-const BUCKET_NAME = process.env.SUPABASE_STORAGE_BUCKET || 'referral-files'
+const BUCKET_NAME = config.supabaseStorageBucket || 'referral-files'
 
 export interface FileUploadResult {
   storageKey: string

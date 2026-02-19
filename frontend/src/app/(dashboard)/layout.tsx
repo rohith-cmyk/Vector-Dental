@@ -40,7 +40,7 @@ export default function DashboardLayout({
       }
     })
 
-    return () => authListener?.unsubscribe?.()
+    return () => authListener?.subscription?.unsubscribe?.()
   }, [router])
 
   if (checkingAuth) {

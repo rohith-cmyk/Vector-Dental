@@ -46,6 +46,9 @@ yarn-error.log*
 temp/
 tmp/
 
+# Local dev certs (mkcert)
+certs/
+
 # Prisma
 backend/prisma/migrations/
 

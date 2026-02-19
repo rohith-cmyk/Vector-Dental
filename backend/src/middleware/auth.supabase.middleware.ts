@@ -83,6 +83,44 @@ export function authenticateSupabase(req: Request, _res: Response, next: NextFun
 }
 
 /**
+ * Optional authentication - does not require token; attaches user if present
+ * Used for feedback and other endpoints that work for both authenticated and anonymous users
+ */
+export function optionalAuthenticateSupabase(req: Request, _res: Response, next: NextFunction) {
+  const asyncHandler = async () => {
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next()
+    }
+
+    try {
+      const token = authHeader.substring(7)
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+
+      if (error || !user) return next()
+
+      const userProfile = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { id: true, email: true, role: true, clinicId: true },
+      })
+
+      if (userProfile) {
+        req.user = {
+          userId: userProfile.id,
+          clinicId: userProfile.clinicId,
+          email: userProfile.email,
+          role: userProfile.role,
+        }
+      }
+    } catch {
+      // Ignore - continue without user
+    }
+    next()
+  }
+  asyncHandler()
+}
+
+/**
  * Role-based authorization middleware
  */
 export function authorize(...roles: string[]) {

@@ -1,12 +1,22 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
-  swcMinify: true,
+  turbopack: {
+    root: __dirname,
+  },
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   },
   env: {
-    API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+    API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
   },
 }
 

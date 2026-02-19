@@ -1,12 +1,14 @@
 // Prisma Schema for Vector Referral
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Clinic Model
@@ -344,5 +346,42 @@ enum NotificationType {
   REFERRAL_COMPLETED
   REFERRAL_STATUS_UPDATE
   SYSTEM_MESSAGE
+}
+
+// Feedback Model (in-app feedback from users)
+model Feedback {
+  id          String        @id @default(uuid())
+  source      FeedbackSource @default(SPECIALIST) // Which portal submitted
+  type        FeedbackType   // Bug, UI confusing, Feature idea, Data issue
+  description String        @db.Text
+  severity    FeedbackSeverity
+  userId      String?       @map("user_id") // Optional - may be anonymous
+  screen      String?       // Current screen/module (e.g. "Referrals", "Dashboard")
+  context     Json?         // Entity IDs, extra context (referralId, contactId, etc.)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([source])
+  @@index([type])
+  @@map("feedback")
+}
+
+enum FeedbackSource {
+  SPECIALIST
+  GD
+}
+
+enum FeedbackType {
+  BUG
+  UI_CONFUSING
+  FEATURE_IDEA
+  DATA_ISSUE
+}
+
+enum FeedbackSeverity {
+  BLOCKING
+  HIGH
+  MEDIUM
+  LOW
 }
 

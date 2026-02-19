@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
+import { ReferralType } from '@prisma/client'
 import { prisma } from '../config/database'
 import { errors } from '../utils/errors'
 
@@ -71,12 +72,12 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
     ] = await Promise.all([
       prisma.referral.count({ where: { fromClinicId: clinicId } }),
       prisma.referral.count({
-        where: { fromClinicId: clinicId, referralType: 'OUTGOING' },
+        where: { fromClinicId: clinicId, referralType: ReferralType.OUTGOING },
       }),
       prisma.referral.count({
         where: {
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ]
         },
@@ -85,7 +86,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         where: {
           status: { in: pendingStatuses },
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ]
         },
@@ -93,7 +94,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       prisma.referral.count({
         where: {
           fromClinicId: clinicId,
-          referralType: 'OUTGOING',
+          referralType: ReferralType.OUTGOING,
           status: { in: ['SENT', 'ACCEPTED'] },
         },
       }),
@@ -113,7 +114,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       prisma.referral.count({
         where: {
           fromClinicId: clinicId,
-          referralType: 'OUTGOING',
+          referralType: ReferralType.OUTGOING,
           createdAt: {
             gte: new Date(previousMonthYear, previousMonth, 1),
             lt: new Date(previousMonthYear, previousMonth + 1, 1),
@@ -123,7 +124,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       prisma.referral.count({
         where: {
           fromClinicId: clinicId,
-          referralType: 'OUTGOING',
+          referralType: ReferralType.OUTGOING,
           createdAt: {
             gte: new Date(currentYear, currentMonth, 1),
             lt: new Date(currentYear, currentMonth + 1, 1),
@@ -137,7 +138,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
             lt: new Date(previousMonthYear, previousMonth + 1, 1),
           },
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId },
           ],
         },
@@ -149,7 +150,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
             lt: new Date(currentYear, currentMonth + 1, 1),
           },
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ]
         },
@@ -167,7 +168,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       prisma.referral.count({
         where: {
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ],
           createdAt: {
@@ -180,7 +181,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         where: {
           status: 'ACCEPTED',
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ],
           createdAt: {
@@ -193,7 +194,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         by: ['toContactId'],
         where: {
           fromClinicId: clinicId,
-          referralType: 'OUTGOING',
+          referralType: ReferralType.OUTGOING,
           toContactId: { not: null },
         },
         _count: true,
@@ -202,7 +203,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         by: ['specialty'],
         where: {
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ],
           specialty: { not: null },
@@ -216,7 +217,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       prisma.referral.findMany({
         where: {
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ],
           createdAt: {
@@ -233,7 +234,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         where: {
           status: { in: pendingStatuses },
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId }
           ]
         },
@@ -247,7 +248,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       prisma.referral.findMany({
         where: {
           fromClinicId: clinicId,
-          referralType: 'OUTGOING',
+          referralType: ReferralType.OUTGOING,
         },
         orderBy: { createdAt: 'desc' },
         take: 5,
@@ -334,7 +335,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
       const countOutgoing = (start: Date, end: Date) => prisma.referral.count({
         where: {
           fromClinicId: clinicId,
-          referralType: 'OUTGOING',
+          referralType: ReferralType.OUTGOING,
           createdAt: { gte: start, lt: end },
         },
       })
@@ -342,7 +343,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
         where: {
           createdAt: { gte: start, lt: end },
           OR: [
-            { fromClinicId: clinicId, referralType: 'INCOMING' },
+            { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
             { toClinicId: clinicId },
           ],
         },
@@ -434,7 +435,7 @@ export async function getDashboardStats(req: Request, res: Response, next: NextF
 
     const incomingScope = {
       OR: [
-        { fromClinicId: clinicId, referralType: 'INCOMING' },
+        { fromClinicId: clinicId, referralType: ReferralType.INCOMING },
         { toClinicId: clinicId }
       ],
     }
