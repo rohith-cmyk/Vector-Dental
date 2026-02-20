@@ -70,8 +70,8 @@ export async function createReferralLink(
       },
     })
 
-    // Build referral URL - must use GD portal (where refer-magic lives), NOT CORS_ORIGIN (comma-separated)
-    const referralUrl = `${config.gdPortalUrl.replace(/\/$/, '')}/refer-magic/${token}`
+    // Build referral URL - refer-magic lives on Specialist portal, NOT CORS_ORIGIN (comma-separated)
+    const referralUrl = `${config.specialistPortalUrl.replace(/\/$/, '')}/refer-magic/${token}`
 
     res.status(201).json({
       success: true,
@@ -135,8 +135,8 @@ export async function listReferralLinks(
       },
     })
 
-    // Build referral URLs - use GD portal (single URL), NOT CORS_ORIGIN (comma-separated)
-    const baseUrl = config.gdPortalUrl.replace(/\/$/, '')
+    // Build referral URLs - refer-magic lives on Specialist portal (single URL), NOT CORS_ORIGIN
+    const baseUrl = config.specialistPortalUrl.replace(/\/$/, '')
     const linksWithUrls = referralLinks.map((link) => ({
       id: link.id,
       token: link.token,
@@ -203,7 +203,7 @@ export async function getReferralLink(
       throw errors.notFound('Referral link not found')
     }
 
-    const baseUrl = config.gdPortalUrl.replace(/\/$/, '')
+    const baseUrl = config.specialistPortalUrl.replace(/\/$/, '')
 
     res.json({
       success: true,
@@ -282,7 +282,7 @@ export async function updateReferralLink(
       },
     })
 
-    const baseUrl = config.gdPortalUrl.replace(/\/$/, '')
+    const baseUrl = config.specialistPortalUrl.replace(/\/$/, '')
 
     res.json({
       success: true,

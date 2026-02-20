@@ -336,7 +336,7 @@ Use this flow when deploying frontends to Vercel and the backend to Railway.
    | `DIRECT_URL` | Your Supabase direct URL (for migrations) |
    | `JWT_SECRET` | Strong secret (`openssl rand -base64 32`) |
    | `CORS_ORIGIN` | `https://your-specialist-app.vercel.app,https://your-gd-app.vercel.app` (see step 2) |
-   | `GD_PORTAL_URL` | `https://your-gd-app.vercel.app` (single URL for referral links; do NOT use CORS_ORIGIN) |
+   | `SPECIALIST_PORTAL_URL` | `https://your-specialist-app.vercel.app` (single URL for referral links; do NOT use CORS_ORIGIN) |
    | `SUPABASE_URL` | From Supabase Dashboard |
    | `SUPABASE_ANON_KEY` | From Supabase Dashboard |
    | `SUPABASE_SERVICE_ROLE_KEY` | From Supabase Dashboard |

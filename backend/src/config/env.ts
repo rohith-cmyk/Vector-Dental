@@ -28,9 +28,9 @@ export const config = {
   // CORS
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
 
-  // GD Portal URL - base URL for referral links (refer-magic lives on GD portal)
+  // Specialist Portal URL - base URL for referral links (refer-magic lives on Specialist portal)
   // Must be a single URL, NOT comma-separated like CORS_ORIGIN
-  gdPortalUrl: process.env.GD_PORTAL_URL || 'http://localhost:3001',
+  specialistPortalUrl: process.env.SPECIALIST_PORTAL_URL || 'http://localhost:3000',
 
   // File Upload
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'),
