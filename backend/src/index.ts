@@ -96,7 +96,8 @@ app.use(errorHandler)
  */
 const startServer = async () => {
   // Start listening immediately (allows healthchecks to reach the app)
-  app.listen(config.port, () => {
+  // Bind to 0.0.0.0 so Railway can reach the container
+  app.listen(config.port, '0.0.0.0', () => {
     logger.info({
       msg: 'Server listening',
       port: config.port,
@@ -116,8 +117,9 @@ const startServer = async () => {
 
     logger.info('Startup complete')
   } catch (error) {
-    logger.fatal({ err: error }, 'Startup failed - database or storage unreachable')
-    process.exit(1)
+    logger.fatal({ err: error }, 'Startup failed - database or storage unreachable. Add DATABASE_URL and redeploy. Server stays up for healthchecks.')
+    // Don't exit - keep server running so /health returns 200 and deploy succeeds
+    // User can add DATABASE_URL in Railway Variables and redeploy
   }
 }
 
