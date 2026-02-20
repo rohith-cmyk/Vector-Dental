@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { config } from '../config/env'
+import { logger } from './logger'
 
 /**
  * Simple email utility
@@ -77,17 +78,24 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
         replyTo: options.replyTo,
       })
 
+      logger.info({ to: options.to, subject: options.subject }, 'Email sent via Resend')
       return { success: true }
-    } catch (error) {
-      console.error('Failed to send email via Resend:', error)
+    } catch (error: any) {
+      logger.error(
+        { err: error, to: options.to, subject: options.subject, resendError: error?.message, code: error?.statusCode },
+        'Failed to send email via Resend'
+      )
       // fall through to SMTP/mailto fallback
     }
+  } else {
+    logger.warn('RESEND_API_KEY not set - email will not be sent. Add it in Railway Variables.')
   }
 
   const smtpTransporter = getTransporter()
   if (!smtpTransporter) {
     const mailtoLink = generateMailtoLink(options)
-    return { success: true, mailtoLink }
+    logger.warn({ to: options.to, subject: options.subject }, 'No email service configured (Resend/SMTP). Email NOT sent - mailto fallback only.')
+    return { success: false, mailtoLink }
   }
 
   try {
@@ -101,8 +109,8 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
     })
 
     return { success: true }
-  } catch (error) {
-    console.error('Failed to send email:', error)
+  } catch (error: any) {
+    logger.error({ err: error, to: options.to, subject: options.subject }, 'Failed to send email via SMTP')
     const mailtoLink = generateMailtoLink(options)
     return { success: false, mailtoLink }
   }

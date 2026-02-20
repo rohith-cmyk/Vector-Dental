@@ -15,16 +15,6 @@ const getApiUrl = () => {
   const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url
   const finalUrl = `${cleanUrl}/api`
 
-  // Log in development
-  if (typeof window !== 'undefined') {
-    console.log('🔗 API Configuration:', {
-      'NEXT_PUBLIC_API_URL': process.env.NEXT_PUBLIC_API_URL,
-      'API_URL': process.env.API_URL,
-      'Final API URL': finalUrl,
-      'Window origin': window.location.origin
-    })
-  }
-
   return finalUrl
 }
 

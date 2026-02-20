@@ -20,6 +20,10 @@ import { logger } from './utils/logger'
  */
 const app = express()
 
+// Trust proxy when behind Railway/load balancer (required for express-rate-limit with X-Forwarded-For)
+// Must be set before rate limit middleware; safe in all environments
+app.set('trust proxy', 1)
+
 /**
  * Middleware
  */
