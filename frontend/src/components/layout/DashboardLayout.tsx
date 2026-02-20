@@ -3,7 +3,6 @@
 import { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
-import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -24,8 +23,6 @@ export function DashboardLayout({ children, title, subtitle, actions }: Dashboar
           {children}
         </main>
       </div>
-
-      <FeedbackButton />
     </div>
   )
 }

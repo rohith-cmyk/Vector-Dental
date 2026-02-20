@@ -3,8 +3,16 @@ import { prisma } from '../config/database'
 import { logger } from '../utils/logger'
 
 /**
- * Health check endpoint
- * Used by load balancers, Kubernetes, Docker, uptime monitors
+ * Liveness probe - returns 200 as soon as the server is listening
+ * Use for Railway/K8s/Docker healthchecks so deploy succeeds while DB connects
+ */
+export function getLiveness(_req: Request, res: Response) {
+  res.status(200).json({ ok: true, status: 'live' })
+}
+
+/**
+ * Readiness probe - full health check including database
+ * Used by load balancers, uptime monitors
  * Returns 200 if healthy, 503 if unhealthy
  */
 export async function getHealth(_req: Request, res: Response) {

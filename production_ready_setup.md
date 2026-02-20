@@ -323,7 +323,7 @@ Use this flow when deploying frontends to Vercel and the backend to Railway.
 
 1. **Create a Railway project** at [railway.app/new](https://railway.app/new).
 2. **Deploy from GitHub** – select your repo and choose **Deploy from GitHub repo**.
-3. **Set Root Directory** – in the service **Settings** → **General**, set **Root Directory** to `backend`.
+3. **Set Root Directory** – in the service **Settings** → **Source**, set **Root Directory** to `backend`. (Required: without this, the Dockerfile cannot find `package.json` and the build fails with `"/package.json": not found`.)
 4. **Configure environment variables** – in **Variables**, add:
 
    | Variable | Value |

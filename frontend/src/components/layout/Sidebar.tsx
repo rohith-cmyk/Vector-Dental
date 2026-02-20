@@ -9,6 +9,7 @@ import {
   Users,
   Settings
 } from 'lucide-react'
+import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -63,6 +64,11 @@ export function Sidebar() {
             )
           })}
         </nav>
+
+        {/* Feedback - bottom left of sidebar */}
+        <div className="shrink-0 px-3 pb-4">
+          <FeedbackButton />
+        </div>
       </div>
     </aside>
   )

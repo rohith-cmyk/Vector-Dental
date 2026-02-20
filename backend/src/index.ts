@@ -70,8 +70,10 @@ if (config.nodeEnv !== 'production') {
   app.use('/uploads', express.static(path.join(process.cwd(), config.uploadDir || 'uploads')))
 }
 
-// Health check at root (no rate limit - for load balancers, Docker, K8s)
-app.get('/health', healthController.getHealth)
+// Liveness (no DB check - for Railway/K8s deploy healthchecks)
+app.get('/health', healthController.getLiveness)
+// Full readiness check (includes DB)
+app.get('/health/ready', healthController.getHealth)
 
 /**
  * Rate limiting (production only)
@@ -90,10 +92,21 @@ app.use(errorHandler)
 
 /**
  * Start server
+ * Listen first so Railway/load balancers can reach /health, then connect DB in background
  */
 const startServer = async () => {
+  // Start listening immediately (allows healthchecks to reach the app)
+  app.listen(config.port, () => {
+    logger.info({
+      msg: 'Server listening',
+      port: config.port,
+      env: config.nodeEnv,
+      corsOrigins: config.corsOrigin,
+    })
+  })
+
   try {
-    // Connect to database
+    // Connect to database (health will return 503 until this succeeds)
     await connectDatabase()
 
     // Ensure Supabase Storage bucket exists (production)
@@ -101,17 +114,9 @@ const startServer = async () => {
       await ensureStorageBucket()
     }
 
-    // Start listening
-    app.listen(config.port, () => {
-      logger.info({
-        msg: 'Server started',
-        port: config.port,
-        env: config.nodeEnv,
-        corsOrigins: config.corsOrigin,
-      })
-    })
+    logger.info('Startup complete')
   } catch (error) {
-    logger.fatal({ err: error }, 'Failed to start server')
+    logger.fatal({ err: error }, 'Startup failed - database or storage unreachable')
     process.exit(1)
   }
 }
