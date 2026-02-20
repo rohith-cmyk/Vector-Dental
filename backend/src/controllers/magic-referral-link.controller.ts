@@ -70,9 +70,8 @@ export async function createReferralLink(
       },
     })
 
-    // Build referral URL
-    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
-    const referralUrl = `${frontendUrl}/refer-magic/${token}`
+    // Build referral URL - must use GD portal (where refer-magic lives), NOT CORS_ORIGIN (comma-separated)
+    const referralUrl = `${config.gdPortalUrl.replace(/\/$/, '')}/refer-magic/${token}`
 
     res.status(201).json({
       success: true,
@@ -136,8 +135,8 @@ export async function listReferralLinks(
       },
     })
 
-    // Build referral URLs
-    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
+    // Build referral URLs - use GD portal (single URL), NOT CORS_ORIGIN (comma-separated)
+    const baseUrl = config.gdPortalUrl.replace(/\/$/, '')
     const linksWithUrls = referralLinks.map((link) => ({
       id: link.id,
       token: link.token,
@@ -146,7 +145,7 @@ export async function listReferralLinks(
       specialty: link.specialty,
       createdAt: link.createdAt,
       updatedAt: link.updatedAt,
-      referralUrl: `${frontendUrl}/refer-magic/${link.token}`,
+      referralUrl: `${baseUrl}/refer-magic/${link.token}`,
       referralCount: link._count.referrals,
       // DO NOT include accessCodeHash or plaintext access code
     }))
@@ -204,7 +203,7 @@ export async function getReferralLink(
       throw errors.notFound('Referral link not found')
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
+    const baseUrl = config.gdPortalUrl.replace(/\/$/, '')
 
     res.json({
       success: true,
@@ -216,7 +215,7 @@ export async function getReferralLink(
         specialty: referralLink.specialty,
         createdAt: referralLink.createdAt,
         updatedAt: referralLink.updatedAt,
-        referralUrl: `${frontendUrl}/refer-magic/${referralLink.token}`,
+        referralUrl: `${baseUrl}/refer-magic/${referralLink.token}`,
         referralCount: referralLink._count.referrals,
         // DO NOT include accessCodeHash
       },
@@ -283,7 +282,7 @@ export async function updateReferralLink(
       },
     })
 
-    const frontendUrl = process.env.FRONTEND_URL || config.corsOrigin
+    const baseUrl = config.gdPortalUrl.replace(/\/$/, '')
 
     res.json({
       success: true,
@@ -294,7 +293,7 @@ export async function updateReferralLink(
         label: updatedLink.label,
         createdAt: updatedLink.createdAt,
         updatedAt: updatedLink.updatedAt,
-        referralUrl: `${frontendUrl}/refer-magic/${updatedLink.token}`,
+        referralUrl: `${baseUrl}/refer-magic/${updatedLink.token}`,
       },
     })
   } catch (error) {

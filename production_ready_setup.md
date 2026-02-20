@@ -319,12 +319,15 @@ User logged in
 
 Use this flow when deploying frontends to Vercel and the backend to Railway.
 
+> **Troubleshooting:** If you hit deployment errors, see [docs/RAILWAY_DEPLOYMENT.md](docs/RAILWAY_DEPLOYMENT.md) for a step-by-step fix guide.
+
 ### 1. Deploy Backend to Railway
 
 1. **Create a Railway project** at [railway.app/new](https://railway.app/new).
 2. **Deploy from GitHub** – select your repo and choose **Deploy from GitHub repo**.
 3. **Set Root Directory** – in the service **Settings** → **Source**, set **Root Directory** to `backend`. (Required: without this, the Dockerfile cannot find `package.json` and the build fails with `"/package.json": not found`.)
-4. **Configure environment variables** – in **Variables**, add:
+4. **Set Dockerfile Path** – in **Settings** → **Build**, set **Dockerfile Path** to `Dockerfile` (not `/backend/Dockerfile`). When Root Directory is `backend`, the path is relative to that folder.
+5. **Configure environment variables** – in **Variables**, add:
 
    | Variable | Value |
    |----------|-------|
@@ -333,14 +336,15 @@ Use this flow when deploying frontends to Vercel and the backend to Railway.
    | `DIRECT_URL` | Your Supabase direct URL (for migrations) |
    | `JWT_SECRET` | Strong secret (`openssl rand -base64 32`) |
    | `CORS_ORIGIN` | `https://your-specialist-app.vercel.app,https://your-gd-app.vercel.app` (see step 2) |
+   | `GD_PORTAL_URL` | `https://your-gd-app.vercel.app` (single URL for referral links; do NOT use CORS_ORIGIN) |
    | `SUPABASE_URL` | From Supabase Dashboard |
    | `SUPABASE_ANON_KEY` | From Supabase Dashboard |
    | `SUPABASE_SERVICE_ROLE_KEY` | From Supabase Dashboard |
    | `SUPABASE_STORAGE_BUCKET` | `referral-files` |
    | *(Optional)* `RESEND_API_KEY`, `TWILIO_*`, `SMTP_*` | For email/SMS |
 
-5. **Generate domain** – **Settings** → **Networking** → **Generate Domain**. Note the URL (e.g. `https://dental-referral-backend.up.railway.app`).
-6. **Run migrations** – either:
+6. **Generate domain** – **Settings** → **Networking** → **Generate Domain**. Note the URL (e.g. `https://dental-referral-backend.up.railway.app`).
+7. **Run migrations** – either:
    - **CLI:** `cd backend && railway run npx prisma migrate deploy`
    - **Or** add a one-off deploy script / GitHub Action that runs migrations before deploy.
 
