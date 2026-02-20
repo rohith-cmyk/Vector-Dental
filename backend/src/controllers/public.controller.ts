@@ -147,7 +147,7 @@ export async function submitPublicReferral(req: Request, res: Response, next: Ne
 
     // Send status tracking link to referring clinic
     if (fromClinicEmail) {
-      const statusUrl = `${config.corsOrigin}/referral-status/${statusToken}`
+      const statusUrl = `${config.specialistPortalUrl.replace(/\/$/, '')}/referral-status/${statusToken}`
       await sendEmail({
         to: fromClinicEmail,
         replyTo: fromClinicEmail,
@@ -506,7 +506,7 @@ export async function submitReferral(
 
     // Send status tracking link to submitter (if email provided)
     if (submittedByEmail) {
-      const statusUrl = `${config.corsOrigin}/referral-status/${statusToken}`
+      const statusUrl = `${config.specialistPortalUrl.replace(/\/$/, '')}/referral-status/${statusToken}`
       await sendEmail({
         to: submittedByEmail,
         replyTo: submittedByEmail,

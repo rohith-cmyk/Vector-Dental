@@ -115,6 +115,14 @@ const startServer = async () => {
       await ensureStorageBucket()
     }
 
+    // Warn if email/SMS not configured (referrals will not send notifications)
+    if (!config.resendApiKey) {
+      logger.warn('RESEND_API_KEY not set - referral emails will not be sent. Add it in .env (local) or Railway Variables (production).')
+    }
+    if (!config.twilioAccountSid || !config.twilioAuthToken || !config.twilioPhoneNumber) {
+      logger.warn('Twilio not configured (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER) - referral SMS will not be sent.')
+    }
+
     logger.info('Startup complete')
   } catch (error) {
     logger.fatal({ err: error }, 'Startup failed - database or storage unreachable. Add DATABASE_URL and redeploy. Server stays up for healthchecks.')
