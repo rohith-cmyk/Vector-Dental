@@ -212,10 +212,22 @@ export const authService = {
 
   /**
    * Get auth session
+   * Handles invalid refresh token by signing out and returning null
    */
   async getSession() {
-    const { data: { session } } = await supabase.auth.getSession()
-    return session
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error) throw error
+      return session
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('Refresh Token') || msg.includes('refresh_token') || msg.includes('AuthApiError')) {
+        await supabase.auth.signOut()
+        localStorage.removeItem('auth_token')
+        return null
+      }
+      throw err
+    }
   },
 
   /**

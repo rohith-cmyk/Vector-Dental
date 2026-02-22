@@ -25,12 +25,33 @@ export default function DashboardLayout({
         // Ensure API requests have the token on refresh
         localStorage.setItem('auth_token', session.access_token)
         api.defaults.headers.common['Authorization'] = `Bearer ${session.access_token}`
+      } catch (err: any) {
+        // Invalid refresh token or other auth error - clear and redirect to login
+        const msg = err?.message || ''
+        if (msg.includes('Refresh Token') || msg.includes('refresh_token') || msg.includes('AuthApiError')) {
+          await authService.logout()
+          router.replace('/login')
+        }
       } finally {
         setCheckingAuth(false)
       }
     }
 
     checkAuth()
+
+    // Handle Supabase background refresh failures (e.g. invalid refresh token)
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      const msg = String(event?.reason?.message || event?.reason || '')
+      if (msg.includes('Refresh Token') || msg.includes('refresh_token') || msg.includes('AuthApiError')) {
+        event.preventDefault()
+        authService.logout().then(() => {
+          if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login'
+          }
+        })
+      }
+    }
+    window.addEventListener('unhandledrejection', handleRejection)
 
     // Keep auth_token in sync when Supabase auto-refreshes (e.g. token renewal)
     const { data: authListener } = authService.onAuthStateChange((_event, session) => {
@@ -40,7 +61,10 @@ export default function DashboardLayout({
       }
     })
 
-    return () => authListener?.subscription?.unsubscribe?.()
+    return () => {
+      window.removeEventListener('unhandledrejection', handleRejection)
+      authListener?.subscription?.unsubscribe?.()
+    }
   }, [router])
 
   if (checkingAuth) {

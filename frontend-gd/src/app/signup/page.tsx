@@ -138,19 +138,19 @@ function SignupContent() {
   const progress = (step / 4) * 100
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#faf8f5] px-4 py-12">
+      <Card className="w-full max-w-md border border-[#1a4d3c]/10 rounded-2xl shadow-sm">
         <CardContent className="p-8">
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
+            <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4 object-contain" />
+            <h1 className="text-2xl font-bold text-[#1a4d3c]">Create Account</h1>
             <p className="text-gray-600 mt-2">Join the Vector Referral network</p>
             {step > 0 && step < 4 && (
               <div className="mt-4">
                 <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 transition-all duration-300"
+                    className="h-full bg-[#1a4d3c] transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -182,7 +182,7 @@ function SignupContent() {
                 type="button"
                 variant="primary"
                 size="lg"
-                className="w-full bg-emerald-500 hover:bg-emerald-600"
+                className="w-full bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                 onClick={handleNext}
               >
                 Next
@@ -203,14 +203,14 @@ function SignupContent() {
                 autoFocus
               />
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   onClick={handleNext}
                 >
                   Next
@@ -236,14 +236,14 @@ function SignupContent() {
                 autoFocus
               />
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   onClick={handleNext}
                 >
                   Next
@@ -298,23 +298,23 @@ function SignupContent() {
               />
               <div className="text-xs text-gray-500">
                 By signing up, you agree to our{' '}
-                <Link href="/terms" className="text-emerald-600 hover:text-emerald-700">
+                <Link href="/terms" className="text-[#1a4d3c] hover:text-[#0f3328] font-medium">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700">
+                <Link href="/privacy" className="text-[#1a4d3c] hover:text-[#0f3328] font-medium">
                   Privacy Policy
                 </Link>
               </div>
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   isLoading={isLoading}
                 >
                   Create Account
@@ -326,7 +326,7 @@ function SignupContent() {
           {/* Login Link */}
           <p className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-emerald-600 hover:text-emerald-700">
+            <Link href="/login" className="font-medium text-[#1a4d3c] hover:text-[#0f3328]">
               Sign in
             </Link>
           </p>
@@ -339,8 +339,8 @@ function SignupContent() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      <div className="min-h-screen flex items-center justify-center bg-[#faf8f5]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a4d3c]" />
       </div>
     }>
       <SignupContent />

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button, Input, Card, CardContent } from '@/components/ui'
+import { Input, Card, CardContent } from '@/components/ui'
 import { authService } from '@/services/auth.supabase.service'
 import { handleApiError } from '@/lib/api'
 
@@ -51,16 +51,16 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md border border-gray-200 shadow-sm">
+    <Card className="w-full max-w-md border border-[#1a4d3c]/10 rounded-2xl shadow-sm">
       <CardContent className="p-8">
         {/* Logo & Title */}
         <div className="text-center mb-8">
           <img
             src="/logo.png"
             alt="Logo"
-            className="h-16 w-16 mx-auto mb-4"
+            className="h-16 w-16 mx-auto mb-4 object-contain"
           />
-          <h1 className="text-2xl font-semibold text-gray-900">Welcome Back</h1>
+          <h1 className="text-2xl font-semibold text-[#1a4d3c]">Welcome Back</h1>
           <p className="text-sm text-gray-600 mt-2">Sign in to your Vector Referral account</p>
         </div>
 
@@ -110,26 +110,35 @@ function LoginForm() {
               <input type="checkbox" className="mr-2 rounded border-gray-300" />
               <span className="text-gray-600">Remember me</span>
             </label>
-            <Link href="/forgot-password" className="text-emerald-600 hover:text-emerald-700">
+            <Link href="/forgot-password" className="text-[#1a4d3c] hover:text-[#0f3328] font-medium">
               Forgot password?
             </Link>
           </div>
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            size="lg"
-            className="w-full bg-emerald-500 hover:bg-emerald-600"
-            isLoading={isLoading}
+            disabled={isLoading}
+            className="w-full rounded-lg px-6 py-3 text-lg font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1a4d3c] disabled:opacity-50 hover:bg-[#0f3328]"
+            style={{ backgroundColor: '#1a4d3c' }}
           >
-            Sign In
-          </Button>
+            {isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 inline h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Loading...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </button>
         </form>
 
         {/* Signup Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium text-emerald-600 hover:text-emerald-700">
+          <Link href="/signup" className="font-medium text-[#1a4d3c] hover:text-[#0f3328]">
             Sign up for free
           </Link>
         </p>
@@ -140,7 +149,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#faf8f5] px-4">
       <Suspense fallback={<div>Loading...</div>}>
         <LoginForm />
       </Suspense>

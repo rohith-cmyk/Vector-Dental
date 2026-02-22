@@ -43,47 +43,56 @@ dental-referral/
 - PostgreSQL 14+ (already installed ✅)
 - npm or yarn
 
-### Quick Start (Development Mode)
+### Local Setup (mirrors production: Vercel frontends + Railway backend)
 
-**Frontend is ready to go with mock data!**
+> **Full step-by-step guide:** [docs/LOCAL_SETUP.md](./docs/LOCAL_SETUP.md)
+
+**1. Install dependencies**
 
 ```bash
-cd "/Users/rohithperumandla/R&D venture Studio/code/dental-referral/frontend"
+cd dental-referral
+npm run install:all
+```
+
+**2. Configure environment**
+
+- **Backend:** Copy `backend/.env.example` → `backend/.env` and fill in `DATABASE_URL`, Supabase keys, etc.
+- **Frontend (Specialist):** Copy `frontend/.env.example` → `frontend/.env.local` (or use existing)
+- **Frontend-GD:** Copy `frontend-gd/.env.example` → `frontend-gd/.env.local` (or use existing)
+
+For local dev, ensure:
+- `NEXT_PUBLIC_API_URL=http://localhost:4000` (frontend)
+- `NEXT_PUBLIC_API_URL=http://localhost:4000/api/gd` (frontend-gd)
+
+**3. Run everything**
+
+**Option A: All local (fastest iteration)**
+```bash
 npm run dev
 ```
 
-Then open: **http://localhost:3000** 🎉
+**Option B: Backend in Docker (mirrors Railway production)**
+```bash
+# Terminal 1: Start backend in Docker
+npm run dev:backend:docker
 
-> **Note**: Authentication is currently disabled for development. The dashboard loads directly with mock data.
+# Terminal 2: Start frontends
+npm run dev:docker
+```
 
-### Full Setup (With Backend & Database)
+This starts:
+- **Backend:** http://localhost:4000 (Docker with hot reload)
+- **Specialist Portal:** http://localhost:3000
+- **GD Portal:** http://localhost:3001
 
-1. **Install dependencies**
-   ```bash
-   cd "/Users/rohithperumandla/R&D venture Studio/code/dental-referral"
-   npm install
-   ```
+**4. Run individually**
 
-2. **Database is already set up** ✅
-   - PostgreSQL installed and running
-   - Database `dental_referral` created
-   - All tables migrated
-
-3. **Run backend server** (in a new terminal)
-   ```bash
-   cd "/Users/rohithperumandla/R&D venture Studio/code/dental-referral/backend"
-   npm run dev
-   ```
-
-4. **Run frontend server** (in another terminal)
-   ```bash
-   cd "/Users/rohithperumandla/R&D venture Studio/code/dental-referral/frontend"
-   npm run dev
-   ```
-
-   This will start:
-   - Frontend: http://localhost:3000 ✅
-   - Backend: http://localhost:5000
+```bash
+npm run dev:backend         # Backend (local)
+npm run dev:backend:docker  # Backend (Docker)
+npm run dev:frontend       # Specialist portal only
+npm run dev:frontend-gd    # GD portal only
+```
 
 ## 📂 Detailed Structure
 
@@ -113,10 +122,30 @@ src/
 
 ## 🔄 Development Workflow
 
-1. Make changes to the code
-2. The dev servers will automatically reload
-3. Run tests before committing
-4. Create a pull request for review
+### Branches
+
+| Branch | Purpose |
+|--------|---------|
+| `vector-referral-dev` | Development – work here, test locally |
+| `vector-referral` | Production – deploys to Vercel + Railway |
+
+### Flow
+
+1. **Work on** `vector-referral-dev`:
+   ```bash
+   git checkout vector-referral-dev
+   ```
+
+2. **Develop & test locally** (frontend, frontend-gd, backend)
+
+3. **Commit and push**:
+   ```bash
+   git add .
+   git commit -m "feat: your change"
+   git push origin vector-referral-dev
+   ```
+
+4. **Deploy to production**: Open a PR from `vector-referral-dev` → `vector-referral`, review, and merge. Vercel and Railway deploy from `vector-referral`.
 
 ## 📦 Building for Production
 

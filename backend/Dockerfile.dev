@@ -1,0 +1,25 @@
+# Backend dev image - hot reload with tsx watch
+# Mirrors production runtime but with volume-mounted source for fast iteration
+FROM node:20-slim
+
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install deps (package.json copied first for layer cache)
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Prisma schema for generate
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+# Source mounted at runtime
+COPY . .
+
+RUN mkdir -p uploads
+
+EXPOSE 4000
+
+# Hot reload - tsx watch restarts on file changes
+CMD ["npx", "tsx", "watch", "--require", "dotenv/config", "src/index.ts"]

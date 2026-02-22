@@ -153,19 +153,19 @@ export default function SignupPage() {
   const progress = step < 5 ? (step / 4) * 100 : 100
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-12">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#faf8f5] px-4 py-12">
+      <Card className="w-full max-w-md border border-[#1a4d3c]/10 rounded-2xl shadow-sm">
         <CardContent className="p-8">
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
+            <img src="/logo.png" alt="Logo" className="h-16 w-16 mx-auto mb-4 object-contain" />
+            <h1 className="text-2xl font-bold text-[#1a4d3c]">Create Account</h1>
             <p className="text-gray-600 mt-2">Start managing referrals in Vector Referral</p>
             {step > 0 && step < 5 && (
               <div className="mt-4">
                 <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 transition-all duration-300"
+                    className="h-full bg-[#1a4d3c] transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -207,7 +207,7 @@ export default function SignupPage() {
                 type="button"
                 variant="primary"
                 size="lg"
-                className="w-full bg-emerald-500 hover:bg-emerald-600"
+                className="w-full bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                 onClick={handleNext}
               >
                 Next
@@ -228,14 +228,14 @@ export default function SignupPage() {
                 autoFocus
               />
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   onClick={handleNext}
                 >
                   Next
@@ -261,14 +261,14 @@ export default function SignupPage() {
                 autoFocus
               />
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   onClick={handleNext}
                 >
                   Next
@@ -292,7 +292,7 @@ export default function SignupPage() {
                   onClick={() => handleWizardChange('role', 'general_dentist')}
                   className={`p-4 rounded-lg border-2 text-left transition-all ${
                     wizardData.role === 'general_dentist'
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      ? 'border-[#1a4d3c] bg-[#d4edda]/50 text-[#1a4d3c]'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -304,7 +304,7 @@ export default function SignupPage() {
                   onClick={() => handleWizardChange('role', 'specialist')}
                   className={`p-4 rounded-lg border-2 text-left transition-all ${
                     wizardData.role === 'specialist'
-                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      ? 'border-[#1a4d3c] bg-[#d4edda]/50 text-[#1a4d3c]'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -313,14 +313,14 @@ export default function SignupPage() {
                 </button>
               </div>
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="button"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   onClick={handleNext}
                 >
                   Next
@@ -357,23 +357,23 @@ export default function SignupPage() {
               />
               <div className="text-xs text-gray-500">
                 By signing up, you agree to our{' '}
-                <Link href="/terms" className="text-emerald-600 hover:text-emerald-700">
+                <Link href="/terms" className="text-[#1a4d3c] hover:text-[#0f3328] font-medium">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700">
+                <Link href="/privacy" className="text-[#1a4d3c] hover:text-[#0f3328] font-medium">
                   Privacy Policy
                 </Link>
               </div>
               <div className="flex gap-3">
-                <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleBack}>
+                <Button type="button" variant="outline" size="lg" className="flex-1 border-[#1a4d3c] text-[#1a4d3c] hover:bg-[#1a4d3c]/5 rounded-lg" onClick={handleBack}>
                   Back
                 </Button>
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                  className="flex-1 bg-[#1a4d3c] hover:bg-[#0f3328] text-white rounded-lg"
                   isLoading={isLoading}
                 >
                   Create Account
@@ -385,7 +385,7 @@ export default function SignupPage() {
           {/* Login Link */}
           <p className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link href="/login" className="font-medium text-emerald-600 hover:text-emerald-700">
+            <Link href="/login" className="font-medium text-[#1a4d3c] hover:text-[#0f3328]">
               Sign in
             </Link>
           </p>

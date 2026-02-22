@@ -1,5 +1,3 @@
-// Prisma Schema for Vector Referral
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
@@ -11,91 +9,80 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Clinic Model
 model Clinic {
-  id        String   @id @default(uuid())
-  name      String
-  address   String?
-  phone     String?
-  email     String?
-  logoUrl   String?
-  logoStorageKey String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  users          User[]
-  contacts       Contact[]
-  referrals      Referral[]
-  referralLink   ClinicReferralLink?
-  notifications  Notification[]
+  id                 String              @id @default(uuid())
+  name               String
+  address            String?
+  phone              String?
+  email              String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  logoUrl            String?
+  logoStorageKey     String?
+  referralLink       ClinicReferralLink?
+  contacts           Contact[]
+  notifications      Notification[]
+  referrals          Referral[]
   specialistProfiles SpecialistProfile[]
+  users              User[]
 
   @@map("clinics")
 }
 
-// User Model
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      UserRole @default(STAFF)
-  clinicId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  clinic         Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  referralLinks  ReferralLink[]
-  intendedReferrals Referral[] @relation("IntendedRecipient")
-  specialistProfile SpecialistProfile?
-  operativeReports  OperativeReport[] @relation("OperativeReportAuthor")
+  id                                     String                   @id @default(uuid())
+  email                                  String                   @unique
+  password                               String
+  name                                   String
+  role                                   UserRole                 @default(STAFF)
+  clinicId                               String
+  createdAt                              DateTime                 @default(now())
+  updatedAt                              DateTime                 @updatedAt
+  userType                               UserType                 @default(SPECIALIST)
+  operativeReports                       OperativeReport[]        @relation("OperativeReportAuthor")
+  post_treatment_reports                 post_treatment_reports[]
+  referralLinks                          ReferralLink[]
+  referrals_referrals_createdByIdTousers Referral[]               @relation("referrals_createdByIdTousers")
+  intendedReferrals                      Referral[]               @relation("IntendedRecipient")
+  specialistProfile                      SpecialistProfile?
+  clinic                                 Clinic                   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@index([clinicId])
+  @@index([userType])
   @@map("users")
 }
 
-enum UserRole {
-  ADMIN
-  GENERAL_DENTIST
-  STAFF
-}
-
-// Specialist Profile (Directory data)
 model SpecialistProfile {
-  id               String   @id @default(uuid())
-  userId           String   @unique @map("user_id")
-  clinicId         String   @map("clinic_id")
-  firstName        String?  @map("first_name")
-  lastName         String?  @map("last_name")
-  credentials      String?
-  specialty        String?
-  subSpecialties   String[] @default([]) @map("sub_specialties")
-  yearsInPractice  Int?     @map("years_in_practice")
-  boardCertified   Boolean  @default(false) @map("board_certified")
-  languages        String[] @default([])
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @unique @map("user_id")
+  clinicId          String   @map("clinic_id")
+  firstName         String?  @map("first_name")
+  lastName          String?  @map("last_name")
+  credentials       String?
+  specialty         String?
+  subSpecialties    String[] @default([]) @map("sub_specialties")
+  yearsInPractice   Int?     @map("years_in_practice")
+  boardCertified    Boolean  @default(false) @map("board_certified")
+  languages         String[] @default([])
   insuranceAccepted String[] @default([]) @map("insurance_accepted")
-  phone            String?
-  email            String?
-  website          String?
-  photoUrl         String?  @map("photo_url")
-  photoStorageKey  String?  @map("photo_storage_key")
-  address          String?
-  city             String?
-  state            String?
-  zip              String?
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  phone             String?
+  email             String?
+  website           String?
+  address           String?
+  city              String?
+  state             String?
+  zip               String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  photoUrl          String?  @map("photo_url")
+  photoStorageKey   String?  @map("photo_storage_key")
+  clinic            Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([clinicId])
   @@map("specialist_profiles")
 }
 
-// Contact Model (Referral Recipients/Specialists)
 model Contact {
   id        String        @id @default(uuid())
   clinicId  String
@@ -108,9 +95,7 @@ model Contact {
   status    ContactStatus @default(ACTIVE)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-
-  // Relations
-  clinic    Clinic     @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinic    Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   referrals Referral[]
 
   @@index([clinicId])
@@ -119,76 +104,58 @@ model Contact {
   @@map("contacts")
 }
 
-enum ContactStatus {
-  ACTIVE
-  INACTIVE
-}
-
-// Referral Model (Two-Way System)
 model Referral {
-  id           String           @id @default(uuid())
-  
-  // Referral Direction
-  referralType ReferralType     @default(OUTGOING)
-  
-  // For OUTGOING referrals (you send out)
-  fromClinicId String           // Clinic sending the referral
-  toContactId  String?          // Contact from your directory (optional)
-  toClinicId   String?          // If referring to another clinic in the system
-  
-  // For INCOMING referrals (you receive)
-  // The clinic receiving uses fromClinicId
-  fromClinicName    String?     // Name of external referring clinic
-  fromClinicEmail   String?     // Email of referring clinic  
-  fromClinicPhone   String?     // Phone of referring clinic
-  referringDentist  String?     // Name of dentist who made referral
-  
-  // Patient Information
-  patientName  String
-  patientDob   DateTime
-  patientPhone String?
-  patientEmail String?
-  
-  // New fields for magic link flow (optional for backward compatibility)
-  patientFirstName      String?  // Split from patientName for new flow
-  patientLastName       String?  // Split from patientName for new flow
-  insurance             String?  // Insurance information
-  gpClinicName          String?  // GP clinic name (maps to fromClinicName)
-  submittedByName       String?  // Name of person submitting (maps to referringDentist)
-  submittedByPhone      String?  // Phone of person submitting
-  
-  // Referral Details
-  reason       String
-  urgency      ReferralUrgency  @default(ROUTINE)
-  status       ReferralStatus   @default(DRAFT)
-  notes        String?
-  acceptedAt   DateTime?
-  scheduledAt  DateTime?
-  completedAt  DateTime?
-  postOpScheduledAt DateTime?
-  
-  intendedRecipientId String? // FK to User (Specialist)
-  specialty    String?          // Specialty category (e.g. Orthodontist)
-  referralLinkId String?  // FK to ReferralLink
-  shareToken   String?   @unique // Token for sharing referral (view-only access)
-  statusToken  String?   @unique // Token for status tracking page
-  statusAccessCodeHash String? // Hashed access code for status tracking
-  
-  // Clinical Data
-  selectedTeeth String[]  @default([]) // Array of tooth IDs (e.g. ["1", "3", "32"])
-  
-  // Timestamps
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
-  // Relations
-  clinic        Clinic          @relation(fields: [fromClinicId], references: [id], onDelete: Cascade)
-  contact       Contact?        @relation(fields: [toContactId], references: [id], onDelete: Restrict)
-  intendedRecipient User?       @relation("IntendedRecipient", fields: [intendedRecipientId], references: [id])
-  referralLink  ReferralLink?   @relation(fields: [referralLinkId], references: [id], onDelete: SetNull)
-  files         ReferralFile[]
-  operativeReports OperativeReport[]
-  notifications Notification[]
+  id                                 String                   @id @default(uuid())
+  patientName                        String
+  patientDob                         DateTime
+  patientPhone                       String?
+  patientEmail                       String?
+  reason                             String
+  urgency                            ReferralUrgency          @default(ROUTINE)
+  status                             ReferralStatus           @default(DRAFT)
+  notes                              String?
+  createdAt                          DateTime                 @default(now())
+  updatedAt                          DateTime                 @updatedAt
+  shareToken                         String?                  @unique
+  fromClinicEmail                    String?
+  fromClinicId                       String
+  fromClinicName                     String?
+  fromClinicPhone                    String?
+  gpClinicName                       String?
+  insurance                          String?
+  intendedRecipientId                String?
+  patientFirstName                   String?
+  patientLastName                    String?
+  referralLinkId                     String?
+  referralType                       ReferralType             @default(OUTGOING)
+  referringDentist                   String?
+  selectedTeeth                      String[]                 @default([])
+  specialty                          String?
+  statusToken                        String?                  @unique
+  submittedByName                    String?
+  submittedByPhone                   String?
+  toClinicId                         String?
+  toContactId                        String?
+  statusAccessCodeHash               String?
+  acceptedAt                         DateTime?                @db.Timestamptz(6)
+  scheduledAt                        DateTime?                @db.Timestamptz(6)
+  completedAt                        DateTime?                @db.Timestamptz(6)
+  postOpScheduledAt                  DateTime?                @db.Timestamptz(6)
+  createdById                        String?
+  appointmentDate                    DateTime?
+  appointmentNotes                   String?
+  patientAttendedAt                  DateTime?
+  treatmentStartedAt                 DateTime?
+  treatmentCompletedAt               DateTime?
+  notifications                      Notification[]
+  operativeReports                   OperativeReport[]
+  post_treatment_reports             post_treatment_reports[]
+  files                              ReferralFile[]
+  users_referrals_createdByIdTousers User?                    @relation("referrals_createdByIdTousers", fields: [createdById], references: [id])
+  clinic                             Clinic                   @relation(fields: [fromClinicId], references: [id], onDelete: Cascade)
+  intendedRecipient                  User?                    @relation("IntendedRecipient", fields: [intendedRecipientId], references: [id])
+  referralLink                       ReferralLink?            @relation(fields: [referralLinkId], references: [id])
+  contact                            Contact?                 @relation(fields: [toContactId], references: [id], onDelete: Restrict)
 
   @@index([fromClinicId])
   @@index([toContactId])
@@ -200,7 +167,157 @@ model Referral {
   @@index([referralLinkId])
   @@index([shareToken])
   @@index([statusToken])
+  @@index([createdById])
   @@map("referrals")
+}
+
+model ReferralFile {
+  id         String   @id @default(uuid())
+  referralId String
+  fileName   String
+  fileType   String
+  fileUrl    String
+  fileSize   Int
+  uploadedAt DateTime @default(now())
+  mimeType   String?
+  storageKey String?
+  referral   Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([referralId])
+  @@map("referral_files")
+}
+
+model OperativeReport {
+  id            String                @id @default(uuid())
+  referralId    String
+  createdById   String
+  findings      String
+  diagnosis     String?
+  treatmentPlan String
+  comment       String?               @map("notes")
+  reportDate    DateTime              @default(now())
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  files         OperativeReportFile[]
+  createdBy     User                  @relation("OperativeReportAuthor", fields: [createdById], references: [id])
+  referral      Referral              @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([referralId])
+  @@index([createdById])
+  @@map("operative_reports")
+}
+
+model OperativeReportFile {
+  id         String           @id @default(uuid())
+  fileName   String
+  fileType   String
+  fileUrl    String
+  fileSize   Int
+  storageKey String?
+  mimeType   String?
+  uploadedAt DateTime?        @default(now()) @db.Timestamptz(6)
+  reportId   String?
+  report     OperativeReport? @relation(fields: [reportId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "operative_report_files_report_id_fkey")
+
+  @@index([reportId], map: "operative_report_files_reportid_idx")
+  @@map("operative_report_files")
+}
+
+model ClinicReferralLink {
+  id        String   @id @default(uuid())
+  clinicId  String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("clinic_referral_links")
+}
+
+model ReferralLink {
+  id             String     @id @default(uuid())
+  specialistId   String
+  token          String     @unique
+  accessCodeHash String
+  isActive       Boolean    @default(true)
+  label          String?
+  specialty      String     @default("General Dentist")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  specialist     User       @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  referrals      Referral[]
+
+  @@index([specialistId])
+  @@index([token])
+  @@map("referral_links")
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  clinicId   String
+  userId     String?
+  type       NotificationType
+  referralId String?
+  title      String
+  message    String
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  clinic     Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  referral   Referral?        @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Feedback {
+  id          String           @id @default(uuid())
+  source      FeedbackSource   @default(SPECIALIST)
+  type        FeedbackType
+  description String
+  severity    FeedbackSeverity
+  userId      String?          @map("user_id")
+  screen      String?
+  context     Json?
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([source])
+  @@index([type])
+  @@map("feedback")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model post_treatment_reports {
+  id               String   @id
+  referralId       String
+  createdById      String
+  treatmentSummary String
+  outcome          String
+  complications    String?
+  recommendations  String
+  followUpNeeded   Boolean  @default(false)
+  reportDate       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime
+  users            User     @relation(fields: [createdById], references: [id])
+  referrals        Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  @@index([createdById])
+  @@index([referralId])
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  GENERAL_DENTIST
+}
+
+enum ContactStatus {
+  ACTIVE
+  INACTIVE
 }
 
 enum ReferralType {
@@ -211,132 +328,18 @@ enum ReferralType {
 enum ReferralStatus {
   DRAFT
   SENT
-  SUBMITTED        // New: from magic link
-  PENDING_REVIEW   // New
   ACCEPTED
-  REJECTED         // New
   COMPLETED
   CANCELLED
+  SUBMITTED
+  PENDING_REVIEW
+  REJECTED
 }
 
 enum ReferralUrgency {
   ROUTINE
   URGENT
   EMERGENCY
-}
-
-// Referral File Model
-model ReferralFile {
-  id         String   @id @default(uuid())
-  referralId String
-  fileName   String
-  fileType   String
-  fileUrl    String
-  fileSize   Int
-  storageKey String?  // Where file lives (S3 key, Supabase path, etc.)
-  mimeType   String?  // More accurate MIME type
-  uploadedAt DateTime @default(now())
-
-  // Relations
-  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
-
-  @@index([referralId])
-  @@map("referral_files")
-}
-
-// Operative Report Model (Ops report from specialist)
-model OperativeReport {
-  id           String   @id @default(uuid())
-  referralId   String
-  createdById  String?
-  findings     String
-  treatmentPlan String
-  comment      String?  @map("notes")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  referral Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
-  createdBy User?   @relation("OperativeReportAuthor", fields: [createdById], references: [id], onDelete: SetNull)
-  files     OperativeReportFile[]
-
-  @@index([referralId])
-  @@map("operative_reports")
-}
-
-// Operative Report File Model
-model OperativeReportFile {
-  id         String   @id @default(uuid())
-  reportId   String
-  fileName   String
-  fileType   String
-  fileUrl    String
-  fileSize   Int
-  storageKey String?  // Where file lives (S3 key, Supabase path, etc.)
-  mimeType   String?  // More accurate MIME type
-  uploadedAt DateTime @default(now())
-
-  report OperativeReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-
-  @@index([reportId])
-  @@map("operative_report_files")
-}
-
-// Clinic Referral Link Model (Shareable Public Link)
-model ClinicReferralLink {
-  id          String   @id @default(uuid())
-  clinicId    String   @unique
-  slug        String   @unique  // URL-friendly slug (e.g., "smith-dental-clinic")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-
-  @@map("clinic_referral_links")
-}
-
-// Magic Referral Link Model (Token-based with access code)
-model ReferralLink {
-  id             String   @id @default(uuid())
-  specialistId   String   // FK to User.id (the specialist creating the link)
-  token          String   @unique // Random 32-64 char token (unguessable)
-  accessCodeHash String   // Hashed access code (bcrypt)
-  isActive       Boolean  @default(true)
-  label          String?  // Optional label like "Standing GP Link"
-  specialty      String?  // Specialist type (e.g., Endodontist)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  // Relations
-  specialist User       @relation(fields: [specialistId], references: [id], onDelete: Cascade)
-  referrals  Referral[]
-
-  @@index([specialistId])
-  @@index([token])
-  @@map("referral_links")
-}
-
-// Notification Model
-model Notification {
-  id          String             @id @default(uuid())
-  clinicId    String
-  userId      String?            // Specific user, or null for all clinic users
-  type        NotificationType
-  referralId  String?
-  title       String
-  message     String
-  isRead      Boolean            @default(false)
-  createdAt   DateTime           @default(now())
-
-  // Relations
-  clinic   Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  referral Referral? @relation(fields: [referralId], references: [id], onDelete: Cascade)
-
-  @@index([clinicId])
-  @@index([isRead])
-  @@index([createdAt])
-  @@map("notifications")
 }
 
 enum NotificationType {
@@ -346,24 +349,10 @@ enum NotificationType {
   REFERRAL_COMPLETED
   REFERRAL_STATUS_UPDATE
   SYSTEM_MESSAGE
-}
-
-// Feedback Model (in-app feedback from users)
-model Feedback {
-  id          String        @id @default(uuid())
-  source      FeedbackSource @default(SPECIALIST) // Which portal submitted
-  type        FeedbackType   // Bug, UI confusing, Feature idea, Data issue
-  description String        @db.Text
-  severity    FeedbackSeverity
-  userId      String?       @map("user_id") // Optional - may be anonymous
-  screen      String?       // Current screen/module (e.g. "Referrals", "Dashboard")
-  context     Json?         // Entity IDs, extra context (referralId, contactId, etc.)
-  createdAt   DateTime      @default(now()) @map("created_at")
-
-  @@index([createdAt])
-  @@index([source])
-  @@index([type])
-  @@map("feedback")
+  APPOINTMENT_SCHEDULED
+  REPORT_AVAILABLE
+  TREATMENT_STARTED
+  TREATMENT_COMPLETED
 }
 
 enum FeedbackSource {
@@ -385,3 +374,7 @@ enum FeedbackSeverity {
   LOW
 }
 
+enum UserType {
+  SPECIALIST
+  GENERAL_DENTIST
+}

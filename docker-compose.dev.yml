@@ -1,0 +1,24 @@
+# Local dev: Backend in Docker (mirrors Railway production)
+# Frontends run locally: npm run dev:frontend, npm run dev:frontend-gd
+#
+# Usage: docker compose -f docker-compose.dev.yml up --build
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/src:/app/src:ro
+      - ./backend/prisma:/app/prisma:ro
+      - backend-uploads:/app/uploads
+
+volumes:
+  backend-uploads:

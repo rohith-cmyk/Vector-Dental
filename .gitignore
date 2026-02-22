@@ -56,3 +56,23 @@ backend/prisma/migrations/
 
 # Uploads
 backend/uploads/
+
+# IDE / Editor
+.cursor/
+
+# Accidental junk files (docker output, extraction artifacts, etc.)
+/extracting
+/sha256:*
+/transferring
+/reading
+/exporting
+/ontext
+/31kB
+/31fb92622470b249c590dc9989be6
+/34172bebd8d36abe
+/6:d8ad8cd72600f46cc068e16c39046eb
+/extrabb448d9d8de948e9dfd590e0
+/extracing
+/extracti1d5319a42f2216f1f01ef
+/extractin
+/extractincb1ee6be

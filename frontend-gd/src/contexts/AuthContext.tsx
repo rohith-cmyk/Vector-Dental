@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authService } from '@/services/api'
+import { supabase } from '@/lib/supabase'
 import type { User, Clinic } from '@/types'
 
 interface AuthContextType {
@@ -44,6 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         }
         setIsLoading(false)
+    }, [])
+
+    // Handle Supabase invalid refresh token (e.g. from background auto-refresh)
+    useEffect(() => {
+        const handleRejection = (event: PromiseRejectionEvent) => {
+            const msg = String(event?.reason?.message || event?.reason || '')
+            if (msg.includes('Refresh Token') || msg.includes('refresh_token') || msg.includes('AuthApiError')) {
+                event.preventDefault()
+                supabase.auth.signOut()
+                localStorage.removeItem('gd_token')
+                localStorage.removeItem('gd_user')
+                localStorage.removeItem('gd_clinic')
+                if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+                    window.location.href = '/login'
+                }
+            }
+        }
+        window.addEventListener('unhandledrejection', handleRejection)
+        return () => window.removeEventListener('unhandledrejection', handleRejection)
     }, [])
 
     const login = async (email: string, password: string) => {

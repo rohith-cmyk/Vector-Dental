@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Flag } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 
 const FEEDBACK_TYPES = [
@@ -85,11 +86,18 @@ export function FeedbackButton() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-        title="Use this to quickly report bugs or suggest improvements during your session."
+        className={cn(
+          'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+          isOpen
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+        )}
         aria-label="Feedback"
       >
-        <Flag className="h-4 w-4" strokeWidth={2} />
+        <Flag
+          className={cn('h-4 w-4', isOpen ? 'text-emerald-600' : 'text-neutral-500')}
+          strokeWidth={1.5}
+        />
         <span>Feedback</span>
       </button>
 

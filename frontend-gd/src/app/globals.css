@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
+/* Leaflet: import causes url() resolution issues with Next.js; load via layout link instead */
 
 @theme {
   --color-brand-50: #f7fee7;
